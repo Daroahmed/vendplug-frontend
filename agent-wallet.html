@@ -45,8 +45,12 @@
   <div class="form-section">
     <h3>🔁 Transfer Funds</h3>
     <label for="recipientAccount">Recipient Account Number</label>
-    <input type="text" id="recipientAccount" placeholder="Enter recipient account" />
+    <input type="text" id="recipientAccount" placeholder="Enter recipient account" onblur="resolveUser()" />
+
     <div id="userNameResolved" style="margin-bottom: 10px; font-style: italic; color: gray;"></div>
+
+    <label for="resolvedName">Resolved Name</label>
+    <input type="text" id="resolvedName" disabled style="background-color: #f0f0f0;" />
 
     <label for="transferAmount">Amount</label>
     <input type="number" id="transferAmount" placeholder="Enter amount" />
@@ -65,11 +69,7 @@
     <div id="transactionsList">Loading transactions...</div>
   </div>
 
-  <!-- Load backend config before agent logic -->
-<script src="/js/config.js"></script>
-<script src="/js/agent-wallet.js"></script>
-
-
-  
+  <script src="/js/config.js"></script>
+  <script src="/js/agent-wallet.js"></script>
 </body>
 </html>

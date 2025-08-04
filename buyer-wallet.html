@@ -2,76 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VendPlug Wallet - Buyer</title>
+  <title>VendPlug Buyer Wallet</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background-color: #111;
-      color: #fff;
-      padding: 1rem;
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .wallet-summary, .transaction-card, .form-section { margin-bottom: 20px; }
+    .wallet-summary span { font-weight: bold; }
+    .transaction-card {
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      background: #f9f9f9;
+      margin-bottom: 10px;
     }
-    .wallet-card {
-      background-color: #222;
-      border-radius: 1rem;
-      padding: 1.5rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    }
-    .section-title {
-      margin: 1.5rem 0 0.5rem;
-      font-weight: bold;
-      color: #ccc;
-    }
-    input, button {
+    .transaction-type.transaction-failed { color: red; }
+    .transaction-type.transaction-success { color: green; }
+    input, button, select {
+      padding: 6px;
+      margin: 4px 0;
       width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
-      border-radius: 0.5rem;
-      border: none;
+      box-sizing: border-box;
     }
-    button {
-      background-color: #04a96d;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #038e5d;
-    }
-    .resolved-user {
-      color: #8f8;
-      font-size: 0.9rem;
-    }
+    .form-section { border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
   </style>
 </head>
 <body>
-  <div class="wallet-card">
-    <h2>Wallet Summary</h2>
-    <p><strong>Account Number:</strong> <span id="accountNumber">Loading...</span></p>
-    <p><strong>Balance:</strong> ₦<span id="balance">Loading...</span></p>
+  <h2>💼 Buyer Wallet Dashboard</h2>
+
+  <div class="wallet-summary">
+    <p>Account Number: <span id="accountNumber">Loading...</span></p>
+    <p>Current Balance: ₦<span id="balance">Loading...</span></p>
   </div>
 
-  <div class="wallet-card">
-    <h3 class="section-title">Fund Wallet</h3>
-    <p>Transfer from your bank to the unique account number above. Funds will reflect shortly.</p>
+  <div class="form-section">
+    <h3>📅 Filter Transactions</h3>
+    <label for="startDate">Start Date</label>
+    <input type="date" id="startDate" />
+    <label for="endDate">End Date</label>
+    <input type="date" id="endDate" />
+    <button id="filterBtn">Filter</button>
   </div>
 
-  <div class="wallet-card">
-    <h3 class="section-title">Transfer to Another VendPlug User</h3>
-    <input type="text" id="recipientAccount" placeholder="Recipient Account Number" />
-    <div id="userNameResolved" class="resolved-user"></div>
-    <input type="number" id="transferAmount" placeholder="Amount" />
+  <div class="form-section">
+    <h3>🔁 Transfer Funds</h3>
+    <label for="recipientAccount">Recipient Account Number</label>
+    <input type="text" id="recipientAccount" placeholder="Enter recipient account" onblur="resolveUser()" />
+
+    <div id="userNameResolved" style="margin-bottom: 10px; font-style: italic; color: gray;"></div>
+
+    <label for="resolvedName">Resolved Name</label>
+    <input type="text" id="resolvedName" disabled style="background-color: #f0f0f0;" />
+
+    <label for="transferAmount">Amount</label>
+    <input type="number" id="transferAmount" placeholder="Enter amount" />
     <button onclick="handleTransfer()">Transfer</button>
   </div>
 
-  <div class="wallet-card">
-    <h3 class="section-title">Transaction History</h3>
-    <ul id="transactionsList">
-      <li>Loading...</li>
-    </ul>
+  <div class="form-section">
+    <h3>💸 Request Payout</h3>
+    <label for="payoutAmount">Amount</label>
+    <input type="number" id="payoutAmount" placeholder="Enter payout amount" />
+    <button onclick="handlePayout()">Request Payout</button>
   </div>
 
+  <div>
+    <h3>📜 Transaction History</h3>
+    <div id="transactionsList">Loading transactions...</div>
+  </div>
+
+  <script src="/js/config.js"></script>
   <script src="/js/buyer-wallet.js"></script>
 </body>
 </html>
