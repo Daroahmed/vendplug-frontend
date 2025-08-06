@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VendPlug | Vendor Shop</title>
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #121212;
+      color: #fff;
+      margin: 0;
+      padding: 1rem;
+    }
+
+    .shop-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .shop-header h2 {
+      color: #00cc99;
+      margin-bottom: 0.5rem;
+    }
+
+    .vendor-info {
+      margin-bottom: 1rem;
+      font-size: 0.95rem;
+      color: #ccc;
+    }
+
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .product-card {
+      background-color: #1e1e1e;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .product-card img {
+      width: 100%;
+      max-height: 120px;
+      object-fit: cover;
+      border-radius: 5px;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-card h4 {
+      margin: 0.5rem 0;
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .product-card p {
+      color: #aaa;
+      font-size: 0.9rem;
+    }
+
+    .product-card button {
+      margin-top: 0.5rem;
+      background-color: #00cc99;
+      color: black;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .message-btn {
+      background: transparent;
+      color: #00cc99;
+      text-decoration: underline;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="shop-header">
+    <h2 id="vendorShopName">Loading Shop...</h2>
+    <div class="vendor-info" id="vendorDetails"></div>
+    <button class="message-btn" id="messageVendorBtn">Message Vendor</button>
+  </div>
+
+  <div class="product-grid" id="vendorProducts">
+    <!-- Products will be injected here -->
+  </div>
+
+  <script src="js/vendor-shop.js"></script>
+</body>
+</html>

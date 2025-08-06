@@ -55,6 +55,10 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
   const businessName = document.getElementById("vendorBusinessName").value;
   const businessAddress = document.getElementById("vendorBusinessAddress").value;
   const cacNumber = document.getElementById("vendorCacNumber").value;
+  const category = document.getElementById("vendorCategory").value;
+  const location = document.getElementById("vendorLocation").value;
+  const shopDescription = document.getElementById("vendorShopDescription").value;
+
 
   const errorMsg = document.getElementById("registerError");
 
@@ -64,7 +68,9 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         fullName, email, shopName, phoneNumber,
-        password, businessName, businessAddress, cacNumber
+        password, businessName, businessAddress, cacNumber, category,
+        location,
+        shopDescription
       }),
     });
 

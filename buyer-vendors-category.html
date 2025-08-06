@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Browse Vendors | VendPlug</title>
+  <style>
+    body {
+      background-color: #121212;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      padding: 1rem;
+    }
+    h2 {
+      text-align: center;
+      color: #00cc99;
+      margin-bottom: 1rem;
+    }
+    select {
+      background: #1e1e1e;
+      color: white;
+      border: 1px solid #333;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 1.5rem;
+    }
+    .vendor-card {
+      background: #1e1e1e;
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+    }
+    .vendor-card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    .vendor-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+    .vendor-card h3 {
+      color: #00cc99;
+      margin-bottom: 0.3rem;
+    }
+    .vendor-card p {
+      font-size: 0.9rem;
+      color: #ccc;
+      margin: 0.2rem 0;
+    }
+    .vendor-card button {
+      background: #00cc99;
+      color: #000;
+      border: none;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .vendor-card button:hover {
+      background: #00b386;
+    }
+  </style>
+</head>
+<body>
+  <h2 id="categoryTitle">Loading Vendors...</h2>
+
+  <div style="max-width: 400px; margin: 0 auto;">
+    <label for="stateFilter">Filter by State:</label>
+    <select id="stateFilter">
+      <option value="">All States</option>
+      <option value="Abia">Abia</option>
+      <option value="Adamawa">Adamawa</option>
+      <option value="Akwa Ibom">Akwa Ibom</option>
+      <option value="Anambra">Anambra</option>
+      <option value="Bauchi">Bauchi</option>
+      <option value="Bayelsa">Bayelsa</option>
+      <option value="Benue">Benue</option>
+      <option value="Borno">Borno</option>
+      <option value="Cross River">Cross River</option>
+      <option value="Delta">Delta</option>
+      <option value="Ebonyi">Ebonyi</option>
+      <option value="Edo">Edo</option>
+      <option value="Ekiti">Ekiti</option>
+      <option value="Enugu">Enugu</option>
+      <option value="FCT">FCT</option>
+      <option value="Gombe">Gombe</option>
+      <option value="Imo">Imo</option>
+      <option value="Jigawa">Jigawa</option>
+      <option value="Kaduna">Kaduna</option>
+      <option value="Kano">Kano</option>
+      <option value="Katsina">Katsina</option>
+      <option value="Kebbi">Kebbi</option>
+      <option value="Kogi">Kogi</option>
+      <option value="Kwara">Kwara</option>
+      <option value="Lagos">Lagos</option>
+      <option value="Nasarawa">Nasarawa</option>
+      <option value="Niger">Niger</option>
+      <option value="Ogun">Ogun</option>
+      <option value="Ondo">Ondo</option>
+      <option value="Osun">Osun</option>
+      <option value="Oyo">Oyo</option>
+      <option value="Plateau">Plateau</option>
+      <option value="Rivers">Rivers</option>
+      <option value="Sokoto">Sokoto</option>
+      <option value="Taraba">Taraba</option>
+      <option value="Yobe">Yobe</option>
+      <option value="Zamfara">Zamfara</option>
+    </select>
+  </div>
+
+  <div id="vendorList" class="vendor-grid"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const selectedCategory = urlParams.get("category");
+      const title = document.getElementById("categoryTitle");
+      const vendorList = document.getElementById("vendorList");
+      const stateFilter = document.getElementById("stateFilter");
+
+      const formatCategory = str => str.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      title.textContent = `Vendors in ${formatCategory(selectedCategory)}`;
+
+      async function fetchVendors(state = "") {
+        vendorList.innerHTML = "<p>Loading vendors...</p>";
+        try {
+          const res = await fetch(`/api/vendors?category=${selectedCategory}${state ? `&state=${state}` : ""}`);
+          const vendors = await res.json();
+
+          vendorList.innerHTML = "";
+
+          if (!vendors.length) {
+            vendorList.innerHTML = "<p>No vendors found in this category/state.</p>";
+            return;
+          }
+
+          vendors.forEach(v => {
+            const card = document.createElement("div");
+            card.className = "vendor-card";
+            card.innerHTML = `
+              <img src="${v.image || '/img/default-vendor.jpg'}" alt="${v.name}" />
+              <h3>${v.name}</h3>
+              <p>${v.location || ''}</p>
+              <p>${v.shopDescription || ''}</p>
+              <button onclick="window.location.href='/vendor-shop.html?vendorId=${v._id}'">
+                View Shop
+              </button>
+            `;
+            vendorList.appendChild(card);
+          });
+
+        } catch (err) {
+          vendorList.innerHTML = `<p style="color: red;">Error loading vendors: ${err.message}</p>`;
+        }
+      }
+
+      stateFilter.addEventListener("change", e => fetchVendors(e.target.value));
+      fetchVendors();
+    });
+  </script>
+</body>
+</html>

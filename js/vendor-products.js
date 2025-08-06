@@ -1,181 +1,116 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const token = localStorage.getItem("vendplug-token");
-    const vendorData = JSON.parse(localStorage.getItem("vendplugVendor") || "{}");
+document.addEventListener('DOMContentLoaded', () => {
+  const vendor = JSON.parse(localStorage.getItem('vendplugVendor'));
+  const token = vendor?.token;
+  const BACKEND = window.BACKEND_URL || "";
+
+  if (!token) {
+    alert('Unauthorized. Please log in again.');
+    window.location.href = '/vendor-login.html';
+    return;
+  }
+
+  const addProductForm = document.getElementById('addProductForm');
+  const msg = document.getElementById('msg');
+  const productList = document.getElementById('productList');
+
+  fetchVendorProducts();
+
+  // 🔁 Handle form submission
+  addProductForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitProduct();
+  });
+
+  // 🧠 Submit (create or update)
+  async function submitProduct() {
+    const id = document.getElementById('productId').value;
+    const name = document.getElementById('productName').value;
+    const price = Number(document.getElementById('productPrice').value);
+    const description = document.getElementById('productDescription').value;
+    const stock = Number(document.getElementById('productStock').value);
+    const imageFile = document.getElementById('productImage').files[0];
   
-    if (!token || !vendorData._id) {
-      alert("Session expired. Please log in.");
-      window.location.href = "vendor-login.html";
-      return;
-    }
+    const endpoint = id
+      ? `${BACKEND}/api/vendor-products/${id}`
+      : `${BACKEND}/api/vendor-products`;
   
-    const form = document.getElementById("product-form");
-    const productList = document.getElementById("product-list");
-    const nameInput = document.getElementById("name");
-    const priceInput = document.getElementById("price");
-    const categoryInput = document.getElementById("category");
-    const imageInput = document.getElementById("image");
+    const method = id ? 'PUT' : 'POST';
   
-    let editingProductId = null;
-  
-    // Load existing products
-    fetch("/api/vendor/products", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-      .then(res => res.json())
-      .then(renderProducts)
-      .catch(err => {
-        console.error("Failed to load products", err);
-        productList.innerHTML += "<p>Error loading products.</p>";
-      });
-  
-    // Handle form submit
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-  
-      const product = {
-        name: nameInput.value.trim(),
-        price: parseFloat(priceInput.value),
-        category: categoryInput.value.trim(),
-        image: imageInput.value.trim()
+    try {
+      const options = {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       };
   
-      if (!product.name || isNaN(product.price) || !product.category) {
-        return alert("Please fill all required fields correctly.");
-      }
-  
-      if (editingProductId) {
-        // Edit product
-        fetch(`/api/vendor/products/${editingProductId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(product)
-        })
-          .then(res => res.json())
-          .then(() => {
-            alert("Product updated.");
-            resetForm();
-            loadProducts();
-          })
-          .catch(err => {
-            console.error("Update failed", err);
-            alert("Failed to update product.");
-          });
+      if (id) {
+        // ✅ Editing: use JSON body
+        options.headers['Content-Type'] = 'application/json';
+        options.body = JSON.stringify({ name, price, description, stock });
       } else {
-        // Create new product
-        fetch("/api/vendor/products", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`
-          },
-          body: JSON.stringify(product)
-        })
-          .then(res => res.json())
-          .then(() => {
-            alert("Product added.");
-            resetForm();
-            loadProducts();
-          })
-          .catch(err => {
-            console.error("Add failed", err);
-            alert("Failed to add product.");
-          });
+        // ✅ Creating: use FormData — no need to send category
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('price', price);
+        formData.append('description', description);
+        formData.append('stock', stock);
+        if (imageFile) formData.append('productImage', imageFile);
+        options.body = formData;
       }
-    });
   
-    function loadProducts() {
-      fetch("/api/vendor/products", {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
-        .then(res => res.json())
-        .then(renderProducts)
-        .catch(err => {
-          console.error("Reload failed", err);
-          productList.innerHTML += "<p>Error reloading products.</p>";
-        });
+      const res = await fetch(endpoint, options);
+      const result = await res.json();
+  
+      if (!res.ok) throw new Error(result.message || 'Upload failed');
+  
+      resetForm();
+      await fetchVendorProducts();
+      alert(id ? '✅ Product updated' : '✅ Product added');
+    } catch (err) {
+      console.error(err);
+      alert('❌ ' + err.message);
     }
+  }
   
-    function renderProducts(products) {
-      const container = document.getElementById("product-list");
-      container.innerHTML = "<h2>My Products</h2>";
-  
-      if (!products.length) {
-        container.innerHTML += "<p>No products yet.</p>";
+
+  // 🔁 Load vendor products
+  async function fetchVendorProducts() {
+    try {
+      const res = await fetch(`${BACKEND}/api/vendor-products/mine`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const products = await res.json();
+
+      productList.innerHTML = '';
+      if (!Array.isArray(products) || !products.length) {
+        productList.innerHTML = '<p>No products found.</p>';
         return;
       }
-  
+
       products.forEach(product => {
-        const card = document.createElement("div");
-        card.className = "product-card";
-  
-        const info = document.createElement("div");
-        info.className = "info";
-        info.innerHTML = `
-          <strong>${product.name}</strong><br/>
-          ₦${product.price.toFixed(2)} • ${product.category}
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          ${product.image ? `<img src="${BACKEND}${product.image}" style="width:100%; border-radius:8px;" />` : ''}
+          <h3>${product.name}</h3>
+          <p>₦${product.price.toLocaleString()}</p>
+          <p>Category: ${product.category}</p>
+          <p>${product.description || ''}</p>
         `;
-  
-        const actions = document.createElement("div");
-        actions.className = "actions";
-  
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit-btn";
-        editBtn.textContent = "Edit";
-        editBtn.onclick = () => {
-          nameInput.value = product.name;
-          priceInput.value = product.price;
-          categoryInput.value = product.category;
-          imageInput.value = product.image || "";
-          editingProductId = product._id;
-          form.querySelector("button").textContent = "Update Product";
-        };
-  
-        const deleteBtn = document.createElement("button");
-        deleteBtn.className = "delete-btn";
-        deleteBtn.textContent = "Delete";
-        deleteBtn.onclick = () => {
-          if (confirm("Are you sure you want to delete this product?")) {
-            fetch(`/api/vendor/products/${product._id}`, {
-              method: "DELETE",
-              headers: {
-                Authorization: `Bearer ${token}`
-              }
-            })
-              .then(res => res.json())
-              .then(() => {
-                alert("Product deleted.");
-                loadProducts();
-              })
-              .catch(err => {
-                console.error("Delete failed", err);
-                alert("Could not delete product.");
-              });
-          }
-        };
-  
-        actions.appendChild(editBtn);
-        actions.appendChild(deleteBtn);
-  
-        card.appendChild(info);
-        card.appendChild(actions);
-        container.appendChild(card);
+        productList.appendChild(card);
       });
+    } catch (err) {
+      console.error(err);
+      productList.innerHTML = '<p>Error loading products.</p>';
     }
-  
-    function resetForm() {
-      nameInput.value = "";
-      priceInput.value = "";
-      categoryInput.value = "";
-      imageInput.value = "";
-      editingProductId = null;
-      form.querySelector("button").textContent = "Add Product";
-    }
-  });
-  
+  }
+
+  // 🔄 Reset form
+  function resetForm() {
+    addProductForm.reset();
+    document.getElementById('productId').value = '';
+  }
+});

@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = vendor.token;
   const resolvedNameEl = document.getElementById('resolvedName');
 
+  // Fetch wallet, payout summary and transactions on load
   fetchWallet();
+  fetchPayoutSummary();
   fetchTransactions();
 
   document.getElementById('filterBtn')?.addEventListener('click', () => {
@@ -32,6 +34,23 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       accountNumberEl.textContent = 'Error';
       balanceEl.textContent = 'Error';
+    }
+  }
+
+  async function fetchPayoutSummary() {
+    try {
+      const res = await fetch(`${window.BACKEND_URL}/api/payouts/summary`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Payout summary fetch failed");
+
+      document.getElementById("pendingPayout").textContent = Number(data.pendingAmount || 0).toLocaleString('en-NG');
+      document.getElementById("totalPaidOut").textContent = Number(data.totalPaidOut || 0).toLocaleString('en-NG');
+      document.getElementById("lastPayoutDate").textContent = data.lastPayoutDate || '-';
+    } catch (err) {
+      console.error("❌ Failed to load payout summary:", err.message);
     }
   }
 
@@ -169,33 +188,34 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function handlePayout() {
-    const amount = Number(document.getElementById('payoutAmount').value);
-    if (!amount || amount <= 0) {
-      alert('Please enter a valid payout amount');
-      return;
-    }
+    const payoutMessage = document.getElementById("payoutMessage");
 
     try {
-      const res = await fetch(`${window.BACKEND_URL}/api/wallet/payout`, {
+      const res = await fetch(`${window.BACKEND_URL}/api/payouts/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ amount }),
       });
 
       const data = await res.json();
-      alert(data.message || 'Payout requested');
+
+      if (!res.ok) throw new Error(data.message || 'Payout failed');
+
+      payoutMessage.textContent = `✅ Payout of ₦${Number(data.amount).toLocaleString()} successful!`;
+      payoutMessage.style.color = "green";
+
       fetchWallet();
       fetchTransactions();
+      fetchPayoutSummary();
     } catch (err) {
-      alert('Payout failed');
-      console.error(err);
+      payoutMessage.textContent = err.message || 'Payout failed';
+      payoutMessage.style.color = "red";
     }
   }
 
-  // Global
+  // Expose globally
   window.handleTransfer = handleTransfer;
   window.handlePayout = handlePayout;
   window.resolveUser = resolveUser;

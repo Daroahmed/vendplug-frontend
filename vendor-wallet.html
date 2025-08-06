@@ -198,9 +198,16 @@
 
   <div class="form-section">
     <h3>Request Payout</h3>
-    <label for="payoutAmount">Amount</label>
-    <input type="number" id="payoutAmount" placeholder="₦0.00" />
-    <button onclick="handlePayout()">Request Payout</button>
+
+<div style="margin-bottom: 10px;">
+  <strong>Pending Payouts:</strong> ₦<span id="pendingPayout">0</span><br/>
+  <strong>Total Paid:</strong> ₦<span id="totalPaidOut">0</span><br/>
+  <strong>Last Payout:</strong> <span id="lastPayoutDate">-</span>
+</div>
+
+<button onclick="handlePayout()">💸 Request All Pending Payouts</button>
+<div class="message" id="payoutMessage"></div>
+
   </div>
 
   <div class="form-section">

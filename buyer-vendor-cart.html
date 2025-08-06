@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VendPlug | My Cart</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <style>
+    body {
+      background-color: #121212;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+      padding: 1rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: #00cc99;
+      margin-bottom: 1rem;
+    }
+
+    .vendor-group {
+      background-color: #1e1e1e;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .vendor-title {
+      color: #00cc99;
+      margin-bottom: 0.5rem;
+    }
+
+    .cart-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 0.5rem 0;
+      border-bottom: 1px solid #2c2c2c;
+      padding-bottom: 0.5rem;
+    }
+
+    .cart-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
+    .cart-item-details {
+      flex-grow: 1;
+    }
+
+    .cart-item-details h4 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .cart-item-details p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+
+    .place-order-btn {
+      background: #00cc99;
+      color: black;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>My Cart</h2>
+
+  <div id="cartContainer">
+    <!-- Cart grouped by vendor will be rendered here -->
+  </div>
+
+  <script src="js/buyer-vendor-cart.js"></script>
+</body>
+</html>
