@@ -4,7 +4,6 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>VendPlug | Vendor Orders</title>
-  <link rel="stylesheet" href="styles.css" />
   <style>
     body {
       background-color: #121212;
@@ -24,6 +23,12 @@
       padding: 1rem;
       margin-bottom: 1.5rem;
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .order-card:hover {
+      transform: scale(1.02);
     }
 
     .order-header {
@@ -49,6 +54,8 @@
     .accepted { background: green; color: white; }
     .rejected { background: red; color: white; }
     .fulfilled { background: #00cc99; color: black; }
+    .delivered { background: blue; color: white; }
+    .completed { background: purple; color: white; }
 
     .product-list {
       margin-top: 10px;
@@ -68,25 +75,26 @@
     <!-- Orders will render here -->
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/buyer-vendor-orders.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-<script>
-  const buyer = JSON.parse(localStorage.getItem("vendplugBuyer"));
-  const token = localStorage.getItem("vendplug-token");
+  <script>
+    const buyer = JSON.parse(localStorage.getItem("vendplugBuyer"));
 
-  const socket = io(BACKEND, {
-    query: { userId: buyer?._id },
-    transports: ["websocket"],
-  });
 
-  socket.on("buyer-order-update", (data) => {
-    alert(`🔔 ${data.message}`);
-    // Optionally refresh the page or show notification badge
-    loadVendorOrders(); // refresh orders
-  });
-</script>
+    const socket = io(BACKEND, {
+      query: { userId: buyer?._id },
+      transports: ["websocket"],
+    });
 
-<div style="display: flex; justify-content: end; margin-bottom: 1rem;">
+    socket.on("buyer-order-update", (data) => {
+      alert(`🔔 ${data.message}`);
+      // ✅ Refresh with correct function
+      fetchOrders();
+    });
+  </script>
+
+  <div style="display: flex; justify-content: end; margin-bottom: 1rem;">
     <div style="position: relative; cursor: pointer;" onclick="toggleNotificationDropdown()">
       <span style="font-size: 24px;">🔔</span>
       <span id="notificationBadge" style="
@@ -102,7 +110,7 @@
       ">0</span>
     </div>
   </div>
-  
+
   <div id="notificationDropdown" style="
     display: none;
     background-color: #1e1e1e;
@@ -120,6 +128,5 @@
   ">
     <div id="notificationList" style="padding: 1rem;"></div>
   </div>
-  
 </body>
 </html>

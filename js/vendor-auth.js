@@ -56,7 +56,7 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
   const businessAddress = document.getElementById("vendorBusinessAddress").value;
   const cacNumber = document.getElementById("vendorCacNumber").value;
   const category = document.getElementById("vendorCategory").value;
-  const location = document.getElementById("vendorLocation").value;
+  const state = document.getElementById("vendorState").value;
   const shopDescription = document.getElementById("vendorShopDescription").value;
 
 
@@ -69,7 +69,7 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
       body: JSON.stringify({
         fullName, email, shopName, phoneNumber,
         password, businessName, businessAddress, cacNumber, category,
-        location,
+        state,
         shopDescription
       }),
     });

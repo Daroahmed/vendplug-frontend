@@ -1,72 +1,68 @@
-console.log("✅ vendor-shop.js loaded");
+document.addEventListener("DOMContentLoaded", () => {
+  const vendorGrid = document.getElementById("vendorGrid");
+  const loadingSpinner = document.getElementById("loadingSpinner");
 
-const BACKEND = window.BACKEND_URL || "";
-const urlParams = new URLSearchParams(window.location.search);
-const vendorId = urlParams.get("vendorId");
+  const API_BASE = "/api"; // Change this if your API base is different
 
-const vendorShopName = document.getElementById("vendorShopName");
-const vendorDetails = document.getElementById("vendorDetails");
-const messageVendorBtn = document.getElementById("messageVendorBtn");
-const vendorProducts = document.getElementById("vendorProducts");
+  // ✅ Get state & category from URL first, then localStorage, then default
+  const urlParams = new URLSearchParams(window.location.search);
+  let state = urlParams.get("state") || localStorage.getItem("vendplug-buyer-state") || "FCT";
+  let category = urlParams.get("category") || localStorage.getItem("vendplug-category") || "Groceries";
 
-async function loadVendorShop() {
-  try {
-    const res = await fetch(`${BACKEND}/api/vendors/${vendorId}`);
-    const data = await res.json();
+  // ✅ Save to localStorage so future visits remember choice
+  localStorage.setItem("vendplug-buyer-state", state);
+  localStorage.setItem("vendplug-category", category);
 
-    vendorShopName.textContent = data.shopName;
-    vendorDetails.innerHTML = `
-      ${data.shopDescription || "No description"} <br/>
-      <strong>Location:</strong> ${data.location}
-    `;
-    messageVendorBtn.onclick = () => {
-      const phone = data.phoneNumber.replace(/\D/g, "");
-      window.open(`https://wa.me/234${phone}`, "_blank");
-    };
+  console.log(`📍 State: ${state}, 📦 Category: ${category}`);
 
-  } catch (err) {
-    vendorShopName.textContent = "Vendor not found";
-    vendorDetails.textContent = "";
-    console.error("❌ Failed to load vendor info", err);
-  }
-}
+  // ✅ Fetch vendors
+  async function fetchVendors() {
+    try {
+      loadingSpinner.style.display = "block";
+      vendorGrid.innerHTML = "";
 
-async function loadVendorProducts() {
-  try {
-    const res = await fetch(`${BACKEND}/api/products/vendor/${vendorId}`);
-    const products = await res.json();
+      const res = await fetch(
+        `${API_BASE}/vendors/shop-vendors?state=${encodeURIComponent(state)}&category=${encodeURIComponent(category)}`
+      );
+      const data = await res.json();
 
-    if (!products.length) {
-      vendorProducts.innerHTML = "<p>No products listed yet.</p>";
-      return;
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to fetch vendors");
+      }
+
+      if (!data.vendors || data.vendors.length === 0) {
+        vendorGrid.innerHTML = `<p class="no-results">No vendors found for ${category} in ${state}.</p>`;
+        return;
+      }
+
+      renderVendors(data.vendors);
+
+    } catch (err) {
+      console.error("❌ Error fetching vendors:", err);
+      vendorGrid.innerHTML = `<p class="error">Error loading vendors. Please try again later.</p>`;
+    } finally {
+      loadingSpinner.style.display = "none";
     }
-
-    vendorProducts.innerHTML = "";
-    products.forEach(p => {
-      const card = document.createElement("div");
-      card.className = "product-card";
-
-      card.innerHTML = `
-        <img src="${p.image || '/img/no-image.png'}" alt="${p.name}" />
-        <h4>${p.name}</h4>
-        <p>₦${p.price.toLocaleString()}</p>
-        <button onclick="addToCart('${p._id}')">Add to Cart</button>
-      `;
-      vendorProducts.appendChild(card);
-    });
-
-  } catch (err) {
-    vendorProducts.innerHTML = "<p>Failed to load products.</p>";
-    console.error("❌ Product load error", err);
   }
-}
 
-function addToCart(productId) {
-  let cart = JSON.parse(localStorage.getItem("vendplugVendorCart") || "[]");
-  cart.push({ productId, vendorId });
-  localStorage.setItem("vendplugVendorCart", JSON.stringify(cart));
-  alert("🛒 Added to cart!");
-}
+  // ✅ Render vendors in grid
+  function renderVendors(vendors) {
+    vendorGrid.innerHTML = vendors.map(vendor => `
+      <div class="vendor-card">
+        <img src="${vendor.image || '/assets/default-vendor.jpg'}" alt="${vendor.businessName}" />
+        <h3>${vendor.businessName}</h3>
+        <p>${vendor.state}</p>
+        <p>${vendor.category}</p>
+        <button onclick="viewVendor('${vendor._id}')">View Shop</button>
+      </div>
+    `).join("");
+  }
 
-loadVendorShop();
-loadVendorProducts();
+  // ✅ Redirect to vendor page
+  window.viewVendor = (vendorId) => {
+    window.location.href = `/vendor-details.html?id=${vendorId}`;
+  };
+
+  // 🔄 Initial fetch
+  fetchVendors();
+});

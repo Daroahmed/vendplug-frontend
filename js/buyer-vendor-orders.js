@@ -12,14 +12,14 @@ if (!token) {
 
 async function fetchOrders() {
   try {
-    const res = await fetch(`${BACKEND}/api/orders/buyer`, {
+    // ✅ Correct endpoint
+    const res = await fetch(`${BACKEND}/api/buyer-orders`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     });
 
     const data = await res.json();
-
     if (!res.ok) throw new Error(data.message);
 
     if (!data.length) {
@@ -29,12 +29,22 @@ async function fetchOrders() {
 
     container.innerHTML = "";
 
-    data.reverse().forEach(order => {
+    data.forEach(order => {
       const card = document.createElement("div");
       card.className = "order-card";
 
-      const vendorName = order.vendor?.shopName || "Unknown Vendor";
+      const vendorName = order.vendor || "Unknown Vendor";
       const statusClass = order.status.toLowerCase();
+
+      // ✅ Safely access product details
+      const productList = order.products
+        .map(p => {
+          const productName = p.product?.name || p.name || "Unknown Product";
+          const price = p.product?.price || p.price || 0;
+          const qty = p.quantity || 1;
+          return `<p>• ${productName} (x${qty}) - ₦${price.toLocaleString()}</p>`;
+        })
+        .join("");
 
       card.innerHTML = `
         <div class="order-header">
@@ -42,14 +52,20 @@ async function fetchOrders() {
           <span class="status-badge ${statusClass}">${order.status}</span>
         </div>
         <div class="product-list">
-          ${order.products.map(p => `<p>• ${p.name} - ₦${p.price.toLocaleString()}</p>`).join("")}
+          ${productList}
         </div>
-        <p style="font-size: 0.8rem; margin-top: 0.5rem;">🗓 ${new Date(order.createdAt).toLocaleString()}</p>
+        <p style="font-size: 0.8rem; margin-top: 0.5rem;">
+          🗓 ${new Date(order.createdAt).toLocaleString()}
+        </p>
       `;
+
+      // ✅ Click goes to details page
+      card.addEventListener("click", () => {
+        window.location.href = `buyer-order-details.html?orderId=${order._id}`;
+      });
 
       container.appendChild(card);
     });
-
   } catch (err) {
     console.error("❌ Failed to load orders:", err);
     container.innerHTML = "<p>Error loading orders.</p>";

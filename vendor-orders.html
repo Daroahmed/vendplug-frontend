@@ -1,86 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VendPlug | Vendor Orders</title>
-  <link rel="stylesheet" href="styles.css" />
-  <style>
-    body {
-      background-color: #121212;
-      font-family: 'Segoe UI', sans-serif;
-      color: #fff;
-      padding: 1rem;
-    }
-
-    h2 {
-      text-align: center;
-      color: #00cc99;
-    }
-
-    .order-card {
-      background-color: #1e1e1e;
-      border-radius: 10px;
-      padding: 1rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.4);
-    }
-
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .status-badge {
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-size: 0.8rem;
-      font-weight: bold;
-      text-transform: capitalize;
-    }
-
-    .pending { background: orange; color: black; }
-    .accepted { background: green; color: white; }
-    .rejected { background: red; color: white; }
-    .fulfilled { background: #00cc99; color: black; }
-
-    .product-list {
-      margin-top: 10px;
-    }
-
-    .product-list p {
-      margin: 2px 0;
-      font-size: 0.9rem;
-      color: #ccc;
-    }
-
-    .action-buttons {
-      margin-top: 10px;
-      display: flex;
-      gap: 10px;
-    }
-
-    .action-buttons button {
-      flex: 1;
-      padding: 8px;
-      border: none;
-      border-radius: 5px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .accept-btn { background: #00cc99; color: black; }
-    .reject-btn { background: red; color: white; }
-    .fulfill-btn { background: green; color: white; }
-  </style>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
-<body>
-  <h2>Vendor Orders</h2>
+<body class="bg-gray-900 text-white">
+  <!-- Header -->
+  <header class="p-4 bg-gray-800 shadow-md flex justify-between items-center">
+    <h1 class="text-xl font-bold">Vendor Orders</h1>
+    <a href="vendor-dashboard.html" class="text-sm underline">Back to Dashboard</a>
+  </header>
 
-  <div id="vendorOrdersContainer">
-    <!-- Orders render here -->
-  </div>
+  <!-- Orders Section -->
+  <main class="p-4">
+    <div id="orders-container" class="space-y-4">
+      <!-- Orders will be dynamically injected here -->
+    </div>
+  </main>
 
   <script src="js/vendor-orders.js"></script>
 </body>
