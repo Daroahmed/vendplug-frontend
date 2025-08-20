@@ -168,35 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function handlePayout() {
-    const amount = Number(document.getElementById('payoutAmount').value);
-    if (!amount || amount <= 0) {
-      alert('Please enter a valid payout amount');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${window.BACKEND_URL}/api/wallet/payout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount }),
-      });
-
-      const data = await res.json();
-      alert(data.message || 'Payout requested');
-      fetchWallet();
-      fetchTransactions();
-    } catch (err) {
-      alert('Payout failed');
-      console.error(err);
-    }
-  }
 
   // Global
   window.handleTransfer = handleTransfer;
-  window.handlePayout = handlePayout;
   window.resolveUser = resolveUser;
 });

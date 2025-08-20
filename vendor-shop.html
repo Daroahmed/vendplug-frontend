@@ -159,7 +159,7 @@
 
   <script>
     window.BACKEND_URL = window.location.hostname === "localhost"
-      ? "http://localhost:5000"
+      ? "http://localhost:5012"
       : "https://your-production-api.com";
   
     const vendorGrid = document.getElementById("vendorGrid");
@@ -236,7 +236,6 @@
           <h3>${v.shopName}</h3>
           <p>${v.totalTransactions || 0} transactions</p>
           <button onclick="viewShop('${v._id}')">View Shop</button>
-          <button onclick="viewProfile('${v._id}')">View Profile</button>
         </div>
       `;
     }
@@ -245,9 +244,6 @@
       window.location.href = `/view-shop.html?vendor=${id}`;
     }
   
-    function viewProfile(id) {
-      window.location.href = `/vendor-shop-profile.html?vendor=${id}`;
-    }
   
     window.addEventListener("scroll", () => {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 300) {

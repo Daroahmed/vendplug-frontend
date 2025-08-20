@@ -61,7 +61,7 @@ async function fetchOrders() {
 
       // ✅ Click goes to details page
       card.addEventListener("click", () => {
-        window.location.href = `buyer-order-details.html?orderId=${order._id}`;
+        window.location.href = `buyer-vendor-order-details.html?orderId=${order._id}`;
       });
 
       container.appendChild(card);

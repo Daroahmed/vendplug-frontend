@@ -72,13 +72,14 @@ function renderOrderDetails(order) {
 
 async function confirmReceipt(orderId) {
   try {
-    const res = await fetch(`${BACKEND}/api/buyer-orders/${orderId}/confirm`, {
+    const res = await fetch(`/api/buyer-orders/${orderId}/confirm`, {
       method: "PUT",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}` 
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
+    
 
     const data = await res.json();
     if (res.ok) {
