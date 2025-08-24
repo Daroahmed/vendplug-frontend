@@ -14,6 +14,8 @@
       align-items: center;
       min-height: 100vh;
       flex-direction: column;
+      margin: 0;
+      padding: 20px;
     }
 
     .auth-container {
@@ -28,6 +30,7 @@
     h2 {
       text-align: center;
       color: #00cc99;
+      margin-top: 0;
     }
 
     form {
@@ -41,10 +44,11 @@
 
     input, button, select, textarea {
       width: 100%;
-      padding: 10px;
-      margin: 10px 0;
+      padding: 12px;
+      margin: 8px 0;
       border: none;
       border-radius: 5px;
+      box-sizing: border-box;
     }
 
     input, select, textarea {
@@ -57,6 +61,11 @@
       color: black;
       font-weight: bold;
       cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #00b386;
     }
 
     .toggle {
@@ -69,12 +78,68 @@
       color: #00cc99;
       border: none;
       font-size: 0.9rem;
+      text-decoration: underline;
+      width: auto;
+      padding: 5px;
+      margin: 0 5px;
+    }
+
+    .toggle button:hover {
+      background: transparent;
+      color: #00b386;
     }
 
     .message {
       text-align: center;
       margin-top: 10px;
       font-size: 0.9rem;
+      color: #ff5555;
+      display: none;
+    }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      color: #ccc;
+    }
+
+    .category-hint {
+      font-size: 0.8rem;
+      color: #aaa;
+      margin-bottom: 10px;
+    }
+
+    .selected-category {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .category-tag {
+      background: #00cc99;
+      color: #000;
+      padding: 5px 10px;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+    }
+
+    .category-tag button {
+      background: transparent;
+      color: #000;
+      border: none;
+      margin-left: 5px;
+      padding: 0;
+      width: auto;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    #otherCategoryDiv {
+      margin-top: 10px;
+      transition: all 0.3s ease;
     }
   </style>
 </head>
@@ -100,10 +165,10 @@
       <input id="vendorBusinessAddress" type="text" placeholder="Business Address" required />
       <input id="vendorCacNumber" type="text" placeholder="CAC Number" required />
 
-
-      <!-- NEW: Category -->
-      <label for="vendorCategory">Select Your Category</label>
-      <select id="vendorCategory" name="category" required>
+      <!-- Category Selection -->
+      <label for="category">Business Categories (Select multiple)</label>
+      <div class="category-hint">Hold Ctrl/Cmd to select multiple categories</div>
+      <select id="category" name="category" multiple size="5" required>
         <option value="">-- Select Category --</option>
       
         <!-- Everyday Essentials -->
@@ -129,15 +194,15 @@
       
         <!-- Fashion & Lifestyle -->
         <option value="Boutiques">Boutiques</option>
-        <option value="Thrift / Okrika / Gonjo">Thrift / Okrika / Gongo</option>
-        <option value="Tokunbo / Belguim Products">Tokunbo / Belguim Products</option>
+        <option value="Thrift / Okrika / Gongo">Thrift / Okrika / Gongo</option>
+        <option value="Tokunbo / Belgium Products">Tokunbo / Belgium Products</option>
         <option value="Shoes and Bags">Shoes and Bags</option>
         <option value="Jewelry & Accessories">Jewelry & Accessories</option>
         <option value="Tailoring & Fashion Design">Tailoring & Fashion Design</option>
         <option value="Textiles & Fabrics">Textiles & Fabrics</option>
         <option value="Wigs & Hair">Wigs & Hair</option>
         <option value="Cosmetics & Skincare">Cosmetics & Skincare</option>
-        <option value="Perfumes / Fragrances / incense">Perfumes & Fragrances</option>
+        <option value="Perfumes & Fragrances">Perfumes & Fragrances</option>
         <option value="Nigerian Caps e.g. Zana">Nigerian Caps e.g. Zana</option>
       
         <!-- Home & Living -->
@@ -169,7 +234,6 @@
         <option value="Phones & Accessories / Laptops & Computers">Phones & Accessories / Laptops & Computers</option>
         <option value="Solar & Inverters">Solar & Inverters</option>
         <option value="CCTV & Security Devices">CCTV & Security Devices</option>
-        <option value="Home Appliances">Home Appliances</option>
         <option value="Game Consoles & Accessories">Game Consoles & Accessories</option>
       
         <!-- Office & Services -->
@@ -191,7 +255,7 @@
         <option value="House Cleaning">House Cleaning</option>
       
         <!-- Agriculture -->
-        <option value=" Animal Feed & Supplements">Animal Feed & Supplements</option>
+        <option value="Animal Feed & Supplements">Animal Feed & Supplements</option>
         <option value="Fish Farming">Fish Farming</option>
       
         <!-- Pets -->
@@ -213,9 +277,22 @@
         <option value="Event Planners">Event Planners</option>
         <option value="Photography & Videography">Photography & Videography</option>
         <option value="Tech Repairs">Tech Repairs</option>
+        
+        <!-- Other option -->
+        <option value="Other">Other (Not Listed)</option>
       </select>
 
-      <!-- NEW: Location -->
+      <!-- Selected Categories Display -->
+      <div class="selected-category" id="selectedCategory"></div>
+
+      <!-- Other Category Input -->
+      <div id="otherCategoryDiv" style="display:none;">
+        <label for="otherCategory">Specify Category</label>
+        <input type="text" id="otherCategory" placeholder="Enter custom category" />
+      </div>
+
+      <!-- Location -->
+      <label for="vendorState">State</label>
       <select id="vendorState" required>
         <option value="">Select State</option>
         <option value="Abia">Abia</option>
@@ -246,7 +323,7 @@
         <option value="Nasarawa">Nasarawa</option>
         <option value="Niger">Niger</option>
         <option value="Ogun">Ogun</option>
-        <option value="Ondo">Ondo</option>
+        <option value="Ondo">O Ondo</option>
         <option value="Osun">Osun</option>
         <option value="Oyo">Oyo</option>
         <option value="Plateau">Plateau</option>
@@ -257,19 +334,200 @@
         <option value="Zamfara">Zamfara</option>
       </select>
 
-      <!-- NEW: Shop Description -->
-      <textarea id="vendorShopDescription" rows="3" placeholder="Short Description of Your Shop (optional)"></textarea>
+      <!-- Shop Description -->
+      <label for="vendorShopDescription">Shop Description (Optional)</label>
+      <textarea id="vendorShopDescription" rows="3" placeholder="Short Description of Your Shop"></textarea>
 
       <button type="submit">Register</button>
       <div class="message" id="registerError"></div>
     </form>
 
     <div class="toggle">
-      <button id="showVendorLoginBtn">Already have an account? Login</button> |
+      <button id="showVendorLoginBtn">Already have an account? Login</button>
       <button id="showVendorRegisterBtn">Register instead</button>
     </div>
   </div>
 
-  <script src="js/vendor-auth.js"></script>
+  <script>
+    console.log("✅ vendor-auth.js loaded");
+
+    const BACKEND = window.BACKEND_URL || "http://localhost:5004";
+
+    // Toggle login/register view
+    document.getElementById("showVendorLoginBtn").addEventListener("click", () => {
+      document.getElementById("vendorLoginForm").classList.add("active");
+      document.getElementById("vendorRegisterForm").classList.remove("active");
+    });
+
+    document.getElementById("showVendorRegisterBtn").addEventListener("click", () => {
+      document.getElementById("vendorLoginForm").classList.remove("active");
+      document.getElementById("vendorRegisterForm").classList.add("active");
+    });
+
+    // Category selection handling
+    const categorySelect = document.getElementById("category");
+    const selectedCategoryContainer = document.getElementById("selectedCategory");
+    const otherCategoryDiv = document.getElementById("otherCategoryDiv");
+    const otherCategoryInput = document.getElementById("otherCategory");
+    
+    // Track selected categories
+    let selectedCategory = [];
+    
+    // Update selected categories display
+    function updateSelectedCategory() {
+      selectedCategoryContainer.innerHTML = '';
+      
+      selectedCategory.forEach(category => {
+        const tag = document.createElement('div');
+        tag.className = 'category-tag';
+        tag.innerHTML = `${category} <button type="button" data-category="${category}">×</button>`;
+        selectedCategoryContainer.appendChild(tag);
+      });
+      
+      // Add event listeners to remove buttons
+      document.querySelectorAll('.category-tag button').forEach(button => {
+        button.addEventListener('click', (e) => {
+          const categoryToRemove = e.target.getAttribute('data-category');
+          selectedCategory = selectedCategory.filter(cat => cat !== categoryToRemove);
+          
+          // Also deselect in the select element
+          Array.from(categorySelect.options).forEach(option => {
+            if (option.value === categoryToRemove) {
+              option.selected = false;
+            }
+          });
+          
+          updateSelectedCategory();
+          checkOtherCategoryVisibility();
+        });
+      });
+    }
+    
+    // Check if we need to show the "Other" category input
+    function checkOtherCategoryVisibility() {
+      if (selectedCategory.includes("Other")) {
+        otherCategoryDiv.style.display = "block";
+      } else {
+        otherCategoryDiv.style.display = "none";
+        otherCategoryInput.value = "";
+      }
+    }
+    
+    // Handle category selection changes
+    categorySelect.addEventListener("change", function() {
+      selectedCategory = Array.from(this.selectedOptions)
+        .map(option => option.value)
+        .filter(value => value !== ""); // Exclude the placeholder
+      
+      updateSelectedCategory();
+      checkOtherCategoryVisibility();
+    });
+
+    // 🔐 LOGIN
+    document.getElementById("vendorLoginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("vendorLoginEmail").value;
+      const password = document.getElementById("vendorLoginPassword").value;
+
+      try {
+        const res = await fetch(`${BACKEND}/api/vendors/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Login failed");
+          return;
+        }
+
+        localStorage.setItem("vendplug-token", data.token);
+        localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
+        window.location.href = "vendor-dashboard.html";
+
+      } catch (err) {
+        console.error("❌ Vendor login error:", err);
+        alert("Login failed. Try again.");
+      }
+    });
+
+    // 📝 REGISTER
+    document.getElementById("vendorRegisterForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fullName = document.getElementById("vendorFullName").value;
+      const email = document.getElementById("vendorEmail").value;
+      const shopName = document.getElementById("vendorShopName").value;
+      const phoneNumber = document.getElementById("vendorPhoneNumber").value;
+      const password = document.getElementById("vendorPassword").value;
+      const businessName = document.getElementById("vendorBusinessName").value;
+      const businessAddress = document.getElementById("vendorBusinessAddress").value;
+      const cacNumber = document.getElementById("vendorCacNumber").value;
+      const state = document.getElementById("vendorState").value;
+      const shopDescription = document.getElementById("vendorShopDescription").value;
+
+      // Get the custom category if "Other" is selected
+      let finalCategory = [...selectedCategory];
+      
+      if (selectedCategory.includes("Other")) {
+        const customCategory = otherCategoryInput.value.trim();
+        if (customCategory) {
+          // Replace "Other" with the custom category
+          finalCategory = finalCategory.filter(cat => cat !== "Other");
+          finalCategory.push(customCategory);
+        } else {
+          document.getElementById("registerError").textContent = "Please specify your custom category";
+          document.getElementById("registerError").style.display = "block";
+          return;
+        }
+      }
+
+      // Validate that at least one category is selected
+      if (finalCategory.length === 0) {
+        document.getElementById("registerError").textContent = "Please select at least one category";
+        document.getElementById("registerError").style.display = "block";
+        return;
+      }
+
+      const errorMsg = document.getElementById("registerError");
+      errorMsg.style.display = "none";
+
+      try {
+        const res = await fetch(`${BACKEND}/api/vendors/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fullName, 
+            email, 
+            shopName, 
+            phoneNumber,
+            password, 
+            businessName, 
+            businessAddress, 
+            cacNumber, 
+            category: finalCategory,
+            state,
+            shopDescription
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Vendor registration failed");
+        }
+
+        localStorage.setItem("vendplug-token", data.token);
+        localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
+        window.location.href = "vendor-dashboard.html";
+
+      } catch (error) {
+        errorMsg.textContent = error.message;
+        errorMsg.style.display = "block";
+      }
+    });
+  </script>
 </body>
 </html>

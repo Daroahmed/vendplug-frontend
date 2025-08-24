@@ -55,7 +55,20 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
   const businessName = document.getElementById("vendorBusinessName").value;
   const businessAddress = document.getElementById("vendorBusinessAddress").value;
   const cacNumber = document.getElementById("vendorCacNumber").value;
-  const category = document.getElementById("vendorCategory").value;
+
+    // Collect multiple selected categories
+    const categorySelect = document.getElementById("vendorCategory");
+    const selectedCategories = Array.from(categorySelect.selectedOptions).map(opt => opt.value);
+  
+    // If "Other" is included, replace it with the custom input
+    const otherCategoryInput = document.getElementById("otherCategory").value.trim();
+    let finalCategories = selectedCategories;
+  
+    if (selectedCategories.includes("Other") && otherCategoryInput) {
+      finalCategories = selectedCategories.filter(cat => cat !== "Other");
+      finalCategories.push(otherCategoryInput);
+    }
+  
   const state = document.getElementById("vendorState").value;
   const shopDescription = document.getElementById("vendorShopDescription").value;
 
@@ -68,7 +81,7 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         fullName, email, shopName, phoneNumber,
-        password, businessName, businessAddress, cacNumber, category,
+        password, businessName, businessAddress, cacNumber, category: finalCategory,
         state,
         shopDescription
       }),
@@ -89,3 +102,14 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
     errorMsg.style.display = "block";
   }
 });
+// 🔄 Show "Other Category" input when "Other" is selected
+document.getElementById("vendorCategory").addEventListener("change", function() {
+  const otherDiv = document.getElementById("otherCategoryDiv");
+  if (this.value === "Other") {
+    otherDiv.style.display = "block";
+  } else {
+    otherDiv.style.display = "none";
+    document.getElementById("otherCategory").value = ""; // reset if not needed
+  }
+});
+

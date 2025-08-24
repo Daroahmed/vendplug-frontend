@@ -8,14 +8,117 @@ document.addEventListener('DOMContentLoaded', () => {
   ];
 
   const categories = [
-    { name: 'Electronics', image: '/assets/electronics.jpg' },
-    { name: 'Fashion', image: '/assets/fashion.jpg' },
-    { name: 'Groceries', image: '/assets/groceries.jpg' },
-    { name: 'Meat & Poultry', image: '/assets/meat.jpg' },
-    { name: 'Phones & Accessories', image: '/assets/phones.jpg' },
-    { name: 'Health & Beauty', image: '/assets/beauty.jpg' },
-    { name: 'Home & Kitchen', image: '/assets/kitchen.jpg' },
+    // 🛒 Everyday Essentials
+    { name: "Supermarkets/Groceries and Provisions", image: "/assets/groceries.jpg" },
+    { name: "Soft Drinks & Water", image: "/assets/soft-drinks.jpg" },
+    { name: "Kitchen Utensils & Plastics", image: "/assets/kitchen-utensils.jpg" },
+    { name: "Gas Plants", image: "/assets/gas.jpg" },
+    { name: "Fruits & Vegetables", image: "/assets/fruits-vegetables.jpg" },
+    { name: "Grains", image: "/assets/grains.jpg" },
+  
+    // 🍖 Meat & Animal Products
+    { name: "Suya & Balango", image: "/assets/suya.jpg" },
+    { name: "Raw Meat Sellers", image: "/assets/meat.jpg" },
+    { name: "Poultry (Chicken, Eggs, Turkey)", image: "/assets/poultry.jpg" },
+    { name: "Livestock (Goat, Ram, Cow)", image: "/assets/livestock.jpg" },
+    { name: "Fish & Seafood", image: "/assets/fish.jpg" },
+  
+    // 🍽️ Food & Hospitality
+    { name: "Restaurants", image: "/assets/restaurants.jpg" },
+    { name: "Catering & Small Chops", image: "/assets/catering.jpg" },
+    { name: "Hotels & Apartments", image: "/assets/hotels.jpg" },
+    { name: "Event Rentals (Canopies, Chairs)", image: "/assets/event-rentals.jpg" },
+  
+    // 👚 Fashion & Lifestyle
+    { name: "Boutiques", image: "/assets/boutiques.jpg" },
+    { name: "Thrift / Okrika / Gongo", image: "/assets/thrift.jpg" },
+    { name: "Tokunbo / Belguim Products", image: "/assets/tokunbo.jpg" },
+    { name: "Shoes and Bags", image: "/assets/shoes-bags.jpg" },
+    { name: "Jewelry & Accessories", image: "/assets/jewelry.jpg" },
+    { name: "Tailoring & Fashion Design", image: "/assets/tailoring.jpg" },
+    { name: "Textiles & Fabrics", image: "/assets/textiles.jpg" },
+    { name: "Wigs & Hair", image: "/assets/wigs.jpg" },
+    { name: "Cosmetics & Skincare", image: "/assets/cosmetics.jpg" },
+    { name: "Perfumes & Fragrances", image: "/assets/perfumes.jpg" },
+    { name: "Nigerian Caps e.g. Zana", image: "/assets/caps.jpg" },
+  
+    // 🏠 Home & Living
+    { name: "Furniture", image: "/assets/furniture.jpg" },
+    { name: "Home Appliances", image: "/assets/home-appliances.jpg" },
+    { name: "Interior Decor & Curtains", image: "/assets/interior.jpg" },
+    { name: "Cleaning Services", image: "/assets/cleaning.jpg" },
+    { name: "Flowers & Gardens", image: "/assets/flowers.jpg" },
+  
+    // 🧱 Building & Construction
+    { name: "Building Materials", image: "/assets/building-materials.jpg" },
+    { name: "Aluminium & Roofing", image: "/assets/aluminium.jpg" },
+    { name: "Cement, Blocks & Interlock", image: "/assets/cement.jpg" },
+    { name: "Gravel, Sharp Sand & Quarry", image: "/assets/sand.jpg" },
+    { name: "Electrical Supplies", image: "/assets/electrical.jpg" },
+    { name: "Plumbing Materials", image: "/assets/plumbing.jpg" },
+    { name: "Tiles & Paints", image: "/assets/tiles.jpg" },
+    { name: "Metal & Iron Works", image: "/assets/metal.jpg" },
+    { name: "Carpenters & Artisans", image: "/assets/carpenters.jpg" },
+  
+    // 🏥 Health & Beauty
+    { name: "Pharmacy & Patent Stores", image: "/assets/pharmacy.jpg" },
+    { name: "Hospital & Medical Equipment", image: "/assets/medical-equipment.jpg" },
+    { name: "Herbal Medicine", image: "/assets/herbal.jpg" },
+    { name: "Maternity & Clinics", image: "/assets/maternity.jpg" },
+    { name: "Fitness & Supplements", image: "/assets/fitness.jpg" },
+  
+    // 💻 Electronics & Gadgets
+    { name: "Phones & Accessories / Laptops & Computers", image: "/assets/phones.jpg" },
+    { name: "Solar & Inverters", image: "/assets/solar.jpg" },
+    { name: "CCTV & Security Devices", image: "/assets/cctv.jpg" },
+    { name: "Game Consoles & Accessories", image: "/assets/games.jpg" },
+  
+    // 🧾 Office & Services
+    { name: "Printing Press", image: "/assets/printing.jpg" },
+    { name: "Stationery & Office Supplies", image: "/assets/stationery.jpg" },
+    { name: "Internet & Data Services", image: "/assets/internet.jpg" },
+    { name: "Freelancers & Digital Services", image: "/assets/freelancers.jpg" },
+  
+    // 🚗 Auto & Transport
+    { name: "Car Dealers / Tokunbo Cars", image: "/assets/cars.jpg" },
+    { name: "Car Spare Parts", image: "/assets/spare-parts.jpg" },
+    { name: "Auto Mechanics", image: "/assets/mechanics.jpg" },
+    { name: "Tyres, Batteries & Accessories", image: "/assets/tyres.jpg" },
+    { name: "Car Wash & Detailing", image: "/assets/car-wash.jpg" },
+  
+    // 🧺 Laundry & Cleaning
+    { name: "Laundry Services", image: "/assets/laundry.jpg" },
+    { name: "Dry Cleaning", image: "/assets/dry-cleaning.jpg" },
+    { name: "House Cleaning", image: "/assets/house-cleaning.jpg" },
+  
+    // 🐄 Agriculture
+    { name: "Animal Feed & Supplements", image: "/assets/animal-feed.jpg" },
+    { name: "Fish Farming", image: "/assets/fish-farming.jpg" },
+  
+    // 🐕 Pets
+    { name: "Pets (Dogs, Cats, Birds)", image: "/assets/pets.jpg" },
+    { name: "Pet Food & Accessories", image: "/assets/pet-food.jpg" },
+    { name: "Veterinary Clinics", image: "/assets/veterinary.jpg" },
+    { name: "Pet Grooming", image: "/assets/pet-grooming.jpg" },
+  
+    // 🏡 Real Estate
+    { name: "Real Estate Agents", image: "/assets/real-estate.jpg" },
+    { name: "Rentals & Sales", image: "/assets/rentals.jpg" },
+    { name: "Facility Management", image: "/assets/facility.jpg" },
+    { name: "Movers & Packers", image: "/assets/movers.jpg" },
+  
+    // 🧠 Professional
+    { name: "Legal Services", image: "/assets/legal.jpg" },
+    { name: "Accounting & Tax", image: "/assets/accounting.jpg" },
+    { name: "Private Tutors", image: "/assets/tutors.jpg" },
+    { name: "Event Planners", image: "/assets/event-planners.jpg" },
+    { name: "Photography & Videography", image: "/assets/photography.jpg" },
+    { name: "Tech Repairs", image: "/assets/tech-repairs.jpg" },
+  
+    // Fallback
+    { name: "Other", image: "/assets/other.jpg" }
   ];
+  
 
   const stateSelect = document.getElementById('stateSelect');
   const categoryGrid = document.getElementById('categoryGrid');
