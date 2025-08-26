@@ -544,7 +544,6 @@
       <button class="menu-toggle" id="menuToggle">
         <i class="fas fa-bars"></i>
       </button>
-      <div class="logo">VP</div>
       <h1>Vendor Shops</h1>
     </div>
     
@@ -863,9 +862,9 @@
       setTimeout(loadVendors, 100);
     });
 
-    // Backend URL configuration - Fixed to use port 5001
+    // Backend URL configuration 
     const API_BASE = window.location.hostname === "localhost" 
-      ? "http://localhost:5001/api" 
+      ? "http://localhost:5000/api" 
       : "/api";
 
     // Event listeners for filters

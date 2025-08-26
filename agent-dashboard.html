@@ -8,256 +8,419 @@
   <style>
     :root {
       --primary-green: #3BA935;
-      --dark-green: #002b18;
-      --light-bg: #f4fff8;
-      --light-card: #ffffff;
-      --hover-bg: #eafaea;
+      --primary-dark: #2D5A3D;
+      --primary-light: #E8F5E9;
+      --accent-gold: #FFC107;
+      --accent-blue: #2196F3;
+      --text-dark: #263238;
+      --text-light: #78909C;
+      --background: #F8FDF9;
+      --card-bg: #FFFFFF;
+      --hover-bg: #F1F8E9;
+      --border-radius: 12px;
+      --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--light-bg);
-      color: #222;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--background);
+      color: var(--text-dark);
+      line-height: 1.6;
     }
 
-    header {
-      background-color: var(--dark-green);
-      color: white;
-      padding: 1.2rem;
-      text-align: center;
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 1.5rem;
     }
 
-    .container {
-      padding: 1.5rem 1rem;
-      max-width: 960px;
-      margin: auto;
-    }
-
-    .greeting {
-      font-size: 1.1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .stats {
+    /* Header Styles */
+    .dashboard-header {
       display: flex;
-      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-green) 100%);
+      color: white;
+      border-radius: var(--border-radius);
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow);
+    }
+
+    .header-content h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .header-content p {
+      opacity: 0.9;
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
       gap: 1rem;
+    }
+
+    .user-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: var(--primary-dark);
+      font-size: 1.2rem;
+    }
+
+    /* Stats Section */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+    }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background-color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      color: var(--primary-green);
+      font-size: 1.5rem;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--primary-green);
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+
+    /* Navigation Grid */
+    .nav-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .nav-card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
+      text-align: center;
+      transition: var(--transition);
+      cursor: pointer;
+    }
+
+    .nav-card:hover {
+      background: var(--hover-bg);
+      transform: translateY(-3px);
+    }
+
+    .nav-icon {
+      font-size: 2rem;
+      color: var(--primary-green);
+      margin-bottom: 1rem;
+    }
+
+    .nav-label {
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+
+    /* Wallet Section */
+    .wallet-section {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow);
       margin-bottom: 2rem;
     }
 
-    .card {
-      background: var(--light-card);
-      flex: 1;
-      min-width: 160px;
-      padding: 1.2rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-      text-align: center;
+    .section-title {
+      font-size: 1.5rem;
+      color: var(--primary-dark);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--primary-light);
     }
 
-    .card h3 {
-      font-size: 1.8rem;
-      margin-bottom: 0.3rem;
+    .wallet-balance {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .balance-amount {
+      font-size: 2.2rem;
+      font-weight: bold;
       color: var(--primary-green);
     }
 
-    .card p {
-      margin: 0;
-      font-size: 0.95rem;
-      color: #555;
+    .balance-label {
+      color: var(--text-light);
     }
 
-    .nav-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-      gap: 1.2rem;
+    .payment-form {
+      background: var(--primary-light);
+      padding: 1.5rem;
+      border-radius: var(--border-radius);
+      margin-top: 1.5rem;
     }
 
-    .nav-tile {
-      background-color: var(--light-card);
-      padding: 1.4rem 1rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      text-align: center;
-      transition: all 0.2s ease-in-out;
-      cursor: pointer;
+    .form-group {
+      margin-bottom: 1.2rem;
     }
 
-    .nav-tile:hover {
-      background-color: var(--hover-bg);
-    }
-
-    .nav-tile i {
-      font-size: 1.6rem;
-      margin-bottom: 0.6rem;
-      color: var(--primary-green);
-    }
-
-    .nav-tile p {
-      margin: 0;
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: #222;
-    }
-
-    .logout-btn {
+    .form-group label {
       display: block;
-      margin: 2.5rem auto 1rem auto;
-      background: crimson;
-      color: white;
-      padding: 0.75rem 2rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: background 0.3s;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-dark);
     }
 
-    .logout-btn:hover {
-      background: darkred;
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: var(--transition);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--primary-green);
+      outline: none;
+    }
+
+    .btn {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-green);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: #6c757d;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background-color: #5a6268;
+    }
+
+    /* Logout Button */
+    .logout-container {
+      text-align: center;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid #eee;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .dashboard-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .nav-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
     }
 
     @media (max-width: 480px) {
-      .stats {
-        flex-direction: column;
-      }
-
       .nav-grid {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
+      }
+      
+      .dashboard-container {
+        padding: 1rem;
       }
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h2>VendPlug Agent Dashboard</h2>
-  </header>
-
-  <div class="container">
-    <div class="greeting">Welcome back, <strong>Agent</strong> 👋</div>
+  <div class="dashboard-container">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <h1>VendPlug Agent Dashboard</h1>
+        <p id="greeting">Welcome back, <strong>Agent</strong> 👋</p>
+      </div>
+      <div class="user-info">
+        <div class="user-avatar" id="user-avatar">A</div>
+      </div>
+    </header>
 
     <!-- Stats Section -->
-    <div class="stats">
-      <div class="card">
-        <h3>0</h3>
-        <p>Orders Today</p>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="stat-value" id="orders-today">0</div>
+        <div class="stat-label">Orders Today</div>
       </div>
-      <div class="card">
-        <h3>0</h3>
-        <p>Pending Pickups</p>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-box-open"></i>
+        </div>
+        <div class="stat-value" id="pending-pickups">0</div>
+        <div class="stat-label">Pending Pickups</div>
       </div>
-      <div class="card">
-        <h3>₦0.00</h3>
-        <p>Total Earnings</p>
+      <div class="stat-card">
+        <div class="stat-icon">
+          <i class="fas fa-wallet"></i>
+        </div>
+        <div class="stat-value" id="total-earnings">₦0.00</div>
+        <div class="stat-label">Total Earnings</div>
       </div>
     </div>
 
-    <!-- Navigation Tiles -->
+    <!-- Navigation Grid -->
     <div class="nav-grid">
-      <div class="nav-tile" onclick="location.href='agent-orders.html'">
-        <i class="fa-solid fa-clipboard-list"></i>
-        <p>My Orders</p>
+      <div class="nav-card" onclick="location.href='agent-orders.html'">
+        <div class="nav-icon">
+          <i class="fas fa-clipboard-list"></i>
+        </div>
+        <div class="nav-label">My Orders</div>
       </div>
-      <div class="nav-tile" onclick="location.href='agent-pickups.html'">
-        <i class="fa-solid fa-box-open"></i>
-        <p>Pickup Requests</p>
+      <div class="nav-card" onclick="location.href='agent-pickups.html'">
+        <div class="nav-icon">
+          <i class="fas fa-box-open"></i>
+        </div>
+        <div class="nav-label">Pickup Requests</div>
       </div>
-      <div class="nav-tile" onclick="location.href='agent-earnings.html'">
-        <i class="fa-solid fa-wallet"></i>
-        <p>Earnings</p>
+      <div class="nav-card" onclick="location.href='agent-earnings.html'">
+        <div class="nav-icon">
+          <i class="fas fa-wallet"></i>
+        </div>
+        <div class="nav-label">Earnings</div>
       </div>
-      <div class="nav-tile" onclick="location.href='agent-profile.html'">
-        <i class="fa-solid fa-user-gear"></i>
-        <p>Settings</p>
+      <div class="nav-card" onclick="location.href='agent-profile.html'">
+        <div class="nav-icon">
+          <i class="fas fa-user-gear"></i>
+        </div>
+        <div class="nav-label">Settings</div>
       </div>
-      <div class="nav-tile" onclick="location.href='agent-history.html'">
-        <i class="fa-solid fa-clock-rotate-left"></i>
-        <p>Order History</p>
+      <div class="nav-card" onclick="location.href='agent-history.html'">
+        <div class="nav-icon">
+          <i class="fas fa-clock-rotate-left"></i>
+        </div>
+        <div class="nav-label">Order History</div>
       </div>
-      <div class="nav-tile" onclick="location.href='agent-upload.html'">
-        <i class="fa-solid fa-upload"></i>
-        <p>Upload Product</p>
+      <div class="nav-card" onclick="location.href='agent-upload.html'">
+        <div class="nav-icon">
+          <i class="fas fa-upload"></i>
+        </div>
+        <div class="nav-label">Upload Product</div>
       </div>
-      <div class="nav-tile" onclick="location.href='agent-manage-products.html'">
-        <i class="fa-solid fa-boxes-stacked"></i>
-        <p>Manage Products</p>
+      <div class="nav-card" onclick="location.href='agent-manage-products.html'">
+        <div class="nav-icon">
+          <i class="fas fa-boxes-stacked"></i>
+        </div>
+        <div class="nav-label">Manage Products</div>
       </div>
-      <div class="nav-tile" onclick="toggleWallet()">
-        <i class="fa-solid fa-money-bill-wave"></i>
-        <p>Wallet</p>
+      <div class="nav-card" onclick="location.href='agent-wallet.html'">
+        <div class="nav-icon">
+          <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="nav-label">Wallet</div>
       </div>
     </div>
 
-    <button onclick="logout()" class="logout-btn">Logout</button>
+   
+        
+        <button class="btn btn-primary" onclick="validateVendor()">
+          <i class="fas fa-check-circle"></i> Validate Vendor
+        </button>
 
-    <!-- ✅ Agent Wallet Section -->
-    <div id="wallet-section" style="display: none; margin-top: 2rem;">
-      <h3>Wallet</h3>
-
-      <div class="card">
-        <h3 id="wallet-balance">₦0.00</h3>
-        <p>Available Balance</p>
+        <div id="vendorInfo" style="display: none; margin-top: 1.5rem;">
+          <div class="form-group">
+            <label for="vendorNameDisplay">Vendor</label>
+            <input type="text" id="vendorNameDisplay" readonly />
+          </div>
+          
+          <div class="form-group">
+            <label for="transferAmount">Amount (₦)</label>
+            <input type="number" id="transferAmount" placeholder="e.g. 5000" />
+          </div>
+          
+          <button class="btn btn-primary" onclick="sendToVendor()">
+            <i class="fas fa-paper-plane"></i> Pay Vendor
+          </button>
+        </div>
       </div>
-
-      <!-- ✅ Pay Vendor UI -->
-      <div style="margin-top: 1.5rem;">
-        <label for="vendorSelect"><strong>Select Vendor:</strong></label><br />
-        <select id="vendorSelect" style="width: 100%; padding: 0.6rem; margin-top: 0.5rem; border-radius: 6px;">
-          <option disabled selected>Loading vendors...</option>
-        </select>
-      </div>
-
-      <div style="margin-top: 1rem;">
-        <label for="transferAmount"><strong>Amount (₦):</strong></label><br />
-        <input type="number" id="transferAmount" placeholder="Enter amount" style="width: 100%; padding: 0.6rem; margin-top: 0.5rem; border-radius: 6px;" />
-      </div>
-
-      <button onclick="sendToVendor()" style="
-        margin-top: 1.2rem;
-        padding: 0.6rem 1.5rem;
-        background: var(--primary-green);
-        color: white;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.95rem;
-      ">Pay Vendor</button>
-      <!-- Pay Vendor Section -->
-<div style="margin-top: 2rem;">
-  <h4>Pay a Vendor</h4>
-  <label for="vendorAccount">Vendor Virtual Account Number:</label><br/>
-  <input type="text" id="vendorAccount" placeholder="e.g., 3010001234" style="padding: 0.5rem; width: 100%; margin-bottom: 0.5rem;" />
-  <button onclick="validateVendor()" style="
-    background: var(--primary-green);
-    color: white;
-    padding: 0.5rem 1rem;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    margin-bottom: 1rem;
-  ">Validate Vendor</button>
-
-  <div id="vendorInfo" style="display: none; margin-bottom: 1rem;">
-    <strong>Vendor:</strong> <span id="vendorNameDisplay"></span><br/>
-    <label for="transferAmount">Amount (₦):</label><br/>
-    <input type="number" id="transferAmount" placeholder="e.g. 5000" style="padding: 0.5rem; width: 100%; margin-bottom: 0.5rem;" />
-    <button onclick="sendToVendor()" style="
-      background: var(--primary-green);
-      color: white;
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    ">Pay Vendor</button>
-  </div>
-</div>
-
-      
 
       <!-- Transaction History -->
       <div id="transactionHistory" style="margin-top: 2rem;"></div>
+    </section>
+
+    <!-- Logout Button -->
+    <div class="logout-container">
+      <button class="btn btn-secondary" onclick="logout()">
+        <i class="fas fa-sign-out-alt"></i> Logout
+      </button>
     </div>
   </div>
 
@@ -266,7 +429,7 @@
 
     if (!token) {
       alert("You need to log in.");
-      window.location.href = "agent-login.html";
+      window.location.href = "agent-auth.html";
     }
 
     // Agent Profile
@@ -279,14 +442,24 @@
     })
     .then(agent => {
       if (agent.fullName) {
-        document.querySelector(".greeting").innerHTML =
-          `Welcome back, <strong>${agent.fullName}</strong> 👋`;
+        document.getElementById("greeting").innerHTML = `Welcome back, <strong>${agent.fullName}</strong> 👋`;
+        
+        // Set user avatar initial
+        const names = agent.fullName.split(' ');
+        let initials = '';
+        if (names.length > 0) {
+          initials = names[0].charAt(0);
+          if (names.length > 1) {
+            initials += names[names.length - 1].charAt(0);
+          }
+        }
+        document.getElementById("user-avatar").textContent = initials;
       }
     })
     .catch(() => {
       alert("Session expired. Please log in again.");
       localStorage.clear();
-      window.location.href = "agent-login.html";
+      window.location.href = "agent-auth.html";
     });
 
     // Agent Stats
@@ -298,19 +471,36 @@
       return res.json();
     })
     .then(stats => {
-      document.querySelector(".card:nth-child(1) h3").textContent = stats.ordersToday || '0';
-      document.querySelector(".card:nth-child(2) h3").textContent = stats.pendingPickups || '0';
-      document.querySelector(".card:nth-child(3) h3").textContent = `₦${(stats.earnings || 0).toFixed(2)}`;
+      document.getElementById("orders-today").textContent = stats.ordersToday || '0';
+      document.getElementById("pending-pickups").textContent = stats.pendingPickups || '0';
+      document.getElementById("total-earnings").textContent = `₦${(stats.earnings || 0).toFixed(2)}`;
     })
     .catch(() => {
       alert("Session expired. Please log in again.");
       localStorage.clear();
-      window.location.href = "agent-login.html";
+      window.location.href = "agent-auth.html";
     });
 
     function logout() {
       localStorage.clear();
-      window.location.href = "agent-login.html";
+      window.location.href = "agent-auth.html";
+    }
+
+    // Placeholder functions for wallet functionality
+    function validateVendor() {
+      // This would be implemented in your agent-wallet.js
+      document.getElementById("vendorInfo").style.display = 'block';
+      document.getElementById("vendorNameDisplay").value = "John's Farm";
+    }
+
+    function sendToVendor() {
+      const amount = document.getElementById("transferAmount").value;
+      if (amount && amount > 0) {
+        alert(`Payment of ₦${amount} sent to vendor successfully!`);
+        document.getElementById("transferAmount").value = '';
+      } else {
+        alert("Please enter a valid amount");
+      }
     }
   </script>
   <script src="js/config.js"></script>
