@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const token = localStorage.getItem("vendplug-token");
     if (!token) {
       alert("Please log in first");
-      window.location.href = "/buyer-login.html";
+      window.location.href = "/buyer-auth.html";
       return;
     }
   

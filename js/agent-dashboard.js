@@ -3,7 +3,7 @@ const role = localStorage.getItem('role');
 
 // Redirect to login if no token or not an agent
 if (!token || role !== 'agent') {
-  window.location.href = '/agent-login.html';
+  window.location.href = '/agent-auth.html';
 }
 
 // Greet agent
@@ -28,7 +28,7 @@ fetch('/api/agents/stats', {
       localStorage.removeItem('vendplug-token');
       localStorage.removeItem('role');
       localStorage.removeItem('name');
-      window.location.href = '/agent-login.html';
+      window.location.href = '/agent-auth.html';
     } else {
       throw new Error(`Failed to load stats. Status: ${res.status}`);
     }

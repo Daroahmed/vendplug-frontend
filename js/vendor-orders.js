@@ -158,8 +158,7 @@ function openOrderModal(orderId) {
   // Attach dynamic listeners
   document.getElementById("acceptBtn")?.addEventListener("click", acceptOrder);
   document.getElementById("rejectBtn")?.addEventListener("click", () => {
-    const reason = prompt("Reason for rejecting?");
-    if (reason?.trim()) rejectOrder(reason.trim());
+    openRejectionModal();
   });
 
   document.getElementById("markPreparingBtn")?.addEventListener("click", () =>
@@ -207,7 +206,7 @@ async function rejectOrder(reason) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ reason }),
+      body: JSON.stringify({ rejectionReason: reason }),
     });
 
     if (!res.ok) throw new Error(await res.text());
@@ -242,6 +241,32 @@ async function updateOrderStatus(status) {
     alert("Something went wrong while updating the status.");
   }
 }
+
+/* ---------------------------
+   Rejection Modal Functions
+---------------------------- */
+function openRejectionModal() {
+  document.getElementById("rejectionModal").style.display = "flex";
+  document.getElementById("rejectionReason").value = "";
+  document.getElementById("rejectionReason").focus();
+}
+
+function closeRejectionModal() {
+  document.getElementById("rejectionModal").style.display = "none";
+}
+
+// Rejection modal event listeners
+document.getElementById("closeRejectionModalBtn")?.addEventListener("click", closeRejectionModal);
+document.getElementById("cancelRejectBtn")?.addEventListener("click", closeRejectionModal);
+document.getElementById("confirmRejectBtn")?.addEventListener("click", () => {
+  const reason = document.getElementById("rejectionReason").value.trim();
+  if (reason.length < 10) {
+    alert("Please provide a rejection reason with at least 10 characters.");
+    return;
+  }
+  closeRejectionModal();
+  rejectOrder(reason);
+});
 
 /* ---------------------------
    Modal Actions

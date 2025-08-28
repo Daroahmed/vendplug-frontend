@@ -50,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!res.ok) return alert(data.message || "Registration failed");
 
         alert("Registration successful. Please log in.");
-        location.href = "buyer-login.html";
+        location.href = "buyer-auth.html";
       } catch (err) {
         alert("Error during registration");
       }

@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!token || !agentJSON || role !== "agent") {
       alert("Session expired. Please log in again.");
       localStorage.clear();
-      window.location.href = "agent-login.html";
+      window.location.href = "agent-auth.html";
       return;
     }
   

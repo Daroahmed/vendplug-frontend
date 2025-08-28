@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("vendplug-token");
   if (!token) {
     alert("You must be logged in to place an order.");
-    window.location.href = "/buyer-login.html";
+    window.location.href = "/buyer-auth.html";
     return;
   }
 

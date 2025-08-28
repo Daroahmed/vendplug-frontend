@@ -65,9 +65,31 @@ document.getElementById("buyerRegisterForm").addEventListener("submit", async (e
     const data = await res.json();
 
     if (res.status === 201) {
-      messageEl.textContent = "Registration successful!";
-      messageEl.style.color = "green";
-      setTimeout(() => (window.location.href = "buyer-home.html"), 1000);
+      // Store email and role for verification
+      localStorage.setItem('pendingVerificationEmail', email);
+      localStorage.setItem('pendingVerificationRole', 'buyer');
+
+      // Send verification email
+      try {
+        const verifyRes = await fetch(`${BACKEND}/api/auth/send-verification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, role: 'buyer' })
+        });
+
+        if (verifyRes.ok) {
+          messageEl.textContent = "Registration successful! Please check your email to verify your account.";
+          messageEl.style.color = "green";
+          setTimeout(() => (window.location.href = "verify-email.html"), 1000);
+        } else {
+          messageEl.textContent = "Registration successful but couldn't send verification email. Please try again.";
+          messageEl.style.color = "orange";
+        }
+      } catch (verifyErr) {
+        console.error("❌ Verification email error:", verifyErr);
+        messageEl.textContent = "Registration successful but couldn't send verification email. Please try again.";
+        messageEl.style.color = "orange";
+      }
     } else {
       messageEl.textContent = data.message || "Registration failed.";
       messageEl.style.color = "red";

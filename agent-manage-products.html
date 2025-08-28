@@ -531,7 +531,7 @@
     if (!token) {
       showNotification("You need to log in.", "error");
       setTimeout(() => {
-        window.location.href = "agent-login.html";
+        window.location.href = "agent-auth.html";
       }, 2000);
     }
 
@@ -554,7 +554,7 @@
         showNotification("Session expired. Please login again.", "error");
         setTimeout(() => {
           localStorage.clear();
-          window.location.href = "agent-login.html";
+          window.location.href = "agent-auth.html";
         }, 2000);
       });
 
@@ -727,7 +727,7 @@
 
     function logout() {
       localStorage.removeItem("vendplug-token");
-      window.location.href = "agent-login.html";
+      window.location.href = "agent-auth.html";
     }
 
     function showNotification(message, type) {

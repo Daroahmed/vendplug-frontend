@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (res.status === 201) {
         messageEl.style.color = 'green';
-        setTimeout(() => (window.location.href = "/buyer-login.html"), 1000);
+        setTimeout(() => (window.location.href = "/buyer-auth.html"), 1000);
       } else {
         messageEl.style.color = 'red';
       }

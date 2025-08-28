@@ -126,7 +126,7 @@
   const token = localStorage.getItem('vendplug-token');
   if (!token) {
     alert("Please log in.");
-    window.location.href = "agent-login.html";
+    window.location.href = "agent-auth.html";
   }
 
   fetch("/api/agents/orders", {

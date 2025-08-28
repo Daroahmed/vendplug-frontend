@@ -7,7 +7,7 @@ const detailsDiv = document.getElementById("orderDetails");
 
 // validate login + order
 if (!token || !buyer) {
-  window.location.href = "/buyer-login.html";
+  window.location.href = "/buyer-auth.html";
 }
 
 const params = new URLSearchParams(window.location.search);

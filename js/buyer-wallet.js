@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!buyer || !buyer.token) {
     alert('Unauthorized. Please log in again.');
-    window.location.href = '/buyer-login.html';
+    window.location.href = '/buyer-auth.html';
     return;
   }
 
@@ -169,7 +169,86 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
 
+  // Funding Modal Functions
+  function showFundingModal() {
+    document.getElementById('fundingModal').style.display = 'block';
+  }
+
+  function closeFundingModal() {
+    document.getElementById('fundingModal').style.display = 'none';
+    document.getElementById('fundingAmount').value = '';
+  }
+
+  async function initiateFunding() {
+    const amount = Number(document.getElementById('fundingAmount').value);
+    if (!amount || amount < 100) {
+      alert('Please enter a valid amount (minimum ₦100)');
+      return;
+    }
+
+    const fundBtn = document.querySelector('.fund-btn');
+    fundBtn.classList.add('loading');
+
+    try {
+      // Initialize transaction with backend
+      const res = await fetch(`${window.BACKEND_URL}/api/paystack/initialize`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount })
+      });
+
+      if (!res.ok) throw new Error('Failed to initialize payment');
+      
+      const { authorization_url, reference } = await res.json();
+
+      // Initialize Paystack popup
+      const handler = PaystackPop.setup({
+        key: window.PAYSTACK_PUBLIC_KEY, // Add this to your config.js
+        email: buyer.email,
+        amount: amount * 100, // Convert to kobo
+        ref: reference,
+        callback: async function(response) {
+          // Verify payment with backend
+          try {
+            const verifyRes = await fetch(`${window.BACKEND_URL}/api/paystack/verify?reference=${response.reference}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+
+            const verifyData = await verifyRes.json();
+            
+            if (verifyRes.ok) {
+              alert('Payment successful! Your wallet has been credited.');
+              fetchWallet(); // Refresh wallet balance
+              fetchTransactions(); // Refresh transaction history
+              closeFundingModal();
+            } else {
+              throw new Error(verifyData.message || 'Payment verification failed');
+            }
+          } catch (error) {
+            alert('Error verifying payment. Please contact support if your wallet is not credited.');
+            console.error('Payment verification error:', error);
+          }
+        },
+        onClose: function() {
+          fundBtn.classList.remove('loading');
+        }
+      });
+
+      handler.openIframe();
+    } catch (error) {
+      console.error('Payment initialization error:', error);
+      alert('Error initializing payment. Please try again.');
+      fundBtn.classList.remove('loading');
+    }
+  }
+
   // Global
   window.handleTransfer = handleTransfer;
   window.resolveUser = resolveUser;
+  window.showFundingModal = showFundingModal;
+  window.closeFundingModal = closeFundingModal;
+  window.initiateFunding = initiateFunding;
 });

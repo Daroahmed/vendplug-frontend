@@ -230,11 +230,14 @@
 <body>
   <!-- Header -->
   <div class="header">
+    <div class="logo-container">
       <h1>Vendor Dashboard</h1>
-    </div> 
+    </div>
+    <div class="user-menu">
+      <!-- Notification icon will be injected here by notifications.js -->
+      <div class="user-avatar">V</div>
     </div>
   </div>
-
 
 
   <!-- Dashboard Content -->
@@ -364,6 +367,9 @@
     </div>
   </div>
 
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/notifications.js"></script>
   <script>
     // This would be replaced with your actual data loading logic
     document.addEventListener('DOMContentLoaded', function() {

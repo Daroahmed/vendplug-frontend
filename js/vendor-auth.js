@@ -93,9 +93,28 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
       throw new Error(data.message || "Vendor registration failed");
     }
 
-    localStorage.setItem("vendplug-token", data.token);
-    localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
-    window.location.href = "vendor-dashboard.html";
+    // Store email for verification
+    localStorage.setItem('pendingVerificationEmail', email);
+    localStorage.setItem('pendingVerificationRole', 'vendor');
+
+    // Send verification email
+    try {
+      const verifyRes = await fetch(`${BACKEND}/api/auth/send-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role: 'vendor' })
+      });
+
+      if (verifyRes.ok) {
+        alert("Registration successful! Please check your email to verify your account.");
+        window.location.href = "verify-email.html";
+      } else {
+        alert("Registration successful but couldn't send verification email. Please try again.");
+      }
+    } catch (verifyErr) {
+      console.error("❌ Verification email error:", verifyErr);
+      alert("Registration successful but couldn't send verification email. Please try again.");
+    }
 
   } catch (error) {
     errorMsg.textContent = error.message;

@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!token) {
     alert('Please login first');
-    window.location.href = '/buyer-login.html';
+    window.location.href = '/buyer-auth.html';
     return;
   }
 

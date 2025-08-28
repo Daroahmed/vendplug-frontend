@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const token = localStorage.getItem("vendplug-token");
   if (!token) {
     alert("Session expired. Please log in again.");
-    window.location.href = "vendor-login.html";
+    window.location.href = "vendor-auth.html";
     return;
   }
 

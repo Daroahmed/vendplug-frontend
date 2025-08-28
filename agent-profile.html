@@ -116,7 +116,7 @@
 <script>
   const token = localStorage.getItem('vendplug-token');
   if (!token) {
-    window.location.href = 'agent-login.html';
+    window.location.href = 'agent-auth.html';
   }
 
   fetch('/api/agents/profile', {
@@ -133,12 +133,12 @@
   .catch(err => {
     alert("Session expired or server error.");
     localStorage.removeItem('vendplug-token');
-    window.location.href = 'agent-login.html';
+    window.location.href = 'agent-auth.html';
   });
 
   function logout() {
     localStorage.removeItem('vendplug-token');
-    window.location.href = 'agent-login.html';
+    window.location.href = 'agent-auth.html';
   }
 </script>
 

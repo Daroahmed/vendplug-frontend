@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!agent || !agent.token) {
     alert('Unauthorized. Please log in again.');
-    window.location.href = '/agent-login.html';
+    window.location.href = '/agent-auth.html';
     return;
   }
 

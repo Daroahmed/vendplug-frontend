@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Email - Vendplug</title>
+  <style>
+    :root {
+      --primary: #00cc99;
+      --bg-dark: #121212;
+      --card: #1e1e1e;
+      --text-light: #fff;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      background: var(--card);
+      padding: 2rem;
+      border-radius: 12px;
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    }
+
+    h1 {
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .message {
+      margin: 1rem 0;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .success {
+      background: rgba(0, 204, 153, 0.1);
+      color: var(--primary);
+    }
+
+    .error {
+      background: rgba(255, 0, 0, 0.1);
+      color: #ff4444;
+    }
+
+    .loader {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
+      border-top: 4px solid var(--primary);
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .link {
+      color: var(--primary);
+      text-decoration: none;
+      margin-top: 1rem;
+      display: inline-block;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Email Verification</h1>
+    <div id="verificationStatus">
+      <div class="loader"></div>
+      <p>Verifying your email...</p>
+    </div>
+    <a href="login.html" class="link" style="display: none;" id="loginLink">Back to Login</a>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const statusDiv = document.getElementById('verificationStatus');
+      const loginLink = document.getElementById('loginLink');
+
+      if (!token) {
+        statusDiv.innerHTML = `
+          <div class="message error">
+            Invalid verification link. Please try again or contact support.
+          </div>
+        `;
+        loginLink.style.display = 'inline-block';
+        return;
+      }
+
+      try {
+        const res = await fetch(`${window.BACKEND_URL}/api/auth/verify-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          statusDiv.innerHTML = `
+            <div class="message success">
+              ${data.message || 'Email verified successfully!'}
+              <br>You can now log in to your account.
+            </div>
+          `;
+        } else {
+          throw new Error(data.message || 'Verification failed');
+        }
+      } catch (error) {
+        statusDiv.innerHTML = `
+          <div class="message error">
+            ${error.message || 'Error verifying email. Please try again.'}
+          </div>
+        `;
+      }
+
+      loginLink.style.display = 'inline-block';
+    });
+  </script>
+  <script src="/js/config.js"></script>
+</body>
+</html>

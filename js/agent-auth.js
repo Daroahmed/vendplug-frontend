@@ -32,12 +32,12 @@ document.addEventListener("DOMContentLoaded", () => {
   
         const data = await res.json();
   
-        if (!res.ok) {
+                if (!res.ok) {
           loginMsg.textContent = data.message || "Login failed";
           loginMsg.style.color = "red";
           return;
         }
-  
+
         // Store session
         localStorage.setItem("vendplug-token", data.token);
         localStorage.setItem("vendplugAgent", JSON.stringify(data.agent));
@@ -76,13 +76,31 @@ document.addEventListener("DOMContentLoaded", () => {
           return;
         }
   
-        localStorage.setItem("vendplug-token", data.token);
-        localStorage.setItem("vendplugAgent", JSON.stringify(data.agent));
-        localStorage.setItem("role", data.agent.role || "agent");
-  
-        registerMsg.textContent = "Registration successful!";
-        registerMsg.style.color = "green";
-        setTimeout(() => (window.location.href = "/agent-dashboard.html"), 1000);
+                // Store email for verification
+        localStorage.setItem('pendingVerificationEmail', email);
+        localStorage.setItem('pendingVerificationRole', 'agent');
+
+        // Send verification email
+        try {
+          const verifyRes = await fetch("/api/auth/send-verification", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, role: 'agent' })
+          });
+
+          if (verifyRes.ok) {
+            registerMsg.textContent = "Registration successful! Please check your email to verify your account.";
+            registerMsg.style.color = "green";
+            setTimeout(() => window.location.href = "verify-email.html", 1000);
+          } else {
+            registerMsg.textContent = "Registration successful but couldn't send verification email. Please try again.";
+            registerMsg.style.color = "orange";
+          }
+        } catch (verifyErr) {
+          console.error("❌ Verification email error:", verifyErr);
+          registerMsg.textContent = "Registration successful but couldn't send verification email. Please try again.";
+          registerMsg.style.color = "orange";
+        }
       } catch (error) {
         console.error("Register Error:", error);
         registerMsg.textContent = "Server error";

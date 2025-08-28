@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!token) {
     alert('Unauthorized. Please log in again.');
-    window.location.href = '/vendor-login.html';
+    window.location.href = '/vendor-auth.html';
     return;
   }
 
