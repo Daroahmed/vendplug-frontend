@@ -1,7 +1,12 @@
 // js/config.js
 window.BACKEND_URL = window.location.hostname === "localhost"
-  ? "http://localhost:5016"
+  ? "http://localhost:5000"
   : "https://api.vendplug.com.ng";
+
+// Frontend URL for email verification links
+window.FRONTEND_URL = window.location.hostname === "localhost"
+  ? "http://localhost:5000"
+  : "https://vendplug.com.ng";
 
 // Paystack configuration
 window.PAYSTACK_PUBLIC_KEY = window.location.hostname === "localhost"

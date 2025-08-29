@@ -74,7 +74,7 @@ document.getElementById("buyerRegisterForm").addEventListener("submit", async (e
         const verifyRes = await fetch(`${BACKEND}/api/auth/send-verification`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, role: 'buyer' })
+          body: JSON.stringify({ email, userType: 'buyer' })
         });
 
         if (verifyRes.ok) {

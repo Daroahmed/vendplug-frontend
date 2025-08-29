@@ -23,13 +23,13 @@ if (token) {
 requestResetForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('resetEmail').value;
-    const role = document.getElementById('userRole').value;
+    const userType = document.getElementById('userRole').value;
 
     try {
         const res = await fetch(`${BACKEND}/api/auth/request-reset`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, role })
+            body: JSON.stringify({ email, userType })
         });
 
         const data = await res.json();
@@ -39,7 +39,7 @@ requestResetForm.addEventListener('submit', async (e) => {
             messageEl.style.color = 'green';
             // Store email and role for potential resend
             localStorage.setItem('resetRequestEmail', email);
-            localStorage.setItem('resetRequestRole', role);
+            localStorage.setItem('resetRequestRole', userType);
         } else {
             messageEl.textContent = data.message || 'Failed to send reset email';
             messageEl.style.color = 'red';

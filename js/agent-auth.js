@@ -85,7 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
           const verifyRes = await fetch("/api/auth/send-verification", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, role: 'agent' })
+            body: JSON.stringify({ email, userType: 'agent' })
           });
 
           if (verifyRes.ok) {

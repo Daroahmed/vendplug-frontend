@@ -92,6 +92,7 @@
     <a href="login.html" class="link" style="display: none;" id="loginLink">Back to Login</a>
   </div>
 
+  <script src="/js/config.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -109,14 +110,27 @@
         return;
       }
 
+      // Wait for config to load
+      if (!window.BACKEND_URL) {
+        statusDiv.innerHTML = `
+          <div class="message error">
+            Configuration error. Please refresh the page.
+          </div>
+        `;
+        return;
+      }
+
       try {
-        const res = await fetch(`${window.BACKEND_URL}/api/auth/verify-email`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token })
+        console.log('🔍 Verifying token:', token);
+        console.log('🌐 Backend URL:', window.BACKEND_URL);
+        console.log('🔍 Full verification URL:', `${window.BACKEND_URL}/api/auth/verify-email`);
+        
+        const res = await fetch(`${window.BACKEND_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
+          method: 'GET'
         });
 
         const data = await res.json();
+        console.log('📡 Response:', data);
 
         if (res.ok) {
           statusDiv.innerHTML = `
@@ -129,6 +143,7 @@
           throw new Error(data.message || 'Verification failed');
         }
       } catch (error) {
+        console.error('❌ Verification error:', error);
         statusDiv.innerHTML = `
           <div class="message error">
             ${error.message || 'Error verifying email. Please try again.'}
@@ -139,6 +154,5 @@
       loginLink.style.display = 'inline-block';
     });
   </script>
-  <script src="/js/config.js"></script>
 </body>
 </html>

@@ -99,11 +99,11 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
 
     // Send verification email
     try {
-      const verifyRes = await fetch(`${BACKEND}/api/auth/send-verification`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, role: 'vendor' })
-      });
+              const verifyRes = await fetch(`${BACKEND}/api/auth/send-verification`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, userType: 'vendor' })
+        });
 
       if (verifyRes.ok) {
         alert("Registration successful! Please check your email to verify your account.");
