@@ -190,58 +190,64 @@ document.addEventListener('DOMContentLoaded', () => {
     fundBtn.classList.add('loading');
 
     try {
-      // Initialize transaction with backend
-      const res = await fetch(`${window.BACKEND_URL}/api/paystack/initialize`, {
+      // Initialize wallet funding with our new Paystack integration
+      const res = await fetch(`${window.BACKEND_URL}/api/paystack/fund-wallet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ 
+          amount,
+          email: buyer.email 
+        })
       });
 
-      if (!res.ok) throw new Error('Failed to initialize payment');
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Failed to initialize payment');
+      }
       
-      const { authorization_url, reference } = await res.json();
+      const paymentData = await res.json();
+      
+      if (!paymentData.success) {
+        throw new Error(paymentData.message || 'Payment initialization failed');
+      }
 
-      // Initialize Paystack popup
-      const handler = PaystackPop.setup({
-        key: window.PAYSTACK_PUBLIC_KEY, // Add this to your config.js
-        email: buyer.email,
-        amount: amount * 100, // Convert to kobo
-        ref: reference,
-        callback: async function(response) {
-          // Verify payment with backend
-          try {
-            const verifyRes = await fetch(`${window.BACKEND_URL}/api/paystack/verify?reference=${response.reference}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
+      const { authorizationUrl, reference } = paymentData.data;
 
-            const verifyData = await verifyRes.json();
-            
-            if (verifyRes.ok) {
-              alert('Payment successful! Your wallet has been credited.');
-              fetchWallet(); // Refresh wallet balance
-              fetchTransactions(); // Refresh transaction history
-              closeFundingModal();
-            } else {
-              throw new Error(verifyData.message || 'Payment verification failed');
-            }
-          } catch (error) {
-            alert('Error verifying payment. Please contact support if your wallet is not credited.');
-            console.error('Payment verification error:', error);
-          }
-        },
-        onClose: function() {
-          fundBtn.classList.remove('loading');
-        }
-      });
-
-      handler.openIframe();
+      // Redirect to Paystack payment page
+      console.log('🚀 Redirecting to Paystack:', authorizationUrl);
+      window.location.href = authorizationUrl;
     } catch (error) {
       console.error('Payment initialization error:', error);
       alert('Error initializing payment. Please try again.');
       fundBtn.classList.remove('loading');
+    }
+  }
+
+  // Payment verification function
+  async function verifyPayment(reference) {
+    try {
+      console.log('🔍 Verifying payment:', reference);
+      
+      const verifyRes = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment?reference=${reference}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const verifyData = await verifyRes.json();
+      
+      if (verifyRes.ok && verifyData.success) {
+        alert('🎉 Payment successful! Your wallet has been credited.');
+        fetchWallet(); // Refresh wallet balance
+        fetchTransactions(); // Refresh transaction history
+        closeFundingModal();
+      } else {
+        throw new Error(verifyData.message || 'Payment verification failed');
+      }
+    } catch (error) {
+      console.error('❌ Payment verification error:', error);
+      alert('❌ Error verifying payment. Please contact support if your wallet is not credited.');
     }
   }
 
