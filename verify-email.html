@@ -48,11 +48,13 @@
     .success {
       background: rgba(0, 204, 153, 0.1);
       color: var(--primary);
+      border: 1px solid var(--primary);
     }
 
     .error {
       background: rgba(255, 0, 0, 0.1);
       color: #ff4444;
+      border: 1px solid #ff4444;
     }
 
     .loader {
@@ -75,10 +77,26 @@
       text-decoration: none;
       margin-top: 1rem;
       display: inline-block;
+      padding: 10px 20px;
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      transition: all 0.3s ease;
     }
 
     .link:hover {
-      text-decoration: underline;
+      background: var(--primary);
+      color: var(--bg-dark);
+    }
+
+    .debug-info {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-size: 12px;
+      text-align: left;
+      max-height: 100px;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -87,72 +105,21 @@
     <h1>Email Verification</h1>
     <div id="verificationStatus">
       <div class="loader"></div>
-      <p>Verifying your email...</p>
+      <p>Loading verification...</p>
     </div>
-    <a href="login.html" class="link" style="display: none;" id="loginLink">Back to Login</a>
+    
+    <div id="debugInfo" class="debug-info" style="display: none;">
+      <strong>Debug Info:</strong><br>
+      <span id="debugContent"></span>
+    </div>
+    
+    <a href="auth-selection.html" class="link" style="display: none;" id="loginLink">Back to Login</a>
   </div>
 
+  <!-- Load config first -->
   <script src="/js/config.js"></script>
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const token = urlParams.get('token');
-      const statusDiv = document.getElementById('verificationStatus');
-      const loginLink = document.getElementById('loginLink');
-
-      if (!token) {
-        statusDiv.innerHTML = `
-          <div class="message error">
-            Invalid verification link. Please try again or contact support.
-          </div>
-        `;
-        loginLink.style.display = 'inline-block';
-        return;
-      }
-
-      // Wait for config to load
-      if (!window.BACKEND_URL) {
-        statusDiv.innerHTML = `
-          <div class="message error">
-            Configuration error. Please refresh the page.
-          </div>
-        `;
-        return;
-      }
-
-      try {
-        console.log('🔍 Verifying token:', token);
-        console.log('🌐 Backend URL:', window.BACKEND_URL);
-        console.log('🔍 Full verification URL:', `${window.BACKEND_URL}/api/auth/verify-email`);
-        
-        const res = await fetch(`${window.BACKEND_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`, {
-          method: 'GET'
-        });
-
-        const data = await res.json();
-        console.log('📡 Response:', data);
-
-        if (res.ok) {
-          statusDiv.innerHTML = `
-            <div class="message success">
-              ${data.message || 'Email verified successfully!'}
-              <br>You can now log in to your account.
-            </div>
-          `;
-        } else {
-          throw new Error(data.message || 'Verification failed');
-        }
-      } catch (error) {
-        console.error('❌ Verification error:', error);
-        statusDiv.innerHTML = `
-          <div class="message error">
-            ${error.message || 'Error verifying email. Please try again.'}
-          </div>
-        `;
-      }
-
-      loginLink.style.display = 'inline-block';
-    });
-  </script>
+  
+  <!-- Load verification logic -->
+  <script src="/js/verify-email.js"></script>
 </body>
 </html>

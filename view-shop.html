@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Vendor Shop - VendPlug</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- QR Code Library -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     :root {
       --primary: #00cc99;
@@ -52,6 +54,94 @@
       display: flex;
       align-items: center;
       gap: 15px;
+    }
+
+    /* Share Section Styles */
+    .share-section {
+      background: var(--bg-secondary);
+      padding: 1rem;
+      margin: 1rem 0;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .share-title {
+      color: var(--primary);
+      margin-bottom: 1rem;
+      font-size: 1.1rem;
+    }
+
+    .share-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .share-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .share-btn.whatsapp {
+      background-color: #25D366;
+      color: white;
+    }
+
+    .share-btn.facebook {
+      background-color: #1877F2;
+      color: white;
+    }
+
+    .share-btn.twitter {
+      background-color: #1DA1F2;
+      color: white;
+    }
+
+    .share-btn.copy {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .share-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .share-btn i {
+      font-size: 1rem;
+    }
+
+    .qr-section {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: var(--bg-card);
+      border-radius: 8px;
+    }
+
+    .qr-code {
+      display: block;
+      margin: 0 auto;
+      max-width: 200px;
+      height: auto;
+    }
+
+    .copy-success {
+      background: var(--primary);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 4px;
+      margin-top: 10px;
+      display: none;
     }
 
     .home-button, .cart-icon {
@@ -255,6 +345,35 @@
     <!-- Vendor details will be loaded here -->
   </section>
 
+  <!-- Share Section -->
+  <section class="share-section">
+    <h3 class="share-title">Share This Shop</h3>
+    <div class="share-buttons">
+      <button class="share-btn whatsapp" onclick="shareToWhatsApp()">
+        <i class="fab fa-whatsapp"></i>
+        WhatsApp
+      </button>
+      <button class="share-btn facebook" onclick="shareToFacebook()">
+        <i class="fab fa-facebook"></i>
+        Facebook
+      </button>
+      <button class="share-btn twitter" onclick="shareToTwitter()">
+        <i class="fab fa-twitter"></i>
+        Twitter
+      </button>
+      <button class="share-btn copy" onclick="copyShopLink()">
+        <i class="fas fa-copy"></i>
+        Copy Link
+      </button>
+    </div>
+    <div class="copy-success" id="copySuccess">Link copied to clipboard!</div>
+    
+    <div class="qr-section">
+      <h4>QR Code for Easy Sharing</h4>
+      <img id="qrCode" class="qr-code" alt="Shop QR Code">
+    </div>
+  </section>
+
   <!-- Loading Spinner -->
   <div class="loading">
     <div class="spinner"></div>
@@ -300,7 +419,7 @@
                 <span id="vendorAccount">${vendor.virtualAccount || 'Not set'}</span>
                 <button class="copy-btn" onclick="copyAccount()">Copy</button>
               </p>
-              <p><strong>Total Transactions:</strong> ${vendor.totalSales || 0}</p>
+              <p><strong>Total Transactions:</strong> ${vendor.totalTransactions || 0}</p>
             </div>
           </div>
         `;
@@ -355,6 +474,190 @@
 
     // Initialize cart count
     document.addEventListener('DOMContentLoaded', updateCartCount);
+
+    // Global variables for sharing
+    let currentVendor = null;
+    let shopUrl = '';
+
+    // Initialize sharing functionality
+    function initializeSharing(vendor) {
+      currentVendor = vendor;
+      shopUrl = `${window.location.origin}/view-shop.html?vendor=${vendor._id}`;
+      
+      // Generate QR code
+      generateQRCode(shopUrl);
+    }
+
+    // Generate QR code
+    function generateQRCode(url) {
+      const qrCodeEl = document.getElementById('qrCode');
+      if (qrCodeEl && window.QRCode) {
+        QRCode.toCanvas(qrCodeEl, url, {
+          width: 200,
+          margin: 2,
+          color: {
+            dark: '#00cc99',
+            light: '#ffffff'
+          }
+        }, function (error) {
+          if (error) console.error('QR Code generation error:', error);
+        });
+      }
+    }
+
+    // Share to WhatsApp
+    function shareToWhatsApp() {
+      if (!currentVendor) return;
+      
+      const message = `Check out this amazing shop on Vendplug!\n\n🏪 ${currentVendor.shopName || currentVendor.fullName}\n📍 ${currentVendor.businessAddress || currentVendor.state || 'Nigeria'}\n📱 ${currentVendor.phoneNumber}\n\n${shopUrl}`;
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      
+      // Track sharing
+      trackShare('whatsapp');
+    }
+
+    // Share to Facebook
+    function shareToFacebook() {
+      if (!shopUrl) return;
+      
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shopUrl)}`;
+      window.open(facebookUrl, '_blank', 'width=600,height=400');
+      
+      // Track sharing
+      trackShare('facebook');
+    }
+
+    // Share to Twitter
+    function shareToTwitter() {
+      if (!currentVendor || !shopUrl) return;
+      
+      const message = `Check out ${currentVendor.shopName || currentVendor.fullName} on Vendplug! 🏪✨\n\n${shopUrl}`;
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`;
+      window.open(twitterUrl, '_blank', 'width=600,height=400');
+      
+      // Track sharing
+      trackShare('twitter');
+    }
+
+    // Copy shop link
+    function copyShopLink() {
+      if (!shopUrl) return;
+      
+      navigator.clipboard.writeText(shopUrl).then(() => {
+        const copySuccess = document.getElementById('copySuccess');
+        copySuccess.style.display = 'block';
+        
+        setTimeout(() => {
+          copySuccess.style.display = 'none';
+        }, 3000);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy link. Please try again.');
+      });
+      
+      // Track sharing
+      trackShare('copy');
+    }
+
+    // Track sharing analytics
+    function trackShare(platform) {
+      try {
+        // Send analytics to backend
+        fetch('/api/analytics/share', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            platform,
+            vendorId: currentVendor?._id,
+            shopUrl,
+            timestamp: new Date().toISOString()
+          })
+        }).catch(err => console.log('Analytics error:', err));
+        
+        // Log locally
+        console.log(`Shop shared via ${platform}`);
+      } catch (error) {
+        console.log('Analytics tracking failed:', error);
+      }
+    }
+
+    // Update the existing DOMContentLoaded to initialize sharing
+    const originalDOMContentLoaded = document.addEventListener;
+    document.addEventListener('DOMContentLoaded', async () => {
+      const vendorId = new URLSearchParams(window.location.search).get('vendor');
+
+      if (!vendorId) {
+        alert('Vendor ID is missing from the URL');
+        return;
+      }
+
+      const vendorProfileEl = document.getElementById('vendorProfile');
+      const vendorProductsEl = document.getElementById('vendorProducts');
+      const loadingEl = document.querySelector('.loading');
+
+      try {
+        // Fetch vendor profile
+        const vendorRes = await fetch(`/api/vendors/${vendorId}`);
+        const vendor = await vendorRes.json();
+
+        if (!vendor || !vendor.fullName) {
+          vendorProfileEl.innerHTML = '<p class="error-message">Vendor not found.</p>';
+          loadingEl.style.display = 'none';
+          return;
+        }
+
+        // Initialize sharing functionality
+        initializeSharing(vendor);
+
+        vendorProfileEl.innerHTML = `
+          <div class="vendor-details">
+            <div class="vendor-info">
+              <h2>${vendor.fullName}</h2>
+              <p><strong>Phone:</strong> <a class="whatsapp-link" href="https://wa.me/${vendor.phoneNumber}" target="_blank">${vendor.phoneNumber}</a></p>
+              <p><strong>Address:</strong> ${vendor.businessAddress || 'Not provided'}</p>
+              <p><strong>State:</strong> ${vendor.state || 'Not specified'}</p>
+              <p><strong>Account Number:</strong> 
+                <span id="vendorAccount">${vendor.virtualAccount || 'Not set'}</span>
+                <button class="copy-btn" onclick="copyAccount()">Copy</button>
+              </p>
+              <p><strong>Total Transactions:</strong> ${vendor.totalTransactions || 0}</p>
+            </div>
+          </div>
+        `;
+
+        // Fetch vendor products
+        console.log("Loading shop for vendor:", vendorId);
+        const productsRes = await fetch(`/api/vendor-products/vendor/${vendorId}`);
+        const products = await productsRes.json();
+
+        // Hide loading spinner
+        loadingEl.style.display = 'none';
+
+        if (!products || products.length === 0) {
+          vendorProductsEl.innerHTML = '<p class="no-products">No products for this vendor yet.</p>';
+          return;
+        }
+
+        vendorProductsEl.innerHTML = products.map(product => `
+          <div class="product-card" onclick="window.location.href='/view-shop-view.html?product=${product._id}'">
+            <img src="${product.image || '/placeholder.png'}" alt="${product.name}" class="product-image" />
+            <div class="product-info">
+              <h4>${product.name}</h4>
+              <p>₦${product.price.toLocaleString()}</p>
+            </div>
+          </div>
+        `).join('');
+
+      } catch (error) {
+        console.error('Error loading vendor data:', error);
+        loadingEl.style.display = 'none';
+        vendorProfileEl.innerHTML = '<p class="error-message">Error loading vendor data.</p>';
+        vendorProductsEl.innerHTML = '';
+      }
+    });
   </script>
 </body>
 </html>

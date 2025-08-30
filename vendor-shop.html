@@ -535,6 +535,111 @@
         top: 60px;
       }
     }
+
+    /* Share Modal Styles */
+    .share-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .share-modal-content {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+
+    .share-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .share-modal-header h3 {
+      color: var(--primary);
+      margin: 0;
+    }
+
+    .close-modal {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .share-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    .share-option {
+      background: var(--bg-secondary);
+      border: none;
+      border-radius: 8px;
+      padding: 1rem;
+      color: var(--text-light);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .share-option:hover {
+      background: var(--primary);
+      color: var(--bg-dark);
+      transform: translateY(-2px);
+    }
+
+    .share-option i {
+      font-size: 1.5rem;
+    }
+
+    /* Toast Styles */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--bg-card);
+      color: var(--text-light);
+      padding: 1rem 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1001;
+      transform: translateX(100%);
+      transition: transform 0.3s ease;
+    }
+
+    .toast.show {
+      transform: translateX(0);
+    }
+
+    .toast-success {
+      border-left: 4px solid var(--primary);
+    }
+
+    .toast-error {
+      border-left: 4px solid #ff4444;
+    }
+
+    .toast-info {
+      border-left: 4px solid #1DA1F2;
+    }
   </style>
 </head>
 <body>
@@ -1007,7 +1112,7 @@
             <button class="quick-btn" onclick="event.stopPropagation(); addToFavorites('${vendor._id}')">
               <i class="fas fa-heart"></i>
             </button>
-            <button class="quick-btn" onclick="event.stopPropagation(); shareVendor('${vendor._id}')">
+            <button class="quick-btn" onclick="event.stopPropagation(); shareVendor('${vendor._id}', '${vendor.businessName || vendor.shopName}', '${vendor.state}', '${vendor.category}')">
               <i class="fas fa-share-alt"></i>
             </button>
           </div>
@@ -1033,20 +1138,158 @@
       // You would typically make an API call here
     }
 
-    function shareVendor(id) {
-      // Implement share functionality
-      console.log("Share vendor:", id);
-      if (navigator.share) {
-        navigator.share({
-          title: 'Check out this vendor on VendPlug',
-          text: 'I found this great vendor on VendPlug!',
-          url: `${window.location.origin}/vendor-details.html?id=${id}`
-        })
-        .catch(error => console.log('Error sharing:', error));
-      } else {
-        // Fallback for browsers that don't support Web Share API
-        alert('Share functionality is not supported in your browser');
+    function shareVendor(id, shopName, state, category) {
+      const shopUrl = `${window.location.origin}/view-shop.html?vendor=${id}`;
+      
+      // Create share options
+      const shareOptions = [
+        {
+          name: 'WhatsApp',
+          icon: 'fab fa-whatsapp',
+          color: '#25D366',
+          action: () => shareToWhatsApp(shopName, state, category, shopUrl)
+        },
+        {
+          name: 'Facebook',
+          icon: 'fab fa-facebook',
+          color: '#1877F2',
+          action: () => shareToFacebook(shopUrl)
+        },
+        {
+          name: 'Twitter',
+          icon: 'fab fa-twitter',
+          color: '#1DA1F2',
+          action: () => shareToTwitter(shopName, shopUrl)
+        },
+        {
+          name: 'Copy Link',
+          icon: 'fas fa-copy',
+          color: '#00cc99',
+          action: () => copyShopLink(shopUrl)
+        }
+      ];
+
+      // Create and show share modal
+      showShareModal(shareOptions, shopName);
+    }
+
+    // Show share modal
+    function showShareModal(shareOptions, shopName) {
+      // Remove existing modal if any
+      const existingModal = document.querySelector('.share-modal');
+      if (existingModal) existingModal.remove();
+
+      const modal = document.createElement('div');
+      modal.className = 'share-modal';
+      modal.innerHTML = `
+        <div class="share-modal-content">
+          <div class="share-modal-header">
+            <h3>Share ${shopName}</h3>
+            <button class="close-modal" onclick="this.closest('.share-modal').remove()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <div class="share-options">
+            ${shareOptions.map(option => `
+              <button class="share-option" onclick="this.closest('.share-modal').remove(); ${option.action.toString().replace('function () {', '').replace('}', '')}">
+                <i class="${option.icon}" style="color: ${option.color}"></i>
+                <span>${option.name}</span>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `;
+
+      document.body.appendChild(modal);
+      
+      // Close modal when clicking outside
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+      });
+    }
+
+    // Share to WhatsApp
+    function shareToWhatsApp(shopName, state, category, shopUrl) {
+      const message = `Check out this amazing shop on Vendplug!\n\n🏪 ${shopName}\n📍 ${state} • ${category}\n\n${shopUrl}`;
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+      window.open(whatsappUrl, '_blank');
+      
+      // Track sharing
+      trackShare('whatsapp', shopUrl);
+    }
+
+    // Share to Facebook
+    function shareToFacebook(shopUrl) {
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shopUrl)}`;
+      window.open(facebookUrl, '_blank', 'width=600,height=400');
+      
+      // Track sharing
+      trackShare('facebook', shopUrl);
+    }
+
+    // Share to Twitter
+    function shareToTwitter(shopName, shopUrl) {
+      const message = `Check out ${shopName} on Vendplug! 🏪✨\n\n${shopUrl}`;
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`;
+      window.open(twitterUrl, '_blank', 'width=600,height=400');
+      
+      // Track sharing
+      trackShare('twitter', shopUrl);
+    }
+
+    // Copy shop link
+    function copyShopLink(shopUrl) {
+      navigator.clipboard.writeText(shopUrl).then(() => {
+        // Show success message
+        showToast('Link copied to clipboard!', 'success');
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        showToast('Failed to copy link', 'error');
+      });
+      
+      // Track sharing
+      trackShare('copy', shopUrl);
+    }
+
+    // Track sharing analytics
+    function trackShare(platform, shopUrl) {
+      try {
+        // Send analytics to backend
+        fetch('/api/analytics/share', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            platform,
+            shopUrl,
+            timestamp: new Date().toISOString()
+          })
+        }).catch(err => console.log('Analytics error:', err));
+        
+        // Log locally
+        console.log(`Shop shared via ${platform}`);
+      } catch (error) {
+        console.log('Analytics tracking failed:', error);
       }
+    }
+
+    // Show toast message
+    function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.textContent = message;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.classList.add('show');
+      }, 100);
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
     }
   </script>
 </body>
