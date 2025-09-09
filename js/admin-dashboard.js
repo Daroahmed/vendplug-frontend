@@ -69,12 +69,122 @@ class AdminDashboard {
 
             const data = await response.json();
             this.updateDashboardCards(data.data.counts);
+            this.updateFinancialSummary(data.data.financial);
             this.updateRecentOrders(data.data.recentOrders);
             this.updateRecentTransactions(data.data.recentTransactions);
 
         } catch (error) {
             console.error('❌ Dashboard data error:', error);
             this.showError('Failed to load dashboard data');
+        }
+    }
+
+    async applyGlobalFilter() {
+        try {
+            const dateFrom = document.getElementById('dashboardDateFrom').value;
+            const dateTo = document.getElementById('dashboardDateTo').value;
+
+            const params = new URLSearchParams();
+            if (dateFrom) params.append('startDate', dateFrom);
+            if (dateTo) params.append('endDate', dateTo);
+
+            const response = await fetch(`/api/admin/dashboard?${params}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    this.logout();
+                    return;
+                }
+                throw new Error('Failed to load filtered dashboard data');
+            }
+
+            const data = await response.json();
+            this.updateDashboardCards(data.data.counts);
+            this.updateFinancialSummary(data.data.financial);
+            this.updateRecentOrders(data.data.recentOrders);
+            this.updateRecentTransactions(data.data.recentTransactions);
+
+            // Show filter status
+            const filterStatus = document.createElement('div');
+            filterStatus.className = 'alert alert-info';
+            filterStatus.style.marginTop = '10px';
+            filterStatus.innerHTML = `
+                <strong>Filter Applied:</strong> 
+                ${dateFrom ? `From ${dateFrom}` : 'All time'} 
+                ${dateTo ? `to ${dateTo}` : ''}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 18px;">&times;</button>
+            `;
+            
+            // Remove existing filter status
+            const existingStatus = document.querySelector('.alert-info');
+            if (existingStatus) existingStatus.remove();
+            
+            // Add new filter status
+            const filterContainer = document.querySelector('.filters');
+            filterContainer.appendChild(filterStatus);
+
+        } catch (error) {
+            console.error('❌ Global filter error:', error);
+            this.showError('Failed to apply filter');
+        }
+    }
+
+    clearGlobalFilter() {
+        document.getElementById('dashboardDateFrom').value = '';
+        document.getElementById('dashboardDateTo').value = '';
+        
+        // Remove filter status
+        const existingStatus = document.querySelector('.alert-info');
+        if (existingStatus) existingStatus.remove();
+        
+        // Reload dashboard with no filters
+        this.loadDashboardData();
+    }
+
+    updateFinancialSummary(financial) {
+        if (!financial) return;
+        
+        // Format currency with Nigerian Naira symbol
+        const formatCurrency = (amount) => {
+            return new Intl.NumberFormat('en-NG', {
+                style: 'currency',
+                currency: 'NGN',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        };
+        
+        // Update financial summary elements
+        const totalTransactionElement = document.getElementById('totalTransactionAmount');
+        if (totalTransactionElement) {
+            totalTransactionElement.textContent = formatCurrency(financial.totalTransactionAmount);
+        }
+        
+        const totalOrderElement = document.getElementById('totalOrderAmount');
+        if (totalOrderElement) {
+            totalOrderElement.textContent = formatCurrency(financial.totalOrderAmount);
+        }
+        
+        const totalPayoutElement = document.getElementById('totalPayoutAmount');
+        if (totalPayoutElement) {
+            totalPayoutElement.textContent = formatCurrency(financial.totalPayoutAmount);
+        }
+        
+        const netRevenueElement = document.getElementById('netRevenue');
+        if (netRevenueElement) {
+            netRevenueElement.textContent = formatCurrency(financial.netRevenue);
+            
+            // Color code based on positive/negative revenue
+            if (financial.netRevenue >= 0) {
+                netRevenueElement.style.color = '#4ade80'; // Green for positive
+            } else {
+                netRevenueElement.style.color = '#f87171'; // Red for negative
+            }
         }
     }
 
@@ -96,6 +206,18 @@ class AdminDashboard {
         const escalatedDisputesElement = document.getElementById('escalatedDisputes');
         if (escalatedDisputesElement) {
             escalatedDisputesElement.textContent = counts.escalatedDisputes || 0;
+        }
+        
+        // Update resolved disputes
+        const resolvedDisputesElement = document.getElementById('resolvedDisputes');
+        if (resolvedDisputesElement) {
+            resolvedDisputesElement.textContent = counts.resolvedDisputes || 0;
+        }
+        
+        // Update total disputes
+        const totalDisputesElement = document.getElementById('totalDisputes');
+        if (totalDisputesElement) {
+            totalDisputesElement.textContent = counts.totalDisputes || 0;
         }
     }
 
@@ -1434,7 +1556,7 @@ class AdminDashboard {
                 staffSelect.innerHTML = '<option value="">All Staff</option>';
                 
                 // Add staff options
-                data.data.forEach(staff => {
+                data.data.staff.forEach(staff => {
                     const option = document.createElement('option');
                     option.value = staff._id;
                     option.textContent = `${staff.fullName} (${staff.role})`;

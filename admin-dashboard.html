@@ -619,6 +619,55 @@
                     <p>Platform statistics and recent activities</p>
                 </div>
                 <div class="section-content">
+                    <!-- Financial Summary Card -->
+                    <div class="financial-summary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h4 style="margin: 0 0 10px 0; font-weight: 600;">💰 Financial Overview</h4>
+                                <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Total platform transaction volume and revenue</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="financial-stats">
+                                    <div class="stat-item" style="margin-bottom: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Total Transactions</div>
+                                        <div style="font-size: 1.8rem; font-weight: bold;" id="totalTransactionAmount">₦0</div>
+                                    </div>
+                                    <div class="stat-item" style="margin-bottom: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Total Orders</div>
+                                        <div style="font-size: 1.8rem; font-weight: bold;" id="totalOrderAmount">₦0</div>
+                                    </div>
+                                    <div class="stat-item" style="margin-bottom: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Total Payouts</div>
+                                        <div style="font-size: 1.8rem; font-weight: bold;" id="totalPayoutAmount">₦0</div>
+                                    </div>
+                                    <div class="stat-item" style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Net Revenue</div>
+                                        <div style="font-size: 2.2rem; font-weight: bold; color: #4ade80;" id="netRevenue">₦0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Global Dashboard Filter -->
+                    <div class="filters" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <div class="filter-group">
+                            <label>Date Range</label>
+                            <input type="date" id="dashboardDateFrom" placeholder="From Date">
+                        </div>
+                        <div class="filter-group">
+                            <label>To</label>
+                            <input type="date" id="dashboardDateTo" placeholder="To Date">
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="adminDashboard.applyGlobalFilter()">Apply Filter</button>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-secondary" onclick="adminDashboard.clearGlobalFilter()">Clear</button>
+                        </div>
+                    </div>
                     <div class="dashboard-grid">
                         <div class="card">
                             <div class="card-header">
@@ -680,6 +729,24 @@
                                 <div>
                                     <div class="card-title">Under Review</div>
                                     <div class="card-value" id="underReviewDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: #27ae60;">✅</div>
+                                <div>
+                                    <div class="card-title">Resolved Disputes</div>
+                                    <div class="card-value" id="resolvedDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: #8e44ad;">📊</div>
+                                <div>
+                                    <div class="card-title">Total Disputes</div>
+                                    <div class="card-value" id="totalDisputes">-</div>
                                 </div>
                             </div>
                         </div>
@@ -959,13 +1026,12 @@
                             <label>Action Type</label>
                             <select id="actionFilter">
                                 <option value="">All Actions</option>
-                                <option value="dispute_assigned">Dispute Assigned</option>
-                                <option value="review_started">Review Started</option>
-                                <option value="dispute_resolved">Dispute Resolved</option>
-                                <option value="dispute_escalated">Dispute Escalated</option>
-                                <option value="priority_updated">Priority Updated</option>
-                                <option value="message_sent">Message Sent</option>
-                                <option value="info_requested">Info Requested</option>
+                                <option value="resolved">Dispute Resolved</option>
+                                <option value="refund">Refund Issued</option>
+                                <option value="no_refund">No Refund</option>
+                                <option value="partial_refund">Partial Refund</option>
+                                <option value="escalated">Dispute Escalated</option>
+                                <option value="under_review">Under Review</option>
                             </select>
                         </div>
                         <div class="filter-group">

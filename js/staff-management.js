@@ -116,8 +116,8 @@ class StaffManagement {
                 this.staffList.forEach(staff => {
                     const staffStats = data.data.find(stat => stat.staffId === staff._id);
                     if (staffStats) {
-                        staff.currentDisputes = staffStats.currentDisputes || [];
-                        staff.assignedDisputes = staffStats.assignedDisputes || 0;
+                        staff.currentDisputes = staffStats.currentDisputes || 0;
+                        staff.assignedDisputes = staffStats.totalAssigned || 0;
                         staff.resolvedDisputes = staffStats.resolvedDisputes || 0;
                         staff.underReviewDisputes = staffStats.underReviewDisputes || 0;
                         staff.overdueDisputes = staffStats.overdueDisputes || 0;
@@ -135,7 +135,7 @@ class StaffManagement {
         
         // Calculate average workload
         const totalWorkload = this.staffList.reduce((sum, staff) => {
-            const currentWorkload = staff.activityStats?.currentDisputes?.length || 0;
+            const currentWorkload = staff.currentDisputes || 0;
             const maxWorkload = staff.maxConcurrentDisputes || 1;
             return sum + (currentWorkload / maxWorkload);
         }, 0);
@@ -143,7 +143,7 @@ class StaffManagement {
         
         // Count overloaded staff
         const overloadedStaff = this.staffList.filter(staff => {
-            const currentWorkload = staff.activityStats?.currentDisputes?.length || 0;
+            const currentWorkload = staff.currentDisputes || 0;
             const maxWorkload = staff.maxConcurrentDisputes || 1;
             return currentWorkload >= maxWorkload;
         }).length;
@@ -163,7 +163,7 @@ class StaffManagement {
         }
 
         const html = this.filteredStaff.map(staff => {
-            const currentWorkload = staff.activityStats?.currentDisputes?.length || 0;
+            const currentWorkload = staff.currentDisputes || 0;
             const maxWorkload = staff.maxConcurrentDisputes || 1;
             const workloadPercentage = Math.round((currentWorkload / maxWorkload) * 100);
             
