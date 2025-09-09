@@ -9,7 +9,7 @@ class StaffDisputeDashboard {
 
     async init() {
         // Check authentication
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('staff-token');
         if (!token) {
             this.redirectToLogin();
             return;
@@ -33,9 +33,9 @@ class StaffDisputeDashboard {
 
     async loadStaffInfo() {
         try {
-            const response = await fetch('/api/admin/profile', {
+            const response = await fetch('/api/staff/profile', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -64,9 +64,9 @@ class StaffDisputeDashboard {
     async loadDashboard() {
         try {
             // Load analytics for dashboard stats
-            const analyticsResponse = await fetch(`${this.apiBaseUrl}/analytics?period=30`, {
+            const analyticsResponse = await fetch(`${this.apiBaseUrl}/disputes/stats?period=30`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -89,19 +89,17 @@ class StaffDisputeDashboard {
     }
 
     updateDashboardStats(data) {
-        document.getElementById('totalDisputes').textContent = data.staff.totalAssigned || 0;
-        document.getElementById('resolvedDisputes').textContent = data.staff.totalResolved || 0;
-        document.getElementById('currentWorkload').textContent = data.staff.currentWorkload || 0;
-        document.getElementById('avgResolutionTime').textContent = 
-            data.resolutionStats.averageResolutionTime ? 
-            Math.round(data.resolutionStats.averageResolutionTime * 10) / 10 : 0;
+        document.getElementById('assignedCount').textContent = data.assignedDisputes || 0;
+        document.getElementById('resolvedToday').textContent = data.resolvedToday || 0;
+        document.getElementById('pendingCount').textContent = data.pendingReview || 0;
+        document.getElementById('overdueCount').textContent = data.overdueDisputes || 0;
     }
 
     async loadRecentDisputes() {
         try {
-            const response = await fetch(`${this.apiBaseUrl}/my-disputes?limit=5`, {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/my?limit=5`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -123,7 +121,12 @@ class StaffDisputeDashboard {
     renderRecentDisputes(disputes) {
         const container = document.getElementById('recentDisputes');
         
-        if (disputes.length === 0) {
+        if (!container) {
+            console.error('recentDisputes container not found');
+            return;
+        }
+        
+        if (!disputes || disputes.length === 0) {
             container.innerHTML = '<div class="text-center text-muted">No recent disputes</div>';
             return;
         }
@@ -141,7 +144,7 @@ class StaffDisputeDashboard {
                 <div class="text-end">
                     <span class="status-badge status-${dispute.status}">${dispute.status}</span>
                     <br>
-                    <button class="btn btn-sm btn-outline-primary mt-1" onclick="dashboard.viewDispute('${dispute.disputeId}')">
+                    <button class="btn btn-sm btn-outline-primary mt-1" onclick="viewDispute('${dispute.disputeId}')">
                         View Details
                     </button>
                 </div>
@@ -153,9 +156,9 @@ class StaffDisputeDashboard {
 
     async loadCategoryBreakdown() {
         try {
-            const response = await fetch(`${this.apiBaseUrl}/analytics?period=30`, {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/stats?period=30`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -177,6 +180,11 @@ class StaffDisputeDashboard {
     renderCategoryChart(categoryStats) {
         const container = document.getElementById('categoryChart');
         
+        if (!container) {
+            console.error('categoryChart container not found');
+            return;
+        }
+        
         if (!categoryStats || categoryStats.length === 0) {
             container.innerHTML = '<div class="text-center text-muted">No category data available</div>';
             return;
@@ -190,7 +198,7 @@ class StaffDisputeDashboard {
         new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: categoryStats.map(item => item._id.replace(/_/g, ' ')),
+                labels: categoryStats.map(item => (item.category || item._id).replace(/_/g, ' ')),
                 datasets: [{
                     data: categoryStats.map(item => item.count),
                     backgroundColor: [
@@ -214,11 +222,11 @@ class StaffDisputeDashboard {
     async loadMyDisputes() {
         try {
             const statusFilter = document.getElementById('statusFilter').value;
-            const url = `${this.apiBaseUrl}/my-disputes${statusFilter ? `?status=${statusFilter}` : ''}`;
+            const url = `${this.apiBaseUrl}/my-disputes${statusFilter ? `?status=${statusFilter}` : ''}&t=${Date.now()}`;
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -243,12 +251,16 @@ class StaffDisputeDashboard {
     renderMyDisputes(disputes) {
         const container = document.getElementById('myDisputesList');
         
+        console.log('🔍 Rendering disputes:', disputes);
+        
         if (disputes.length === 0) {
             container.innerHTML = '<div class="text-center text-muted">No disputes found</div>';
             return;
         }
 
-        const html = disputes.map(dispute => `
+        const html = disputes.map(dispute => {
+            console.log(`🔍 Processing dispute ${dispute.disputeId} with status: ${dispute.status}`);
+            return `
             <div class="card dispute-card mb-3 ${dispute.priority}-priority">
                 <div class="card-body">
                     <div class="row align-items-center">
@@ -270,20 +282,39 @@ class StaffDisputeDashboard {
                         </div>
                         <div class="col-md-4 text-end">
                             <div class="btn-group-vertical">
-                                <button class="btn btn-outline-primary btn-sm mb-1" onclick="dashboard.viewDispute('${dispute.disputeId}')">
+                                <button class="btn btn-outline-primary btn-sm mb-1" onclick="viewDispute('${dispute.disputeId}')">
                                     <i class="fas fa-eye me-1"></i>View Details
                                 </button>
-                                ${dispute.status !== 'resolved' ? `
-                                    <button class="btn btn-success btn-sm" onclick="dashboard.showResolveModal('${dispute.disputeId}')">
+                                
+                                ${dispute.status === 'assigned' ? `
+                                    <button class="btn btn-primary btn-sm" onclick="startReview('${dispute.disputeId}')">
+                                        <i class="fas fa-play me-1"></i>Start Review
+                                    </button>
+                                ` : ''}
+                                
+                                ${dispute.status === 'under_review' ? `
+                                    <div class="btn-group-vertical">
+                                        <button class="btn btn-success btn-sm mb-1" onclick="showResolveModal('${dispute.disputeId}')">
                                         <i class="fas fa-check me-1"></i>Resolve
                                     </button>
+                                        <button class="btn btn-warning btn-sm mb-1" onclick="showEscalateModal('${dispute.disputeId}')">
+                                            <i class="fas fa-arrow-up me-1"></i>Escalate
+                                        </button>
+                                        <button class="btn btn-info btn-sm mb-1" onclick="showRequestInfoModal('${dispute.disputeId}')">
+                                            <i class="fas fa-question me-1"></i>Request Info
+                                        </button>
+                                        <button class="btn btn-secondary btn-sm" onclick="showPriorityModal('${dispute.disputeId}')">
+                                            <i class="fas fa-flag me-1"></i>Priority
+                                        </button>
+                                    </div>
                                 ` : ''}
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-        `).join('');
+        `;
+        }).join('');
 
         container.innerHTML = html;
     }
@@ -295,7 +326,7 @@ class StaffDisputeDashboard {
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -358,9 +389,9 @@ class StaffDisputeDashboard {
     async loadAnalytics() {
         try {
             const period = document.getElementById('analyticsPeriod').value;
-            const response = await fetch(`${this.apiBaseUrl}/analytics?period=${period}`, {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/stats?period=${period}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -392,16 +423,16 @@ class StaffDisputeDashboard {
                         <div class="card-body">
                             <div class="row text-center">
                                 <div class="col-4">
-                                    <h4 class="text-primary">${data.staff.totalAssigned}</h4>
-                                    <small class="text-muted">Total Assigned</small>
+                                    <h4 class="text-primary">${data.totalDisputes || 0}</h4>
+                                    <small class="text-muted">Total Disputes</small>
                                 </div>
                                 <div class="col-4">
-                                    <h4 class="text-success">${data.staff.totalResolved}</h4>
+                                    <h4 class="text-success">${data.resolvedDisputes || 0}</h4>
                                     <small class="text-muted">Resolved</small>
                                 </div>
                                 <div class="col-4">
-                                    <h4 class="text-warning">${data.staff.currentWorkload}</h4>
-                                    <small class="text-muted">Current Workload</small>
+                                    <h4 class="text-warning">${data.assignedDisputes || 0}</h4>
+                                    <small class="text-muted">Assigned</small>
                                 </div>
                             </div>
                         </div>
@@ -415,16 +446,16 @@ class StaffDisputeDashboard {
                         <div class="card-body">
                             <div class="row text-center">
                                 <div class="col-4">
-                                    <h4 class="text-info">${data.resolutionStats.averageResolutionTime ? Math.round(data.resolutionStats.averageResolutionTime * 10) / 10 : 0}</h4>
-                                    <small class="text-muted">Avg. Days</small>
+                                    <h4 class="text-info">${data.averageResolutionTime ? Math.round(data.averageResolutionTime * 10) / 10 : 0}</h4>
+                                    <small class="text-muted">Avg. Hours</small>
                                 </div>
                                 <div class="col-4">
-                                    <h4 class="text-success">${data.resolutionStats.minResolutionTime ? Math.round(data.resolutionStats.minResolutionTime * 10) / 10 : 0}</h4>
-                                    <small class="text-muted">Fastest</small>
+                                    <h4 class="text-success">${data.resolvedDisputes || 0}</h4>
+                                    <small class="text-muted">Resolved</small>
                                 </div>
                                 <div class="col-4">
-                                    <h4 class="text-warning">${data.resolutionStats.maxResolutionTime ? Math.round(data.resolutionStats.maxResolutionTime * 10) / 10 : 0}</h4>
-                                    <small class="text-muted">Longest</small>
+                                    <h4 class="text-warning">${data.escalatedDisputes || 0}</h4>
+                                    <small class="text-muted">Escalated</small>
                                 </div>
                             </div>
                         </div>
@@ -455,7 +486,7 @@ class StaffDisputeDashboard {
             new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: data.categoryStats.map(item => item._id.replace(/_/g, ' ')),
+                    labels: data.categoryStats.map(item => (item.category || item._id).replace(/_/g, ' ')),
                     datasets: [{
                         label: 'Disputes',
                         data: data.categoryStats.map(item => item.count),
@@ -476,10 +507,11 @@ class StaffDisputeDashboard {
     }
 
     async viewDispute(disputeId) {
+        console.log('🔍 viewDispute called with ID:', disputeId);
         try {
-            const response = await fetch(`${this.apiBaseUrl}/dispute/${disputeId}`, {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -489,6 +521,7 @@ class StaffDisputeDashboard {
             }
 
             const data = await response.json();
+            console.log('📊 Dispute data received:', data);
             this.currentDispute = data.data;
             this.renderDisputeModal();
 
@@ -499,7 +532,12 @@ class StaffDisputeDashboard {
     }
 
     renderDisputeModal() {
-        const dispute = this.currentDispute;
+        const dispute = this.currentDispute.dispute || this.currentDispute;
+        console.log('🔍 Rendering dispute modal with data:', dispute);
+        console.log('🔍 Dispute category:', dispute.category);
+        console.log('🔍 Complainant data:', dispute.complainant);
+        console.log('🔍 Respondent data:', dispute.respondent);
+        console.log('🔍 Order data:', dispute.order);
         document.getElementById('modalDisputeId').textContent = dispute.disputeId;
         
         const html = `
@@ -512,16 +550,16 @@ class StaffDisputeDashboard {
                         <div class="card-body">
                             <div class="row mb-3">
                                 <div class="col-sm-3"><strong>Title:</strong></div>
-                                <div class="col-sm-9">${dispute.title}</div>
+                                <div class="col-sm-9">${dispute.title || 'No title provided'}</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-3"><strong>Description:</strong></div>
-                                <div class="col-sm-9">${dispute.description}</div>
+                                <div class="col-sm-9">${dispute.description || 'No description provided'}</div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-sm-3"><strong>Category:</strong></div>
                                 <div class="col-sm-9">
-                                    <span class="badge bg-primary">${dispute.category.replace(/_/g, ' ')}</span>
+                                    <span class="badge bg-primary">${dispute.category ? dispute.category.replace(/_/g, ' ') : 'Unknown'}</span>
                                 </div>
                             </div>
                             <div class="row mb-3">
@@ -565,12 +603,18 @@ class StaffDisputeDashboard {
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <strong>Complainant:</strong><br>
-                                <small class="text-muted">${dispute.complainant?.userId?.fullName || 'Unknown'}</small>
+                                <strong>Complainant (${dispute.complainant?.userType || 'Buyer'}):</strong><br>
+                                <small class="text-muted">
+                                    ID: ${dispute.complainant?.userId?._id || dispute.complainant?.userId || dispute.complainant?._id || 'Unknown'}<br>
+                                    Name: ${dispute.complainant?.userId?.fullName || dispute.complainant?.userId?.shopName || dispute.complainant?.fullName || dispute.complainant?.shopName || 'Unknown'}
+                                </small>
                             </div>
                             <div class="mb-3">
-                                <strong>Respondent:</strong><br>
-                                <small class="text-muted">${dispute.respondent?.userId?.fullName || dispute.respondent?.userId?.businessName || 'Unknown'}</small>
+                                <strong>Respondent (${dispute.respondent?.userType || 'Vendor'}):</strong><br>
+                                <small class="text-muted">
+                                    ID: ${dispute.respondent?.userId?._id || dispute.respondent?.userId || dispute.respondent?._id || 'Unknown'}<br>
+                                    Name: ${dispute.respondent?.userId?.fullName || dispute.respondent?.userId?.shopName || dispute.respondent?.userId?.businessName || dispute.respondent?.fullName || dispute.respondent?.shopName || dispute.respondent?.businessName || 'Unknown'}
+                                </small>
                             </div>
                         </div>
                     </div>
@@ -581,10 +625,16 @@ class StaffDisputeDashboard {
                         </div>
                         <div class="card-body">
                             <div class="mb-2">
-                                <strong>Order ID:</strong> ${dispute.order?.orderId || 'N/A'}
+                                <strong>Order ID:</strong> ${dispute.order?.orderId || dispute.orderId || dispute.order?._id || 'N/A'}
                             </div>
                             <div class="mb-2">
-                                <strong>Amount:</strong> $${dispute.order?.totalAmount || 'N/A'}
+                                <strong>Amount:</strong> ₦${dispute.order?.totalAmount || dispute.order?.amount || 'N/A'}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Status:</strong> ${dispute.order?.status || 'N/A'}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Created:</strong> ${dispute.order?.createdAt ? new Date(dispute.order.createdAt).toLocaleDateString() : dispute.order?.created ? new Date(dispute.order.created).toLocaleDateString() : 'N/A'}
                             </div>
                         </div>
                     </div>
@@ -595,11 +645,46 @@ class StaffDisputeDashboard {
                                 <h5><i class="fas fa-tools me-2"></i>Actions</h5>
                             </div>
                             <div class="card-body">
-                                <button class="btn btn-success w-100 mb-2" onclick="dashboard.showResolveModal('${dispute.disputeId}')">
-                                    <i class="fas fa-check me-1"></i>Resolve Dispute
+                                ${dispute.status === 'assigned' ? `
+                                    <button class="btn btn-primary w-100 mb-2" onclick="dashboard.startReview('${dispute.disputeId}')">
+                                        <i class="fas fa-play me-1"></i>Start Review
                                 </button>
-                                <button class="btn btn-warning w-100" onclick="dashboard.updateStatus('${dispute.disputeId}', 'under_review')">
-                                    <i class="fas fa-eye me-1"></i>Mark Under Review
+                                ` : ''}
+                                
+                                ${dispute.status === 'under_review' ? `
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <button class="btn btn-success w-100" onclick="showResolveModal('${dispute.disputeId}')">
+                                                <i class="fas fa-check me-1"></i>Resolve
+                                </button>
+                            </div>
+                                        <div class="col-6">
+                                            <button class="btn btn-warning w-100" onclick="showEscalateModal('${dispute.disputeId}')">
+                                                <i class="fas fa-arrow-up me-1"></i>Escalate
+                                            </button>
+                        </div>
+                                    </div>
+                                    
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <button class="btn btn-info w-100" onclick="showRequestInfoModal('${dispute.disputeId}')">
+                                                <i class="fas fa-question me-1"></i>Request Info
+                                            </button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button class="btn btn-secondary w-100" onclick="showPriorityModal('${dispute.disputeId}')">
+                                                <i class="fas fa-flag me-1"></i>Priority
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="btn btn-outline-primary w-100 mb-2" onclick="dashboard.showInternalNotesModal('${dispute.disputeId}')">
+                                        <i class="fas fa-sticky-note me-1"></i>Internal Notes
+                                    </button>
+                                ` : ''}
+                                
+                                <button class="btn btn-outline-success w-100" onclick="dashboard.showContactModal('${dispute.disputeId}')">
+                                    <i class="fas fa-comment me-1"></i>Contact Parties
                                 </button>
                             </div>
                         </div>
@@ -637,10 +722,10 @@ class StaffDisputeDashboard {
         if (!message) return;
 
         try {
-            const response = await fetch(`${this.apiBaseUrl}/dispute/${this.currentDispute.disputeId}/message`, {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDispute.disputeId}/message`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ message })
@@ -660,33 +745,50 @@ class StaffDisputeDashboard {
     }
 
     showResolveModal(disputeId) {
+        console.log('🔍 showResolveModal called with disputeId:', disputeId);
         this.currentDisputeId = disputeId;
+        console.log('🔍 currentDisputeId set to:', this.currentDisputeId);
+        console.log('🔍 Dashboard object currentDisputeId:', this.currentDisputeId);
         new bootstrap.Modal(document.getElementById('resolveModal')).show();
     }
 
     async submitResolution() {
-        const decision = document.getElementById('resolutionDecision').value;
+        console.log('🔍 submitResolution called');
+        console.log('🔍 currentDisputeId:', this.currentDisputeId);
+        
+        const resolution = document.getElementById('resolutionDecision').value;
         const reason = document.getElementById('resolutionReason').value;
-        const refundAmount = document.getElementById('refundAmount').value;
         const notes = document.getElementById('resolutionNotes').value;
+        const refundAmount = document.getElementById('refundAmount').value;
 
-        if (!decision || !reason) {
-            this.showError('Please fill in all required fields');
+        console.log('🔍 Resolution:', resolution);
+        console.log('🔍 Reason:', reason);
+        console.log('🔍 Notes:', notes);
+        console.log('🔍 Refund Amount:', refundAmount);
+
+        if (!resolution) {
+            this.showError('Please select a resolution decision');
+            return;
+        }
+
+        if (!this.currentDisputeId) {
+            console.error('❌ No dispute selected - currentDisputeId is:', this.currentDisputeId);
+            this.showError('No dispute selected');
             return;
         }
 
         try {
-            const response = await fetch(`${this.apiBaseUrl}/dispute/${this.currentDisputeId}/resolve`, {
-                method: 'POST',
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/resolve`, {
+                method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    decision,
+                    resolution,
                     reason,
-                    refundAmount: refundAmount ? parseFloat(refundAmount) : 0,
-                    notes
+                    notes,
+                    refundAmount: refundAmount ? parseFloat(refundAmount) : 0
                 })
             });
 
@@ -719,7 +821,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch('/api/admin/staff/available', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -755,10 +857,10 @@ class StaffDisputeDashboard {
         }
 
         try {
-            const response = await fetch(`${this.apiBaseUrl}/dispute/${this.currentDisputeId}/assign`, {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/assign`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -785,10 +887,10 @@ class StaffDisputeDashboard {
 
     async updateStatus(disputeId, status) {
         try {
-            const response = await fetch(`${this.apiBaseUrl}/dispute/${disputeId}/status`, {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}/status`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ status })
@@ -804,6 +906,405 @@ class StaffDisputeDashboard {
         } catch (error) {
             console.error('Error updating status:', error);
             this.showError('Failed to update status');
+        }
+    }
+
+    // Start Review Action
+    async startReview(disputeId) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}/start-review`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to start review');
+            }
+
+            this.showSuccess('Review started successfully');
+            await this.loadMyDisputes();
+            await this.viewDispute(disputeId);
+
+        } catch (error) {
+            console.error('Error starting review:', error);
+            this.showError('Failed to start review');
+        }
+    }
+
+    // Show Escalate Modal
+    showEscalateModal(disputeId) {
+        console.log('🔍 showEscalateModal called with disputeId:', disputeId);
+        this.currentDisputeId = disputeId;
+        console.log('🔍 currentDisputeId set to:', this.currentDisputeId);
+        new bootstrap.Modal(document.getElementById('escalateModal')).show();
+    }
+
+    async submitEscalation() {
+        console.log('🔍 submitEscalation called');
+        console.log('🔍 currentDisputeId:', this.currentDisputeId);
+        
+        const reason = document.getElementById('escalationReason').value;
+        const notes = document.getElementById('escalationNotes').value;
+
+        console.log('🔍 Escalation Reason:', reason);
+        console.log('🔍 Escalation Notes:', notes);
+
+        if (!reason) {
+            this.showError('Please select an escalation reason');
+            return;
+        }
+
+        if (!this.currentDisputeId) {
+            console.error('❌ No dispute selected - currentDisputeId is:', this.currentDisputeId);
+            this.showError('No dispute selected');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/escalate`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    reason,
+                    priority: 'high', // Escalated disputes are always high priority
+                    notes
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to escalate dispute');
+            }
+
+            const result = await response.json();
+            console.log('✅ Escalation successful:', result);
+
+            // Close modal
+            const modalElement = document.getElementById('escalateModal');
+            const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modal.hide();
+
+            // Show success message
+            this.showSuccess('Dispute escalated successfully');
+
+            // Refresh the dispute list
+            await this.loadMyDisputes();
+
+        } catch (error) {
+            console.error('❌ Escalation error:', error);
+            this.showError('Failed to escalate dispute');
+        }
+    }
+
+
+    // Show Request Info Modal
+    showRequestInfoModal(disputeId) {
+        console.log('🔍 showRequestInfoModal called with disputeId:', disputeId);
+        this.currentDisputeId = disputeId;
+        console.log('🔍 currentDisputeId set to:', this.currentDisputeId);
+        new bootstrap.Modal(document.getElementById('requestInfoModal')).show();
+    }
+
+    async submitRequestInfo() {
+        console.log('🔍 submitRequestInfo called');
+        console.log('🔍 currentDisputeId:', this.currentDisputeId);
+        
+        const requestType = document.getElementById('requestType').value;
+        const message = document.getElementById('requestMessage').value;
+        const dueDate = document.getElementById('requestDueDate').value;
+
+        console.log('🔍 Request Type:', requestType);
+        console.log('🔍 Message:', message);
+        console.log('🔍 Due Date:', dueDate);
+
+        if (!requestType || !message) {
+            this.showError('Please select request type and enter message');
+            return;
+        }
+
+        if (!this.currentDisputeId) {
+            console.error('❌ No dispute selected - currentDisputeId is:', this.currentDisputeId);
+            this.showError('No dispute selected');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/request-info`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    requestType,
+                    message,
+                    dueDate: dueDate || null
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send information request');
+            }
+
+            const result = await response.json();
+            console.log('✅ Request info successful:', result);
+
+            // Close modal
+            const modalElement = document.getElementById('requestInfoModal');
+            const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modal.hide();
+
+            // Show success message
+            this.showSuccess('Information request sent successfully');
+
+            // Refresh the dispute list
+            await this.loadMyDisputes();
+
+        } catch (error) {
+            console.error('❌ Request info error:', error);
+            this.showError('Failed to send information request');
+        }
+    }
+
+
+    // Show Priority Modal
+    showPriorityModal(disputeId) {
+        console.log('🔍 showPriorityModal called with disputeId:', disputeId);
+        this.currentDisputeId = disputeId;
+        console.log('🔍 currentDisputeId set to:', this.currentDisputeId);
+        new bootstrap.Modal(document.getElementById('priorityModal')).show();
+    }
+
+    // Submit Priority Change
+    async submitPriorityChange() {
+        console.log('🔍 submitPriorityChange called');
+        console.log('🔍 currentDisputeId:', this.currentDisputeId);
+        
+        const priority = document.getElementById('newPriority').value;
+        const reason = document.getElementById('priorityReason').value;
+
+        console.log('🔍 Priority:', priority);
+        console.log('🔍 Reason:', reason);
+
+        if (!priority) {
+            this.showError('Please select a priority level');
+            return;
+        }
+
+        if (!this.currentDisputeId) {
+            console.error('❌ No dispute selected - currentDisputeId is:', this.currentDisputeId);
+            this.showError('No dispute selected');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/priority`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    priority, 
+                    reason: reason || '' 
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update priority');
+            }
+
+            const result = await response.json();
+            console.log('✅ Priority update successful:', result);
+
+            // Close modal
+            const modalElement = document.getElementById('priorityModal');
+            const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modal.hide();
+
+            // Show success message
+            this.showSuccess('Priority updated successfully');
+
+            // Refresh the dispute list
+            await this.loadMyDisputes();
+
+        } catch (error) {
+            console.error('❌ Priority update error:', error);
+            this.showError('Failed to update priority');
+        }
+    }
+
+    // Show Internal Notes Modal
+    showInternalNotesModal(disputeId) {
+        console.log('🔍 showInternalNotesModal called with disputeId:', disputeId);
+        this.currentDisputeId = disputeId;
+        console.log('🔍 currentDisputeId set to:', this.currentDisputeId);
+        new bootstrap.Modal(document.getElementById('internalNotesModal')).show();
+        
+        // Load existing notes
+        this.loadInternalNotes(disputeId);
+    }
+
+    // Load Internal Notes
+    async loadInternalNotes(disputeId) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}/internal-notes`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                this.renderInternalNotes(data.data.notes || []);
+            }
+        } catch (error) {
+            console.error('Error loading internal notes:', error);
+        }
+    }
+
+    // Render Internal Notes
+    renderInternalNotes(notes) {
+        const container = document.getElementById('internalNotesList');
+        
+        if (notes.length === 0) {
+            container.innerHTML = '<div class="text-muted">No internal notes yet</div>';
+            return;
+        }
+
+        const html = notes.map(note => `
+            <div class="card mb-2">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${note.addedBy?.fullName || 'Staff'}</strong>
+                            <div>${note.note}</div>
+                        </div>
+                        <small class="text-muted">${new Date(note.createdAt).toLocaleString()}</small>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+    }
+
+    // Add Internal Note
+    async addInternalNote() {
+        console.log('🔍 addInternalNote called');
+        console.log('🔍 currentDisputeId:', this.currentDisputeId);
+        
+        const note = document.getElementById('newInternalNote').value.trim();
+
+        console.log('🔍 Note:', note);
+
+        if (!note) {
+            this.showError('Please enter a note');
+            return;
+        }
+
+        if (!this.currentDisputeId) {
+            console.error('❌ No dispute selected - currentDisputeId is:', this.currentDisputeId);
+            this.showError('No dispute selected');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/internal-notes`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ note })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add note');
+            }
+
+            const result = await response.json();
+            console.log('✅ Note added successfully:', result);
+
+            document.getElementById('newInternalNote').value = '';
+            await this.loadInternalNotes(this.currentDisputeId);
+            this.showSuccess('Internal note added successfully');
+
+        } catch (error) {
+            console.error('❌ Error adding note:', error);
+            this.showError('Failed to add note');
+        }
+    }
+
+    // Show Contact Modal
+    showContactModal(disputeId) {
+        console.log('🔍 showContactModal called with disputeId:', disputeId);
+        this.currentDisputeId = disputeId;
+        console.log('🔍 currentDisputeId set to:', this.currentDisputeId);
+        new bootstrap.Modal(document.getElementById('contactModal')).show();
+    }
+
+    // Send Contact Message
+    async sendContactMessage() {
+        console.log('🔍 sendContactMessage called');
+        console.log('🔍 currentDisputeId:', this.currentDisputeId);
+        
+        const contactType = document.getElementById('contactRecipient').value;
+        const message = document.getElementById('contactMessage').value;
+        const isInternal = document.getElementById('internalMessage').checked;
+
+        console.log('🔍 Contact Type:', contactType);
+        console.log('🔍 Message:', message);
+        console.log('🔍 Is Internal:', isInternal);
+
+        if (!message.trim()) {
+            this.showError('Please enter a message');
+            return;
+        }
+
+        if (!this.currentDisputeId) {
+            console.error('❌ No dispute selected - currentDisputeId is:', this.currentDisputeId);
+            this.showError('No dispute selected');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/contact`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ contactType, message, isInternal })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to send message');
+            }
+
+            const result = await response.json();
+            console.log('✅ Message sent successfully:', result);
+
+            // Close modal
+            const modalElement = document.getElementById('contactModal');
+            const modal = bootstrap.Modal.getInstance(modalElement) || new bootstrap.Modal(modalElement);
+            modal.hide();
+
+            // Show success message
+            this.showSuccess('Message sent successfully');
+
+            // Refresh the dispute list
+            await this.loadMyDisputes();
+
+        } catch (error) {
+            console.error('❌ Error sending message:', error);
+            this.showError('Failed to send message');
         }
     }
 
@@ -878,7 +1379,7 @@ class StaffDisputeDashboard {
     }
 
     redirectToLogin() {
-        window.location.href = '/admin-login.html';
+        window.location.href = '/staff-login.html';
     }
 
     setupRealTimeUpdates() {
@@ -920,8 +1421,136 @@ function submitResolution() { dashboard.submitResolution(); }
 function submitAssignment() { dashboard.submitAssignment(); }
 
 function logout() {
-    localStorage.removeItem('adminToken');
-    window.location.href = '/admin-login.html';
+    localStorage.removeItem('staff-token');
+    window.location.href = '/staff-login.html';
+}
+
+// Global functions for onclick handlers
+function viewDispute(disputeId) {
+    if (dashboard) {
+        dashboard.viewDispute(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function startReview(disputeId) {
+    if (dashboard) {
+        dashboard.startReview(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function showResolveModal(disputeId) {
+    console.log('🔍 Global showResolveModal called with disputeId:', disputeId);
+    console.log('🔍 Dashboard object exists:', !!dashboard);
+    if (dashboard) {
+        console.log('🔍 Calling dashboard.showResolveModal');
+        dashboard.showResolveModal(disputeId);
+    } else {
+        console.error('❌ Dashboard not initialized');
+    }
+}
+
+function showEscalateModal(disputeId) {
+    if (dashboard) {
+        dashboard.showEscalateModal(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function showRequestInfoModal(disputeId) {
+    if (dashboard) {
+        dashboard.showRequestInfoModal(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function showPriorityModal(disputeId) {
+    if (dashboard) {
+        dashboard.showPriorityModal(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function showInternalNotesModal(disputeId) {
+    if (dashboard) {
+        dashboard.showInternalNotesModal(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function showContactModal(disputeId) {
+    if (dashboard) {
+        dashboard.showContactModal(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+// Additional global functions for modal actions
+function submitResolution() {
+    console.log('🔍 Global submitResolution called');
+    console.log('🔍 Dashboard object exists:', !!dashboard);
+    if (dashboard) {
+        console.log('🔍 Dashboard currentDisputeId:', dashboard.currentDisputeId);
+        dashboard.submitResolution();
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function submitEscalation() {
+    if (dashboard) {
+        dashboard.submitEscalation();
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function submitRequestInfo() {
+    if (dashboard) {
+        dashboard.submitRequestInfo();
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function submitPriorityChange() {
+    if (dashboard) {
+        dashboard.submitPriorityChange();
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function addInternalNote() {
+    if (dashboard) {
+        dashboard.addInternalNote();
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function showEscalateModal(disputeId) {
+    if (dashboard) {
+        dashboard.showEscalateModal(disputeId);
+    } else {
+        console.error('Dashboard not initialized');
+    }
+}
+
+function submitResolution() {
+    if (dashboard) {
+        dashboard.submitResolution();
+    } else {
+        console.error('Dashboard not initialized');
+    }
 }
 
 // Initialize dashboard when page loads

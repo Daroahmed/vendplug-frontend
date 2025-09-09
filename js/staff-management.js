@@ -10,14 +10,14 @@ class StaffManagement {
 
     async init() {
         // Check authentication
-        const token = localStorage.getItem('adminToken');
+        const token = localStorage.getItem('admin-token');
         if (!token) {
             this.redirectToLogin();
             return;
         }
 
         try {
-            // Get admin info
+            // Get admin info (non-blocking)
             await this.loadAdminInfo();
             
             // Load staff list
@@ -25,7 +25,10 @@ class StaffManagement {
             
         } catch (error) {
             console.error('Initialization error:', error);
-            this.showError('Failed to initialize staff management');
+            // Don't show error for admin info, just continue with staff list
+            if (error.message !== 'Failed to load admin info') {
+                this.showError('Failed to initialize staff management');
+            }
         }
     }
 
@@ -33,7 +36,7 @@ class StaffManagement {
         try {
             const response = await fetch(`${this.apiBaseUrl}/profile`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -46,11 +49,13 @@ class StaffManagement {
             this.currentAdmin = data.data;
             
             // Update UI
-            document.getElementById('adminName').textContent = this.currentAdmin.fullName;
+            document.getElementById('adminName').textContent = this.currentAdmin.fullName || 'Admin User';
 
         } catch (error) {
             console.error('Error loading admin info:', error);
-            throw error;
+            // Fallback to generic admin name
+            document.getElementById('adminName').textContent = 'Admin User';
+            this.currentAdmin = { fullName: 'Admin User' };
         }
     }
 
@@ -58,7 +63,7 @@ class StaffManagement {
         try {
             const response = await fetch(`${this.apiBaseUrl}/staff`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -68,8 +73,22 @@ class StaffManagement {
             }
 
             const data = await response.json();
-            this.staffList = data.data;
+            console.log('Staff API response:', data);
+            
+            // Handle different response formats
+            if (data.data && Array.isArray(data.data)) {
+                this.staffList = data.data;
+            } else if (data.data && data.data.staff && Array.isArray(data.data.staff)) {
+                this.staffList = data.data.staff;
+            } else {
+                console.warn('Unexpected staff data format:', data);
+                this.staffList = [];
+            }
+            
             this.filteredStaff = [...this.staffList];
+            
+            // Load dispute assignments for each staff member
+            await this.loadStaffDisputeAssignments();
             
             this.updateStats();
             this.renderStaffList();
@@ -78,6 +97,35 @@ class StaffManagement {
             console.error('Error loading staff list:', error);
             document.getElementById('staffList').innerHTML = 
                 '<div class="text-center text-muted">Failed to load staff list</div>';
+        }
+    }
+
+    async loadStaffDisputeAssignments() {
+        try {
+            // Load dispute statistics for all staff
+            const response = await fetch(`${this.apiBaseUrl}/disputes/staff-stats`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Update staff list with dispute assignments
+                this.staffList.forEach(staff => {
+                    const staffStats = data.data.find(stat => stat.staffId === staff._id);
+                    if (staffStats) {
+                        staff.currentDisputes = staffStats.currentDisputes || [];
+                        staff.assignedDisputes = staffStats.assignedDisputes || 0;
+                        staff.resolvedDisputes = staffStats.resolvedDisputes || 0;
+                        staff.underReviewDisputes = staffStats.underReviewDisputes || 0;
+                        staff.overdueDisputes = staffStats.overdueDisputes || 0;
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Error loading staff dispute assignments:', error);
         }
     }
 
@@ -157,14 +205,24 @@ class StaffManagement {
                             <div class="col-md-3">
                                 <div class="row text-center">
                                     <div class="col-4">
-                                        <h6 class="mb-1">${staff.activityStats?.disputesAssigned || 0}</h6>
+                                        <h6 class="mb-1">${staff.assignedDisputes || staff.activityStats?.disputesAssigned || 0}</h6>
                                         <small class="text-muted">Assigned</small>
                                     </div>
                                     <div class="col-4">
-                                        <h6 class="mb-1">${staff.activityStats?.disputesResolved || 0}</h6>
+                                        <h6 class="mb-1">${staff.resolvedDisputes || staff.activityStats?.disputesResolved || 0}</h6>
                                         <small class="text-muted">Resolved</small>
                                     </div>
                                     <div class="col-4">
+                                        <h6 class="mb-1">${staff.underReviewDisputes || 0}</h6>
+                                        <small class="text-muted">Under Review</small>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-2">
+                                    <div class="col-6">
+                                        <h6 class="mb-1 text-warning">${staff.overdueDisputes || 0}</h6>
+                                        <small class="text-muted">Overdue</small>
+                                    </div>
+                                    <div class="col-6">
                                         <h6 class="mb-1">${staff.disputeSpecialties?.length || 0}</h6>
                                         <small class="text-muted">Specialties</small>
                                     </div>
@@ -174,6 +232,9 @@ class StaffManagement {
                                 <div class="btn-group-vertical">
                                     <button class="btn btn-outline-primary btn-sm mb-1" onclick="staffManager.editStaff('${staff._id}')">
                                         <i class="fas fa-edit me-1"></i>Edit
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm mb-1" onclick="staffManager.viewStaffDisputes('${staff._id}')">
+                                        <i class="fas fa-gavel me-1"></i>View Disputes
                                     </button>
                                     <button class="btn btn-outline-${staff.isActive ? 'warning' : 'success'} btn-sm" onclick="staffManager.toggleStaffStatus('${staff._id}', ${staff.isActive})">
                                         <i class="fas fa-${staff.isActive ? 'pause' : 'play'} me-1"></i>${staff.isActive ? 'Deactivate' : 'Activate'}
@@ -368,7 +429,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formData)
@@ -471,7 +532,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff/${staffId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formData)
@@ -513,7 +574,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff/${staffId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -551,7 +612,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff/${staffId}/reset-password`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ newPassword })
@@ -651,6 +712,276 @@ class StaffManagement {
         this.showSuccess('Staff list refreshed');
     }
 
+    async viewStaffDisputes(staffId) {
+        try {
+            const staff = this.staffList.find(s => s._id === staffId);
+            if (!staff) {
+                this.showError('Staff member not found');
+                return;
+            }
+
+            // Load staff's disputes
+            const response = await fetch(`${this.apiBaseUrl}/disputes/staff/${staffId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load staff disputes');
+            }
+
+            const data = await response.json();
+            this.showStaffDisputesModal(staff, data.data.disputes || []);
+
+        } catch (error) {
+            console.error('Error loading staff disputes:', error);
+            this.showError('Failed to load staff disputes');
+        }
+    }
+
+    showStaffDisputesModal(staff, disputes) {
+        const modalHTML = `
+            <div class="modal fade" id="staffDisputesModal" tabindex="-1">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-gavel me-2"></i>Disputes for ${staff.fullName}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h5 class="text-primary">${disputes.filter(d => d.status === 'assigned').length}</h5>
+                                            <small>Assigned</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h5 class="text-warning">${disputes.filter(d => d.status === 'under_review').length}</h5>
+                                            <small>Under Review</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h5 class="text-success">${disputes.filter(d => d.status === 'resolved').length}</h5>
+                                            <small>Resolved</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h5 class="text-danger">${disputes.filter(d => d.status === 'escalated').length}</h5>
+                                            <small>Escalated</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Dispute ID</th>
+                                            <th>Title</th>
+                                            <th>Status</th>
+                                            <th>Priority</th>
+                                            <th>Category</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${disputes.map(dispute => `
+                                            <tr>
+                                                <td>${dispute.disputeId}</td>
+                                                <td>${dispute.title || 'No title'}</td>
+                                                <td>
+                                                    <span class="badge bg-${this.getStatusColor(dispute.status)}">
+                                                        ${dispute.status.replace('_', ' ')}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-${this.getPriorityColor(dispute.priority)}">
+                                                        ${dispute.priority}
+                                                    </span>
+                                                </td>
+                                                <td>${dispute.category.replace('_', ' ')}</td>
+                                                <td>${new Date(dispute.createdAt).toLocaleDateString()}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="staffManager.viewDisputeDetails('${dispute.disputeId}')">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            ${disputes.length === 0 ? '<div class="text-center text-muted py-4">No disputes assigned to this staff member</div>' : ''}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('staffDisputesModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('staffDisputesModal')).show();
+    }
+
+    getStatusColor(status) {
+        const colors = {
+            'open': 'secondary',
+            'assigned': 'primary',
+            'under_review': 'warning',
+            'resolved': 'success',
+            'escalated': 'danger',
+            'closed': 'dark'
+        };
+        return colors[status] || 'secondary';
+    }
+
+    getPriorityColor(priority) {
+        const colors = {
+            'low': 'success',
+            'medium': 'warning',
+            'high': 'danger',
+            'urgent': 'dark'
+        };
+        return colors[priority] || 'secondary';
+    }
+
+    async viewDisputeDetails(disputeId) {
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load dispute details');
+            }
+
+            const data = await response.json();
+            this.showDisputeDetailsModal(data.data);
+
+        } catch (error) {
+            console.error('Error loading dispute details:', error);
+            this.showError('Failed to load dispute details');
+        }
+    }
+
+    showDisputeDetailsModal(dispute) {
+        const modalHTML = `
+            <div class="modal fade" id="disputeDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">
+                                <i class="fas fa-gavel me-2"></i>Dispute Details - ${dispute.disputeId}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <strong>Status:</strong>
+                                    <span class="badge bg-${this.getStatusColor(dispute.status)} ms-2">
+                                        ${dispute.status.replace('_', ' ')}
+                                    </span>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Priority:</strong>
+                                    <span class="badge bg-${this.getPriorityColor(dispute.priority)} ms-2">
+                                        ${dispute.priority}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Title:</strong>
+                                <p>${dispute.title || 'No title'}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Description:</strong>
+                                <p>${dispute.description || 'No description'}</p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Category:</strong>
+                                <span class="badge bg-info">${dispute.category.replace('_', ' ')}</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <strong>Created:</strong>
+                                <span>${new Date(dispute.createdAt).toLocaleString()}</span>
+                            </div>
+                            
+                            ${dispute.assignment ? `
+                                <div class="mb-3">
+                                    <strong>Assigned To:</strong>
+                                    <p>${dispute.assignment.assignedTo?.fullName || 'Unknown'} (${dispute.assignment.assignedTo?.role || 'Unknown'})</p>
+                                    <small class="text-muted">Assigned on: ${new Date(dispute.assignment.assignedAt).toLocaleString()}</small>
+                                </div>
+                            ` : ''}
+                            
+                            ${dispute.resolution ? `
+                                <div class="mb-3">
+                                    <strong>Resolution:</strong>
+                                    <p>Decision: ${dispute.resolution.resolution}</p>
+                                    <p>Notes: ${dispute.resolution.notes || 'No notes'}</p>
+                                    <p>Resolved by: ${dispute.resolution.resolvedBy?.fullName || 'Unknown'}</p>
+                                    <p>Resolved on: ${new Date(dispute.resolution.resolvedAt).toLocaleString()}</p>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('disputeDetailsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to page
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Show modal
+        new bootstrap.Modal(document.getElementById('disputeDetailsModal')).show();
+    }
+
     // Utility functions
     showSuccess(message) {
         this.showAlert(message, 'success');
@@ -678,7 +1009,7 @@ class StaffManagement {
     }
 
     redirectToLogin() {
-        window.location.href = '/admin-login.html';
+        window.location.href = 'admin-login.html';
     }
 }
 
@@ -698,8 +1029,8 @@ function previewCSV() { staffManager.previewCSV(); }
 function importStaff() { staffManager.importStaff(); }
 
 function logout() {
-    localStorage.removeItem('adminToken');
-    window.location.href = '/admin-login.html';
+    localStorage.removeItem('admin-token');
+    window.location.href = 'admin-login.html';
 }
 
 // Initialize staff manager when page loads

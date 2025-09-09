@@ -593,6 +593,16 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="staff-management.html" class="nav-link">
+                        <i>👨‍💼</i> Staff Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#staff-activity" class="nav-link" data-section="staff-activity">
+                        <i>📋</i> Staff Activity Log
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="#logout" class="nav-link" id="logoutBtn">
                         <i>🚪</i> Logout
                     </a>
@@ -657,10 +667,46 @@
                         </div>
                         <div class="card">
                             <div class="card-header">
+                                <div class="card-icon disputes">👥</div>
+                                <div>
+                                    <div class="card-title">Assigned Disputes</div>
+                                    <div class="card-value" id="assignedDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
                                 <div class="card-icon disputes">🔍</div>
                                 <div>
                                     <div class="card-title">Under Review</div>
                                     <div class="card-value" id="underReviewDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="cursor: pointer;" onclick="window.location.href='staff-management.html'">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">👨‍💼</div>
+                                <div>
+                                    <div class="card-title">Staff Management</div>
+                                    <div class="card-value" style="font-size: 0.9rem; color: #3498db;">Manage Team</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="cursor: pointer;" onclick="window.location.href='staff-login.html'">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">🛡️</div>
+                                <div>
+                                    <div class="card-title">Staff Login</div>
+                                    <div class="card-value" style="font-size: 0.9rem; color: #27ae60;">Dispute Resolution</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="cursor: pointer;" onclick="adminDashboard.showEscalatedDisputes()">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">🚨</div>
+                                <div>
+                                    <div class="card-title">Escalated Disputes</div>
+                                    <div class="card-value" id="escalatedDisputes">0</div>
                                 </div>
                             </div>
                         </div>
@@ -825,7 +871,9 @@
                             <select id="disputeStatus">
                                 <option value="">All Statuses</option>
                                 <option value="open">Open</option>
+                                <option value="assigned">Assigned</option>
                                 <option value="under_review">Under Review</option>
+                                <option value="escalated">Escalated</option>
                                 <option value="resolved">Resolved</option>
                                 <option value="closed">Closed</option>
                             </select>
@@ -849,6 +897,94 @@
                     <div id="disputesTable" class="loading">
                         <div class="spinner"></div>
                         Loading disputes...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escalated Disputes Section -->
+            <div id="escalated-disputes-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Escalated Disputes</h3>
+                    <p>Review and take action on escalated disputes</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Priority</label>
+                            <select id="escalatedPriority">
+                                <option value="">All Priorities</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Escalation Reason</label>
+                            <select id="escalationReason">
+                                <option value="">All Reasons</option>
+                                <option value="complex_case">Complex Case</option>
+                                <option value="staff_unavailable">Staff Unavailable</option>
+                                <option value="requires_admin_decision">Requires Admin Decision</option>
+                                <option value="legal_issues">Legal Issues</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchEscalatedDisputes()">Filter</button>
+                        </div>
+                    </div>
+
+                    <div id="escalatedDisputesTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading escalated disputes...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Staff Activity Log Section -->
+            <div id="staff-activity-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Staff Activity Log</h3>
+                    <p>Track all staff actions and dispute activities</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Staff Member</label>
+                            <select id="staffFilter">
+                                <option value="">All Staff</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Action Type</label>
+                            <select id="actionFilter">
+                                <option value="">All Actions</option>
+                                <option value="dispute_assigned">Dispute Assigned</option>
+                                <option value="review_started">Review Started</option>
+                                <option value="dispute_resolved">Dispute Resolved</option>
+                                <option value="dispute_escalated">Dispute Escalated</option>
+                                <option value="priority_updated">Priority Updated</option>
+                                <option value="message_sent">Message Sent</option>
+                                <option value="info_requested">Info Requested</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date Range</label>
+                            <input type="date" id="dateFrom">
+                        </div>
+                        <div class="filter-group">
+                            <label>To</label>
+                            <input type="date" id="dateTo">
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchStaffActivity()">Filter</button>
+                        </div>
+                    </div>
+
+                    <div id="staffActivityTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading staff activity...
                     </div>
                 </div>
             </div>
