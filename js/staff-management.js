@@ -49,7 +49,7 @@ class StaffManagement {
             this.currentAdmin = data.data;
             
             // Update UI
-            document.getElementById('adminName').textContent = this.currentAdmin.fullName || 'Admin User';
+            document.getElementById('adminName').textContent = DataFormatter.formatUserName(this.currentAdmin);
 
         } catch (error) {
             console.error('Error loading admin info:', error);
@@ -182,16 +182,16 @@ class StaffManagement {
                                         </div>
                                     </div>
                                     <div>
-                                        <h6 class="mb-1">${staff.fullName}</h6>
-                                        <p class="text-muted mb-0">${staff.email}</p>
-                                        <small class="text-muted">@${staff.username}</small>
+                                        <h6 class="mb-1">${DataFormatter.formatUserName(staff)}</h6>
+                                        <p class="text-muted mb-0">${DataFormatter.formatEmail(staff.email)}</p>
+                                        <small class="text-muted">@${DataFormatter.formatUsername(staff.username)}</small>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-2">
-                                <span class="role-badge role-${roleClass}">${staff.role.replace('dispute_', '').replace('_', ' ')}</span>
+                                <span class="role-badge role-${roleClass}">${DataFormatter.formatUserType(staff.role)}</span>
                                 <br>
-                                <span class="status-badge status-${statusClass}">${staff.isActive ? 'Active' : 'Inactive'}</span>
+                                <span class="status-badge status-${statusClass}">${DataFormatter.formatStatus(staff.isActive ? 'active' : 'inactive')}</span>
                             </div>
                             <div class="col-md-2">
                                 <div class="text-center">
@@ -748,7 +748,7 @@ class StaffManagement {
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">
-                                <i class="fas fa-gavel me-2"></i>Disputes for ${staff.fullName}
+                                <i class="fas fa-gavel me-2"></i>Disputes for ${DataFormatter.formatUserName(staff)}
                             </h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
@@ -925,29 +925,29 @@ class StaffManagement {
                             
                             <div class="mb-3">
                                 <strong>Title:</strong>
-                                <p>${dispute.title || 'No title'}</p>
+                                <p>${DataFormatter.formatText(dispute.title, 'No title')}</p>
                             </div>
                             
                             <div class="mb-3">
                                 <strong>Description:</strong>
-                                <p>${dispute.description || 'No description'}</p>
+                                <p>${DataFormatter.formatText(dispute.description, 'No description')}</p>
                             </div>
                             
                             <div class="mb-3">
                                 <strong>Category:</strong>
-                                <span class="badge bg-info">${dispute.category.replace('_', ' ')}</span>
+                                <span class="badge bg-info">${DataFormatter.formatCategory(dispute.category)}</span>
                             </div>
                             
                             <div class="mb-3">
                                 <strong>Created:</strong>
-                                <span>${new Date(dispute.createdAt).toLocaleString()}</span>
+                                <span>${DataFormatter.formatDate(dispute.createdAt)}</span>
                             </div>
                             
                             ${dispute.assignment ? `
                                 <div class="mb-3">
                                     <strong>Assigned To:</strong>
-                                    <p>${dispute.assignment.assignedTo?.fullName || 'Unknown'} (${dispute.assignment.assignedTo?.role || 'Unknown'})</p>
-                                    <small class="text-muted">Assigned on: ${new Date(dispute.assignment.assignedAt).toLocaleString()}</small>
+                                    <p>${DataFormatter.formatUserName(dispute.assignment.assignedTo)} (${DataFormatter.formatUserType(dispute.assignment.assignedTo?.role)})</p>
+                                    <small class="text-muted">Assigned on: ${DataFormatter.formatDate(dispute.assignment.assignedAt)}</small>
                                 </div>
                             ` : ''}
                             
@@ -955,9 +955,9 @@ class StaffManagement {
                                 <div class="mb-3">
                                     <strong>Resolution:</strong>
                                     <p>Decision: ${dispute.resolution.resolution}</p>
-                                    <p>Notes: ${dispute.resolution.notes || 'No notes'}</p>
-                                    <p>Resolved by: ${dispute.resolution.resolvedBy?.fullName || 'Unknown'}</p>
-                                    <p>Resolved on: ${new Date(dispute.resolution.resolvedAt).toLocaleString()}</p>
+                                    <p>Notes: ${DataFormatter.formatText(dispute.resolution.notes, 'No notes')}</p>
+                                    <p>Resolved by: ${DataFormatter.formatUserName(dispute.resolution.resolvedBy)}</p>
+                                    <p>Resolved on: ${DataFormatter.formatDate(dispute.resolution.resolvedAt)}</p>
                                 </div>
                             ` : ''}
                         </div>

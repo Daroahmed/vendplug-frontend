@@ -276,7 +276,7 @@ class StaffDisputeDashboard {
                                 <small>
                                     <i class="fas fa-tag me-1"></i>${dispute.category.replace(/_/g, ' ')}
                                     <i class="fas fa-calendar ms-3 me-1"></i>${new Date(dispute.createdAt).toLocaleDateString()}
-                                    <i class="fas fa-user ms-3 me-1"></i>${dispute.complainant?.userId?.fullName || 'Unknown'}
+                                    <i class="fas fa-user ms-3 me-1"></i>${DataFormatter.formatUserName(dispute.complainant?.userId)}
                                 </small>
                             </div>
                         </div>
@@ -369,7 +369,7 @@ class StaffDisputeDashboard {
                                 <small>
                                     <i class="fas fa-tag me-1"></i>${dispute.category.replace(/_/g, ' ')}
                                     <i class="fas fa-calendar ms-3 me-1"></i>${new Date(dispute.createdAt).toLocaleDateString()}
-                                    <i class="fas fa-user ms-3 me-1"></i>${dispute.complainant?.userId?.fullName || 'Unknown'}
+                                    <i class="fas fa-user ms-3 me-1"></i>${DataFormatter.formatUserName(dispute.complainant?.userId)}
                                 </small>
                             </div>
                         </div>
@@ -603,17 +603,17 @@ class StaffDisputeDashboard {
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <strong>Complainant (${dispute.complainant?.userType || 'Buyer'}):</strong><br>
+                                <strong>Complainant (${DataFormatter.formatUserType(dispute.complainant?.userType)}):</strong><br>
                                 <small class="text-muted">
-                                    ID: ${dispute.complainant?.userId?._id || dispute.complainant?.userId || dispute.complainant?._id || 'Unknown'}<br>
-                                    Name: ${dispute.complainant?.userId?.fullName || dispute.complainant?.userId?.shopName || dispute.complainant?.fullName || dispute.complainant?.shopName || 'Unknown'}
+                                    ID: ${DataFormatter.formatOrderId(dispute.complainant?.userId?._id || dispute.complainant?.userId)}<br>
+                                    Name: ${DataFormatter.formatUserName(dispute.complainant?.userId)}
                                 </small>
                             </div>
                             <div class="mb-3">
-                                <strong>Respondent (${dispute.respondent?.userType || 'Vendor'}):</strong><br>
+                                <strong>Respondent (${DataFormatter.formatUserType(dispute.respondent?.userType)}):</strong><br>
                                 <small class="text-muted">
-                                    ID: ${dispute.respondent?.userId?._id || dispute.respondent?.userId || dispute.respondent?._id || 'Unknown'}<br>
-                                    Name: ${dispute.respondent?.userId?.fullName || dispute.respondent?.userId?.shopName || dispute.respondent?.userId?.businessName || dispute.respondent?.fullName || dispute.respondent?.shopName || dispute.respondent?.businessName || 'Unknown'}
+                                    ID: ${DataFormatter.formatOrderId(dispute.respondent?.userId?._id || dispute.respondent?.userId)}<br>
+                                    Name: ${DataFormatter.formatUserName(dispute.respondent?.userId)}
                                 </small>
                             </div>
                         </div>
@@ -625,16 +625,16 @@ class StaffDisputeDashboard {
                         </div>
                         <div class="card-body">
                             <div class="mb-2">
-                                <strong>Order ID:</strong> ${dispute.order?.orderId || dispute.orderId || dispute.order?._id || 'N/A'}
+                                <strong>Order ID:</strong> ${DataFormatter.formatOrderId(dispute.orderId?._id || dispute.orderId)}
                             </div>
                             <div class="mb-2">
-                                <strong>Amount:</strong> ₦${dispute.order?.totalAmount || dispute.order?.amount || 'N/A'}
+                                <strong>Amount:</strong> ${DataFormatter.formatCurrency(dispute.orderId?.totalAmount)}
                             </div>
                             <div class="mb-2">
-                                <strong>Status:</strong> ${dispute.order?.status || 'N/A'}
+                                <strong>Status:</strong> ${DataFormatter.formatStatus(dispute.orderId?.status)}
                             </div>
                             <div class="mb-2">
-                                <strong>Created:</strong> ${dispute.order?.createdAt ? new Date(dispute.order.createdAt).toLocaleDateString() : dispute.order?.created ? new Date(dispute.order.created).toLocaleDateString() : 'N/A'}
+                                <strong>Created:</strong> ${DataFormatter.formatDate(dispute.orderId?.createdAt)}
                             </div>
                         </div>
                     </div>

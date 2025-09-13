@@ -68,6 +68,9 @@ class AdminDashboard {
             }
 
             const data = await response.json();
+            console.log('📊 Dashboard data received:', data);
+            console.log('📊 Counts data:', data.data?.counts);
+            console.log('📊 Financial data:', data.data?.financial);
             this.updateDashboardCards(data.data.counts);
             this.updateFinancialSummary(data.data.financial);
             this.updateRecentOrders(data.data.recentOrders);
@@ -147,6 +150,7 @@ class AdminDashboard {
     }
 
     updateFinancialSummary(financial) {
+        console.log('💰 Updating financial summary with data:', financial);
         if (!financial) return;
         
         // Format currency with Nigerian Naira symbol
@@ -189,6 +193,7 @@ class AdminDashboard {
     }
 
     updateDashboardCards(counts) {
+        console.log('🔢 Updating dashboard cards with counts:', counts);
         document.getElementById('totalUsers').textContent = counts.totalBuyers + counts.totalVendors + counts.totalAgents;
         document.getElementById('totalOrders').textContent = counts.totalOrders;
         document.getElementById('pendingPayouts').textContent = counts.pendingPayouts;
@@ -230,12 +235,12 @@ class AdminDashboard {
 
         const ordersHTML = orders.map(order => `
             <div style="padding: 10px; border-bottom: 1px solid #eee;">
-                <div style="font-weight: 600;">${order.orderId || 'N/A'}</div>
+                <div style="font-weight: 600;">${DataFormatter.formatOrderId(order.orderId)}</div>
                 <div style="font-size: 0.9rem; color: #666;">
-                    ${order.buyer?.fullName || 'Unknown'} → ${order.vendor?.shopName || 'Unknown'}
+                    ${DataFormatter.formatUserName(order.buyer)} → ${DataFormatter.formatUserName(order.vendor, 'Unknown Vendor')}
                 </div>
                 <div style="font-size: 0.8rem; color: #999;">
-                    ${new Date(order.createdAt).toLocaleDateString()} - ${order.status}
+                    ${DataFormatter.formatDate(order.createdAt)} - ${DataFormatter.formatStatus(order.status)}
                 </div>
             </div>
         `).join('');
@@ -544,17 +549,17 @@ class AdminDashboard {
                     <tbody>
                         ${data.orders.map(order => `
                             <tr>
-                                <td>${order._id || 'N/A'}</td>
-                                <td>${order.buyer?.fullName || 'Unknown'}</td>
-                                <td>${order.vendor?.shopName || 'Unknown'}</td>
-                                <td>₦${order.totalAmount?.toLocaleString() || 'N/A'}</td>
+                                <td>${DataFormatter.formatOrderId(order._id)}</td>
+                                <td>${DataFormatter.formatUserName(order.buyer)}</td>
+                                <td>${DataFormatter.formatUserName(order.vendor, 'Unknown Vendor')}</td>
+                                <td>${DataFormatter.formatCurrency(order.totalAmount)}</td>
                                 <td>
-                                    <span class="status-badge status-${order.status}">
-                                        ${order.status}
+                                    <span class="status-badge ${DataFormatter.getStatusBadgeClass(order.status)}">
+                                        ${DataFormatter.formatStatus(order.status)}
                                     </span>
                                 </td>
                                 <td>${order.agent ? 'Agent' : 'Vendor'}</td>
-                                <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                                <td>${DataFormatter.formatDate(order.createdAt)}</td>
                             </tr>
                         `).join('')}
                     </tbody>
@@ -880,18 +885,18 @@ class AdminDashboard {
                             <tr>
                                 <td>${dispute.disputeId}</td>
                                 <td>
-                                    <div>${dispute.raisedBy?.fullName || dispute.complainant?.userId?.fullName || 'Unknown'}</div>
-                                    <div style="font-size: 0.8rem; color: #666;">${dispute.raisedByType || dispute.complainant?.userType || 'N/A'}</div>
+                                    <div>${DataFormatter.formatUserName(dispute.raisedBy || dispute.complainant?.userId)}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${DataFormatter.formatUserType(dispute.raisedByType || dispute.complainant?.userType)}</div>
                                 </td>
                                 <td>
-                                    <div>${dispute.order?.vendor?.shopName || dispute.respondent?.userId?.fullName || dispute.respondent?.userId?.shopName || 'Unknown'}</div>
-                                    <div style="font-size: 0.8rem; color: #666;">${dispute.order?.vendor ? 'Vendor' : dispute.respondent?.userType || 'N/A'}</div>
+                                    <div>${DataFormatter.formatUserName(dispute.respondent?.userId, 'Unknown Respondent')}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${DataFormatter.formatUserType(dispute.respondent?.userType)}</div>
                                 </td>
                                 <td>
-                                    <div>${dispute.order?._id || dispute.orderId?._id || 'N/A'}</div>
-                                    <div style="font-size: 0.8rem; color: #666;">₦${dispute.order?.totalAmount?.toLocaleString() || dispute.orderId?.totalAmount?.toLocaleString() || 'N/A'}</div>
+                                    <div>${DataFormatter.formatOrderId(dispute.orderId?._id || dispute.orderId)}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${DataFormatter.formatCurrency(dispute.orderId?.totalAmount)}</div>
                                 </td>
-                                <td>${this.formatCategory(dispute.category)}</td>
+                                <td>${DataFormatter.formatCategory(dispute.category)}</td>
                                 <td>
                                     <span class="status-badge status-${dispute.status}">
                                         ${dispute.status.replace('_', ' ')}
@@ -980,6 +985,15 @@ class AdminDashboard {
                         <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
                     </div>
                     <div class="modal-body">
+                        ${disputeData.status === 'escalated' ? `
+                            <div class="alert alert-warning">
+                                <strong>⚠️ This dispute has been escalated and requires admin attention</strong>
+                                ${disputeData.escalation ? `
+                                    <br><small>Escalation Reason: ${disputeData.escalation.reason || 'Not specified'}</small>
+                                    ${disputeData.escalation.notes ? `<br><small>Notes: ${disputeData.escalation.notes}</small>` : ''}
+                                ` : ''}
+                            </div>
+                        ` : ''}
                         <div class="dispute-info">
                             <div class="info-grid">
                                 <div class="info-item">
@@ -1010,8 +1024,8 @@ class AdminDashboard {
                                     </div>
                                     <div class="party">
                                         <h4>Respondent (${disputeData.respondent?.userType || 'Unknown'})</h4>
-                                        <p>ID: ${disputeData.order?.vendor?._id || disputeData.order?.buyer?._id || disputeData.respondent?.userId?._id || disputeData.respondent?.userId || 'Unknown'}</p>
-                                        <p>Name: ${disputeData.order?.vendor?.shopName || disputeData.order?.buyer?.fullName || disputeData.respondent?.userId?.fullName || disputeData.respondent?.userId?.shopName || 'Unknown'}</p>
+                                        <p>ID: ${DataFormatter.formatOrderId(disputeData.respondent?.userId?._id || disputeData.respondent?.userId)}</p>
+                                        <p>Name: ${DataFormatter.formatUserName(disputeData.respondent?.userId, 'Unknown Respondent')}</p>
                                     </div>
                                 </div>
                                 ${disputeData.assignment?.assignedTo ? `
@@ -1036,9 +1050,9 @@ class AdminDashboard {
                                 </div>
                                 <div class="detail-item">
                                     <label>Order:</label>
-                                    <p>${disputeData.orderType || 'Unknown'} - ${disputeData.order?._id || disputeData.orderId?._id || disputeData.orderId || 'Unknown'}</p>
-                                    <p>Amount: ₦${disputeData.order?.totalAmount?.toLocaleString() || disputeData.orderId?.totalAmount || 'Unknown'}</p>
-                                    <p>Status: ${disputeData.order?.status || disputeData.orderId?.status || 'Unknown'}</p>
+                                    <p>${DataFormatter.formatUserType(disputeData.orderType)} - ${DataFormatter.formatOrderId(disputeData.orderId?._id || disputeData.orderId)}</p>
+                                    <p>Amount: ${DataFormatter.formatCurrency(disputeData.orderId?.totalAmount)}</p>
+                                    <p>Status: ${DataFormatter.formatStatus(disputeData.orderId?.status)}</p>
                                 </div>
                             </div>
 
@@ -1114,10 +1128,20 @@ class AdminDashboard {
                     </div>
                     <div class="modal-footer">
                         ${disputeData.status === 'open' ? `
-                            <button class="btn btn-success" onclick="adminDashboard.assignDispute('${disputeData.disputeId}')">Assign to Admin</button>
+                            <button class="btn btn-success" onclick="adminDashboard.assignDispute('${disputeData.disputeId}')">Assign to Staff</button>
                         ` : ''}
                         ${disputeData.status === 'under_review' ? `
                             <button class="btn btn-warning" onclick="adminDashboard.resolveDispute('${disputeData.disputeId}')">Resolve Dispute</button>
+                        ` : ''}
+                        ${disputeData.status === 'escalated' ? `
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary" onclick="adminDashboard.reassignEscalatedDispute('${disputeData.disputeId}')">
+                                    <i class="fas fa-user-plus me-1"></i>Reassign to Staff
+                                </button>
+                                <button class="btn btn-success" onclick="adminDashboard.showResolveEscalatedModal('${disputeData.disputeId}')">
+                                    <i class="fas fa-check me-1"></i>Resolve Escalated
+                                </button>
+                            </div>
                         ` : ''}
                         <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
                     </div>
@@ -1129,19 +1153,92 @@ class AdminDashboard {
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
-    assignDispute(disputeId) {
-        const assignedTo = prompt('Enter admin ID to assign this dispute to:');
-        if (assignedTo && assignedTo.trim()) {
-            this.performAssignDispute(disputeId, assignedTo.trim());
+    async assignDispute(disputeId) {
+        try {
+            // Fetch available staff for assignment
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch staff list');
+            }
+
+            const data = await response.json();
+            const staff = data.data.staff || [];
+
+            // Filter staff with dispute resolution permissions
+            const availableStaff = staff.filter(s => 
+                s.permissions && s.permissions.disputeResolution && s.isActive
+            );
+
+            if (availableStaff.length === 0) {
+                alert('No available staff members found for dispute assignment');
+                return;
+            }
+
+            // Create staff selection modal
+            this.showStaffSelectionModal(disputeId, availableStaff);
+
+        } catch (error) {
+            console.error('Error fetching staff:', error);
+            alert('Failed to load staff list. Please try again.');
         }
     }
 
-    async performAssignDispute(disputeId, assignedTo) {
+    showStaffSelectionModal(disputeId, staff) {
+        // Create modal HTML
+        const modalHtml = `
+            <div id="staffSelectionModal" class="modal" style="display: block;">
+                <div class="modal-content" style="max-width: 600px; max-height: 90%; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Assign Dispute to Staff</h2>
+                        <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Select a staff member to assign this dispute to:</p>
+                        <div class="list-group">
+                            ${staff.map(s => `
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                        onclick="adminDashboard.performAssignDispute('${disputeId}', '${s._id}', '${s.fullName}')">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">${s.fullName}</h6>
+                                        <small>${s.role}</small>
+                                    </div>
+                                    <p class="mb-1">Current workload: ${s.currentDisputes || 0} disputes</p>
+                                    <small>Specialties: ${s.disputeSpecialties ? s.disputeSpecialties.join(', ') : 'General'}</small>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('staffSelectionModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Modal is already visible with style="display: block;"
+    }
+
+    async performAssignDispute(disputeId, assignedTo, staffName) {
         try {
-            const response = await fetch(`/api/admin/disputes/${disputeId}/assign`, {
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/assign`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ assignedTo })
@@ -1149,8 +1246,14 @@ class AdminDashboard {
 
             if (!response.ok) throw new Error('Failed to assign dispute');
 
-            this.showSuccess('Dispute assigned successfully');
+            this.showSuccess(`Dispute assigned successfully to ${staffName}`);
             this.loadDisputes();
+            
+            // Close the modal
+            const modal = document.getElementById('staffSelectionModal');
+            if (modal) {
+                modal.remove();
+            }
 
         } catch (error) {
             console.error('❌ Assign dispute error:', error);
@@ -1285,18 +1388,18 @@ class AdminDashboard {
                             <tr>
                                 <td>${dispute.disputeId}</td>
                                 <td>
-                                    <div>${dispute.raisedBy?.fullName || dispute.complainant?.userId?.fullName || 'Unknown'}</div>
-                                    <div style="font-size: 0.8rem; color: #666;">${dispute.raisedByType || dispute.complainant?.userType || 'N/A'}</div>
+                                    <div>${DataFormatter.formatUserName(dispute.raisedBy || dispute.complainant?.userId)}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${DataFormatter.formatUserType(dispute.raisedByType || dispute.complainant?.userType)}</div>
                                 </td>
                                 <td>
-                                    <div>${dispute.order?.vendor?.shopName || dispute.respondent?.userId?.fullName || dispute.respondent?.userId?.shopName || 'Unknown'}</div>
-                                    <div style="font-size: 0.8rem; color: #666;">${dispute.order?.vendor ? 'Vendor' : dispute.respondent?.userType || 'N/A'}</div>
+                                    <div>${DataFormatter.formatUserName(dispute.respondent?.userId, 'Unknown Respondent')}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${DataFormatter.formatUserType(dispute.respondent?.userType)}</div>
                                 </td>
                                 <td>
-                                    <div>${dispute.order?._id || dispute.orderId?._id || 'N/A'}</div>
-                                    <div style="font-size: 0.8rem; color: #666;">₦${dispute.order?.totalAmount?.toLocaleString() || dispute.orderId?.totalAmount?.toLocaleString() || 'N/A'}</div>
+                                    <div>${DataFormatter.formatOrderId(dispute.orderId?._id || dispute.orderId)}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${DataFormatter.formatCurrency(dispute.orderId?.totalAmount)}</div>
                                 </td>
-                                <td>${this.formatCategory(dispute.category)}</td>
+                                <td>${DataFormatter.formatCategory(dispute.category)}</td>
                                 <td>
                                     <span class="status-badge status-${dispute.priority}">
                                         ${dispute.priority}
@@ -1410,8 +1513,8 @@ class AdminDashboard {
                                     </div>
                                     <div class="party">
                                         <h4>Respondent (${disputeData.respondent?.userType || 'Unknown'})</h4>
-                                        <p>ID: ${disputeData.order?.vendor?._id || disputeData.order?.buyer?._id || disputeData.respondent?.userId?._id || disputeData.respondent?.userId || 'Unknown'}</p>
-                                        <p>Name: ${disputeData.order?.vendor?.shopName || disputeData.order?.buyer?.fullName || disputeData.respondent?.userId?.fullName || disputeData.respondent?.userId?.shopName || 'Unknown'}</p>
+                                        <p>ID: ${DataFormatter.formatOrderId(disputeData.respondent?.userId?._id || disputeData.respondent?.userId)}</p>
+                                        <p>Name: ${DataFormatter.formatUserName(disputeData.respondent?.userId, 'Unknown Respondent')}</p>
                                     </div>
                                 </div>
                             </div>
@@ -1428,9 +1531,9 @@ class AdminDashboard {
                                 </div>
                                 <div class="detail-item">
                                     <label>Order:</label>
-                                    <p>${disputeData.orderType || 'Unknown'} - ${disputeData.order?._id || disputeData.orderId?._id || disputeData.orderId || 'Unknown'}</p>
-                                    <p>Amount: ₦${disputeData.order?.totalAmount?.toLocaleString() || disputeData.orderId?.totalAmount || 'Unknown'}</p>
-                                    <p>Status: ${disputeData.order?.status || disputeData.orderId?.status || 'Unknown'}</p>
+                                    <p>${DataFormatter.formatUserType(disputeData.orderType)} - ${DataFormatter.formatOrderId(disputeData.orderId?._id || disputeData.orderId)}</p>
+                                    <p>Amount: ${DataFormatter.formatCurrency(disputeData.orderId?.totalAmount)}</p>
+                                    <p>Status: ${DataFormatter.formatStatus(disputeData.orderId?.status)}</p>
                                 </div>
                             </div>
                         </div>
@@ -1448,72 +1551,6 @@ class AdminDashboard {
         document.body.insertAdjacentHTML('beforeend', modalHTML);
     }
 
-    async reassignEscalatedDispute(disputeId) {
-        const staffId = prompt('Enter staff ID to reassign this dispute to:');
-        if (!staffId || !staffId.trim()) return;
-
-        try {
-            const response = await fetch(`/api/admin/disputes/${disputeId}/reassign`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.adminToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ 
-                    assignedTo: staffId.trim(),
-                    reason: 'Reassigned by admin from escalated status'
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to reassign dispute');
-
-            this.showSuccess('Dispute reassigned successfully');
-            this.loadEscalatedDisputes();
-
-        } catch (error) {
-            console.error('❌ Reassign dispute error:', error);
-            this.showError('Failed to reassign dispute');
-        }
-    }
-
-    async resolveEscalatedDispute(disputeId) {
-        const decision = prompt('Enter decision (refund, no_refund, partial_refund):');
-        if (!decision) return;
-
-        const reason = prompt('Enter reason for decision:');
-        if (!reason) return;
-
-        const refundAmount = prompt('Enter refund amount (if applicable, 0 for no refund):');
-        const amount = refundAmount ? parseFloat(refundAmount) : 0;
-
-        const notes = prompt('Enter additional notes (optional):') || '';
-
-        try {
-            const response = await fetch(`/api/admin/disputes/${disputeId}/resolve`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${this.adminToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    resolution: decision,
-                    reason,
-                    refundAmount: amount,
-                    notes,
-                    resolvedBy: 'admin'
-                })
-            });
-
-            if (!response.ok) throw new Error('Failed to resolve escalated dispute');
-
-            this.showSuccess('Escalated dispute resolved successfully');
-            this.loadEscalatedDisputes();
-
-        } catch (error) {
-            console.error('❌ Resolve escalated dispute error:', error);
-            this.showError('Failed to resolve escalated dispute');
-        }
-    }
 
     // Staff Activity Log Management
     async loadStaffActivity() {
@@ -1678,6 +1715,229 @@ class AdminDashboard {
             'info_requested': 'Info Requested'
         };
         return actions[action] || action.replace('_', ' ').toUpperCase();
+    }
+
+    // Escalated Dispute Management Functions
+    showResolveEscalatedModal(disputeId) {
+        // Create resolution modal
+        const modalHtml = `
+            <div id="resolveEscalatedModal" class="modal" style="display: block;">
+                <div class="modal-content" style="max-width: 600px; max-height: 90%; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Resolve Escalated Dispute</h2>
+                        <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <form id="resolveEscalatedForm">
+                            <div class="form-group mb-3">
+                                <label for="resolutionDecision">Resolution Decision *</label>
+                                <select class="form-control" id="resolutionDecision" required>
+                                    <option value="">Select decision</option>
+                                    <option value="favor_complainant">Full Refund (Favor Complainant)</option>
+                                    <option value="favor_respondent">No Refund (Favor Respondent)</option>
+                                    <option value="partial_refund">Partial Refund</option>
+                                    <option value="full_refund">Full Refund</option>
+                                    <option value="no_refund">No Refund</option>
+                                    <option value="no_action">No Action</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="resolutionReason">Resolution Reason *</label>
+                                <input type="text" class="form-control" id="resolutionReason" required 
+                                       placeholder="Brief reason for the decision">
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="refundAmount">Refund Amount (₦)</label>
+                                <input type="number" class="form-control" id="refundAmount" 
+                                       placeholder="Enter amount if refund is applicable" min="0" step="0.01">
+                            </div>
+                            <div class="form-group mb-3">
+                                <label for="resolutionNotes">Resolution Notes</label>
+                                <textarea class="form-control" id="resolutionNotes" rows="3" 
+                                          placeholder="Detailed notes about the resolution"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                        <button type="button" class="btn btn-success" onclick="adminDashboard.performResolveEscalatedDispute('${disputeId}')">
+                            <i class="fas fa-check-circle"></i> Resolve Dispute
+                        </button>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('resolveEscalatedModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Modal is already visible with style="display: block;"
+    }
+
+    async performResolveEscalatedDispute(disputeId) {
+        const decision = document.getElementById('resolutionDecision').value;
+        const reason = document.getElementById('resolutionReason').value;
+        const refundAmount = document.getElementById('refundAmount').value;
+        const notes = document.getElementById('resolutionNotes').value;
+
+        if (!decision || !reason) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('admin-token');
+            console.log('🔑 Admin token:', token ? 'Present' : 'Missing');
+            console.log('🔑 Token length:', token ? token.length : 0);
+            
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/resolve-escalated`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    decision,
+                    reason,
+                    refundAmount: refundAmount ? parseFloat(refundAmount) : 0,
+                    notes
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to resolve escalated dispute');
+            }
+
+            this.showSuccess('Escalated dispute resolved successfully');
+            this.loadEscalatedDisputes();
+            
+            // Close the modal
+            const modal = document.getElementById('resolveEscalatedModal');
+            if (modal) {
+                modal.remove();
+            }
+
+        } catch (error) {
+            console.error('❌ Resolve escalated dispute error:', error);
+            this.showError('Failed to resolve escalated dispute');
+        }
+    }
+
+    async reassignEscalatedDispute(disputeId) {
+        try {
+            // Fetch available staff for assignment
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch staff list');
+            }
+
+            const data = await response.json();
+            const staff = data.data.staff || [];
+
+            // Filter staff with dispute resolution permissions
+            const availableStaff = staff.filter(s => 
+                s.permissions && s.permissions.disputeResolution && s.isActive
+            );
+
+            if (availableStaff.length === 0) {
+                alert('No available staff members found for dispute reassignment');
+                return;
+            }
+
+            // Create staff selection modal for reassignment
+            this.showStaffReassignmentModal(disputeId, availableStaff);
+
+        } catch (error) {
+            console.error('Error fetching staff:', error);
+            alert('Failed to load staff list. Please try again.');
+        }
+    }
+
+    showStaffReassignmentModal(disputeId, staff) {
+        // Create modal HTML
+        const modalHtml = `
+            <div id="staffReassignmentModal" class="modal" style="display: block;">
+                <div class="modal-content" style="max-width: 600px; max-height: 90%; overflow-y: auto;">
+                    <div class="modal-header">
+                        <h2>Reassign Escalated Dispute</h2>
+                        <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Select a staff member to reassign this escalated dispute to:</p>
+                        <div class="list-group">
+                            ${staff.map(s => `
+                                <button type="button" class="list-group-item list-group-item-action" 
+                                        onclick="adminDashboard.performReassignEscalatedDispute('${disputeId}', '${s._id}', '${s.fullName}')">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h6 class="mb-1">${s.fullName}</h6>
+                                        <small>${s.role}</small>
+                                    </div>
+                                    <p class="mb-1">Current workload: ${s.currentDisputes || 0} disputes</p>
+                                    <small>Specialties: ${s.disputeSpecialties ? s.disputeSpecialties.join(', ') : 'General'}</small>
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('staffReassignmentModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Modal is already visible with style="display: block;"
+    }
+
+    async performReassignEscalatedDispute(disputeId, assignedTo, staffName) {
+        try {
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/reassign`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ assignedTo })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to reassign escalated dispute');
+            }
+
+            this.showSuccess(`Escalated dispute reassigned successfully to ${staffName}`);
+            this.loadEscalatedDisputes();
+            
+            // Close the modal
+            const modal = document.getElementById('staffReassignmentModal');
+            if (modal) {
+                modal.remove();
+            }
+
+        } catch (error) {
+            console.error('❌ Reassign escalated dispute error:', error);
+            this.showError('Failed to reassign escalated dispute');
+        }
     }
 }
 
