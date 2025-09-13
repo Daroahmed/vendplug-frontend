@@ -13,11 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
   // Hide the loading spinner when products are loaded
   const loadingElement = document.querySelector('.loading');
   
-  // 🛒 2. Fetch and display products
-  fetch("/api/products")
+  // 🛒 2. Fetch and display agent products
+  fetch("/api/agent-products/shop")
     .then(response => response.json())
     .then(data => {
-      const products = data.products;
+      const products = data; // Agent products are returned directly, not wrapped in products property
       const categoryMap = {
         "Vegetables": "fresh-vegetables",
         "Grains": "grains-provisions",

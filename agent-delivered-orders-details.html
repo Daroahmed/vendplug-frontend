@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VendPlug | Agent Orders</title>
+  <title>VendPlug | Delivered Orders</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
@@ -129,10 +129,8 @@
       font-weight: bold;
     }
 
-    .status.pending { background: orange; color: black; }
-    .status.accepted { background: #00cc99; color: black; }
-    .status.rejected { background: red; color: white; }
     .status.delivered { background: blue; color: white; }
+    .status.fulfilled { background: green; color: white; }
 
     .button-group {
       display: flex;
@@ -200,119 +198,84 @@
     .modal-header button:hover {
       color: white;
     }
+
     .btn-primary {
-  background: #00cc99;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.btn-secondary {
-  background: #007bff;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.btn-danger {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  margin: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.btn-close {
-  background: gray;
-  color: white;
-  padding: 8px 12px;
-  margin: 4px;
-  border-radius: 6px;
-  cursor: pointer;
-}
+      background: #00cc99;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      margin: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-/* Modal styles */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  justify-content: center;
-  align-items: center;
-}
+    .btn-secondary {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      margin: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-.modal-content {
-  background-color: #1e1e1e;
-  border: 2px solid #00cc99;
-  border-radius: 12px;
-  padding: 1rem;
-  max-width: 500px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-}
+    .btn-close {
+      background: gray;
+      color: white;
+      padding: 8px 12px;
+      margin: 4px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
 
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #00cc99;
-}
+    /* Copy button styles */
+    .copy-btn {
+      background: #00cc99;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.3s ease;
+    }
 
-.modal-header h2 {
-  margin: 0;
-  color: #00cc99;
-}
+    .copy-btn:hover {
+      background: #00aa77;
+      transform: scale(1.05);
+    }
 
-.modal-header button {
-  background: none;
-  border: none;
-  color: #00cc99;
-  font-size: 1.5rem;
-  cursor: pointer;
-  padding: 0;
-}
+    .copy-btn i {
+      font-size: 10px;
+    }
 
-.modal-body {
-  margin-bottom: 1rem;
-}
+    /* Stats cards */
+    .stats-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
 
-.modal-body p {
-  margin-bottom: 1rem;
-  color: #ccc;
-}
+    .stat-card {
+      background: #1e1e1e;
+      border: 2px solid #00cc99;
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+    }
 
-/* Copy button styles */
-.copy-btn {
-  background: #00cc99;
-  border: none;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.3s ease;
-}
+    .stat-card h3 {
+      color: #00cc99;
+      margin: 0 0 0.5rem 0;
+      font-size: 1.2rem;
+    }
 
-.copy-btn:hover {
-  background: #00aa77;
-  transform: scale(1.05);
-}
-
-.copy-btn i {
-  font-size: 10px;
-}
+    .stat-card p {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
 
   </style>
 </head>
@@ -320,23 +283,37 @@
 
   <!-- Header -->
   <header>
-    <h1>Agent Orders</h1>
+    <h1>Delivered Orders</h1>
     <a href="agent-dashboard.html">← Back to Dashboard</a>
   </header>
 
   <!-- Orders Section -->
   <main>
-    <h2>Incoming Orders</h2>
+    <!-- Stats -->
+    <div class="stats-container">
+      <div class="stat-card">
+        <h3>Total Delivered</h3>
+        <p id="totalDelivered">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Total Fulfilled</h3>
+        <p id="totalFulfilled">0</p>
+      </div>
+      <div class="stat-card">
+        <h3>Total Revenue</h3>
+        <p id="totalRevenue">₦0</p>
+      </div>
+    </div>
+
+    <h2>Completed Orders</h2>
 
     <!-- Filters -->
     <div class="filters">
       <label for="statusFilter">Filter by Status:</label>
       <select id="statusFilter">
         <option value="">All</option>
-        <option value="pending">Pending</option>
-        <option value="accepted">Accepted</option>
-        <option value="rejected">Rejected</option>
         <option value="delivered">Delivered</option>
+        <option value="fulfilled">Fulfilled</option>
       </select>
 
       <label for="startDate">Start Date:</label>
@@ -361,70 +338,14 @@
       </div>
       <div id="orderDetails"></div>
       <div class="button-group">
-        <div class="button-group">
-        </div>
-        
-      </div>
-    </div>
-  </div>
-
-  <!-- Rejection Reason Modal -->
-  <div id="rejectionModal" class="modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2>Reject Order</h2>
-        <button id="closeRejectionModalBtn">&times;</button>
-      </div>
-      <div class="modal-body">
-        <p>Please provide a reason for rejecting this order (minimum 10 characters):</p>
-        <textarea 
-          id="rejectionReason" 
-          placeholder="Enter rejection reason here..."
-          rows="4"
-          style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #00cc99; background: #121212; color: white; margin: 10px 0;"
-        ></textarea>
-        <div class="button-group">
-          <button id="confirmRejectBtn" class="btn-danger">Confirm Rejection</button>
-          <button id="cancelRejectBtn" class="btn-secondary">Cancel</button>
-        </div>
+        <button id="closeModalBtn" class="btn-close">Close</button>
       </div>
     </div>
   </div>
 
   <!-- Scripts -->
   <script src="js/config.js"></script>
-  <script src="js/agent-orders.js" defer></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      async function fetchOrders() {
-        const status = document.getElementById("statusFilter").value;
-        const startDate = document.getElementById("startDate").value;
-        const endDate = document.getElementById("endDate").value;
-  
-        let url = `/api/agent-orders?`;
-  
-        if (status) url += `status=${status}&`;
-        if (startDate) url += `startDate=${startDate}&`;
-        if (endDate) url += `endDate=${endDate}&`;
-  
-        const token = localStorage.getItem("vendplug-token");
-  
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        const data = await res.json();
-        renderOrders(data);
-      }
-  
-      document.getElementById("applyFilters").addEventListener("click", fetchOrders);
-  
-      // Initial fetch
-      fetchOrders();
-    });
-  </script>
+  <script src="js/agent-delivered-orders.js" defer></script>
   
 </body>
 </html>

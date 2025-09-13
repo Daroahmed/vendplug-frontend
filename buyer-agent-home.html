@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>VendPlug | Buyer Agent Home</title>
+  <title>Select State & Category - VendPlug Agents</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
@@ -103,6 +103,29 @@
       cursor: pointer;
     }
 
+        /* Agent Button */
+        .agent-button-container {
+      padding: 1rem;
+      background: var(--bg-card);
+      margin-bottom: 1px;
+    }
+
+    .agent-button {
+      width: 100%;
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      background-color: var(--primary);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+
     .menu-overlay {
       position: fixed;
       top: 0;
@@ -184,160 +207,96 @@
       color: var(--primary);
     }
 
-    /* Search Bar */
-    .search-bar {
-      padding: 1rem;
-      background: var(--bg-card);
-      margin-bottom: 1px;
+    /* Main Content */
+    .container {
+      padding: 1.5rem;
+      max-width: 1000px;
+      margin: 0 auto;
     }
 
-    .search-bar input {
+    /* State Selection */
+    .state-selection {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .state-select {
       width: 100%;
       padding: 0.9rem 1rem;
       border-radius: 8px;
       border: none;
-      font-size: 1rem;
-      background-color: var(--bg-secondary);
-      color: var(--text-light);
-    }
-
-    /* Vendor Button */
-    .vendor-button-container {
-      padding: 1rem;
-      background: var(--bg-card);
-      margin-bottom: 1px;
-    }
-
-    .vendor-button {
-      width: 100%;
-      padding: 1rem;
-      border: none;
-      border-radius: 8px;
-      background-color: var(--primary);
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    /* Categories */
-    .categories-container {
-      padding: 1rem;
-      background: var(--bg-card);
-      margin-bottom: 1px;
-    }
-
-    .categories-title {
-      color: var(--primary);
-      margin-bottom: 1rem;
-    }
-
-    .categories-scroll {
-      display: flex;
-      gap: 0.8rem;
-      overflow-x: auto;
-      padding-bottom: 0.5rem;
-    }
-
-    .category-chip {
-      padding: 0.6rem 1.2rem;
       background: var(--bg-secondary);
-      border-radius: 20px;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      cursor: pointer;
-      transition: all 0.3s;
+      color: var(--text-light);
+      font-family: inherit;
+      font-size: 1rem;
     }
 
-    .category-chip.active {
-      background: var(--primary);
-      color: #000;
+    /* Category Sections */
+    .category-section {
+      margin-bottom: 2rem;
     }
 
-    /* Products */
-    .products-container {
-      padding: 1rem;
-    }
-
-    .products-title {
+    .category-header {
+      font-size: 1.2rem;
       color: var(--primary);
       margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    .products-scroll {
+    .category-scroll {
       display: flex;
-      gap: 1.2rem;
       overflow-x: auto;
-      padding-bottom: 1rem;
+      gap: 1rem;
+      padding: 0.5rem 0.5rem 1.5rem;
+      scroll-snap-type: x mandatory;
     }
 
-    .product-card {
+    .category-scroll::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .category-scroll::-webkit-scrollbar-thumb {
+      background-color: var(--primary);
+      border-radius: 4px;
+    }
+
+    .category-card {
       background: var(--bg-card);
-      width: 200px;
       border-radius: 12px;
+      width: 160px;
+      flex: 0 0 auto;
       overflow: hidden;
-      flex-shrink: 0;
       box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       transition: transform 0.3s;
+      cursor: pointer;
+      scroll-snap-align: start;
     }
 
-    .product-card:hover {
+    .category-card:hover {
       transform: translateY(-5px);
     }
 
-    .product-image {
+    .category-image {
       width: 100%;
-      height: 160px;
+      height: 120px;
       object-fit: cover;
     }
 
-    .product-info {
+    .category-name {
       padding: 1rem;
-      position: relative;
-    }
-
-    .product-info h4 {
-      margin: 0 0 0.5rem;
-      font-size: 1rem;
-      color: var(--text-light);
-    }
-
-    .product-info p {
       font-size: 0.9rem;
-      color: var(--muted);
-      margin-bottom: 0.5rem;
-    }
-
-    .product-price {
-      font-weight: bold;
-      color: var(--primary);
-      margin-bottom: 1rem;
-    }
-
-    .add-to-cart {
-      position: absolute;
-      bottom: 1rem;
-      right: 1rem;
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      background-color: var(--primary);
-      color: #000;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.2rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      transition: all 0.3s;
-    }
-
-    .add-to-cart:hover {
-      transform: scale(1.1);
+      text-align: center;
+      font-weight: 500;
     }
 
     /* Loading Spinner */
@@ -345,7 +304,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 2rem;
+      padding: 3rem;
     }
 
     .spinner {
@@ -362,26 +321,30 @@
       100% { transform: rotate(360deg); }
     }
 
-    /* Hidden class */
-    .hidden {
-      display: none;
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .container {
+        padding: 1rem;
+      }
+      
+      .header h2 {
+        font-size: 1.2rem;
+      }
     }
   </style>
 </head>
 <body>
-
-  <!-- Header -->
+  <!-- Header with Hamburger, Cart, and Notification -->
   <div class="header">
     <div class="logo-container">
       <button class="menu-toggle" id="menuToggle">
         <i class="fas fa-bars"></i>
       </button>
-     
-      <h2>Agent's Market</h2>
+      <h2>Select Category</h2>
     </div>
     
     <div class="header-actions">
-      <a href="buyer-agent-cart.html" class="cart-icon">
+      <a href="buyer-agent-checkout.html" class="cart-icon">
         <i class="fas fa-shopping-cart"></i>
         <span class="cart-count">3</span>
       </a>
@@ -432,43 +395,29 @@
     </div>
   </div>
 
-  <!-- Search Bar -->
-  <div class="search-bar">
-    <input type="text" placeholder="Search fresh items or services..." />
-  </div>
-
-  <!-- Vendor Button -->
-  <div class="vendor-button-container">
-    <button class="vendor-button" onclick="window.location.href='buyer-home.html'">
-      <i class="fas fa-store"></i> Meet a Vendor or Require a Service
-    </button>
-  </div>
-
-  <!-- Products Section -->
-  <div class="products-container">
-    <h3 class="products-title">Fresh Vegetables</h3>
-    <div class="products-scroll" id="fresh-vegetables">
-      <!-- Products will be loaded here -->
+    <!-- Agent Button -->
+    <div class="agent-button-container">
+      <button class="agent-button" onclick="window.location.href='buyer-agent-home.html'">
+        <i class="fas fa-store"></i> Shop With an Agent
+      </button>
     </div>
-  </div>
 
-  <div class="products-container">
-    <h3 class="products-title">Grains & Provisions</h3>
-    <div class="products-scroll" id="grains-provisions">
-      <!-- Products will be loaded here -->
+  <div class="container">
+    <!-- State Selection -->
+    <div class="state-selection">
+      <h2 class="section-title">Select Your Location</h2>
+      <select id="stateSelect" class="state-select">
+        <option value="">-- Choose State --</option>
+      </select>
     </div>
-  </div>
 
-  <div class="products-container">
-    <h3 class="products-title">Other Items</h3>
-    <div class="products-scroll" id="others">
-      <!-- Products will be loaded here -->
+    <!-- Loading Spinner -->
+    <div class="loading" id="loadingSpinner">
+      <div class="spinner"></div>
     </div>
-  </div>
 
-  <!-- Loading Spinner -->
-  <div class="loading">
-    <div class="spinner"></div>
+    <!-- Category Sections will be dynamically added here -->
+    <div id="categorySections"></div>
   </div>
 
   <script>
@@ -494,61 +443,252 @@
     closeMenu.addEventListener('click', closeMenuFunc);
     menuOverlay.addEventListener('click', closeMenuFunc);
 
-    // Simulate loading products
-    document.addEventListener('DOMContentLoaded', function() {
-      // Hide loading spinner after content is loaded
-      setTimeout(() => {
-        document.querySelector('.loading').style.display = 'none';
-        loadProducts();
-      }, 1500);
-    });
+    // Grouped categories based on your comments
+    const groupedCategories = [
+      {
+        groupName: "Everyday Essentials",
+        categories: [
+          { name: "Supermarkets/Groceries and Provisions", image: "/assets/groceries.jpg" },
+          { name: "Soft Drinks & Water", image: "/assets/soft-drinks.jpg" },
+          { name: "Kitchen Utensils & Plastics", image: "/assets/kitchen-utensils.jpg" },
+          { name: "Gas Plants", image: "/assets/gas.jpg" },
+          { name: "Fruits & Vegetables", image: "/assets/fruits-vegetables.jpg" },
+          { name: "Grains", image: "/assets/grains.jpg" }
+        ]
+      },
+      {
+        groupName: "Meat & Animal Products",
+        categories: [
+          { name: "Suya & Balango", image: "/assets/suya.jpg" },
+          { name: "Raw Meat Sellers", image: "/assets/meat.jpg" },
+          { name: "Poultry (Chicken, Eggs, Turkey)", image: "/assets/poultry.jpg" },
+          { name: "Livestock (Goat, Ram, Cow)", image: "/assets/livestock.jpg" },
+          { name: "Fish & Seafood", image: "/assets/fish.jpg" }
+        ]
+      },
+      {
+        groupName: "Food & Hospitality",
+        categories: [
+          { name: "Restaurants", image: "/assets/restaurants.jpg" },
+          { name: "Catering & Small Chops", image: "/assets/catering.jpg" },
+          { name: "Hotels & Apartments", image: "/assets/hotels.jpg" },
+          { name: "Event Rentals (Canopies, Chairs)", image: "/assets/event-rentals.jpg" }
+        ]
+      },
+      {
+        groupName: "Fashion & Lifestyle",
+        categories: [
+          { name: "Boutiques", image: "/assets/boutiques.jpg" },
+          { name: "Thrift / Okrika / Gongo", image: "/assets/thrift.jpg" },
+          { name: "Tokunbo / Belgium Products", image: "/assets/tokunbo.jpg" },
+          { name: "Shoes and Bags", image: "/assets/shoes-bags.jpg" },
+          { name: "Jewelry & Accessories", image: "/assets/jewelry.jpg" },
+          { name: "Tailoring & Fashion Design", image: "/assets/tailoring.jpg" },
+          { name: "Textiles & Fabrics", image: "/assets/textiles.jpg" },
+          { name: "Wigs & Hair", image: "/assets/wigs.jpg" },
+          { name: "Cosmetics & Skincare", image: "/assets/cosmetics.jpg" },
+          { name: "Perfumes & Fragrances", image: "/assets/perfumes.jpg" },
+          { name: "Nigerian Caps e.g. Zana", image: "/assets/caps.jpg" }
+        ]
+      },
+      {
+        groupName: "Home & Living",
+        categories: [
+          { name: "Furniture", image: "/assets/furniture.jpg" },
+          { name: "Home Appliances", image: "/assets/home-appliances.jpg" },
+          { name: "Interior Decor & Curtains", image: "/assets/interior.jpg" },
+          { name: "Cleaning Services", image: "/assets/cleaning.jpg" },
+          { name: "Flowers & Gardens", image: "/assets/flowers.jpg" }
+        ]
+      },
+      {
+        groupName: "Building & Construction",
+        categories: [
+          { name: "Building Materials", image: "/assets/building-materials.jpg" },
+          { name: "Aluminium & Roofing", image: "/assets/aluminium.jpg" },
+          { name: "Cement, Blocks & Interlock", image: "/assets/cement.jpg" },
+          { name: "Gravel, Sharp Sand & Quarry", image: "/assets/sand.jpg" },
+          { name: "Electrical Supplies", image: "/assets/electrical.jpg" },
+          { name: "Plumbing Materials", image: "/assets/plumbing.jpg" },
+          { name: "Tiles & Paints", image: "/assets/tiles.jpg" },
+          { name: "Metal & Iron Works", image: "/assets/metal.jpg" },
+          { name: "Carpenters & Artisans", image: "/assets/carpenters.jpg" }
+        ]
+      },
+      {
+        groupName: "Health & Beauty",
+        categories: [
+          { name: "Pharmacy & Patent Stores", image: "/assets/pharmacy.jpg" },
+          { name: "Hospital & Medical Equipment", image: "/assets/medical-equipment.jpg" },
+          { name: "Herbal Medicine", image: "/assets/herbal.jpg" },
+          { name: "Maternity & Clinics", image: "/assets/maternity.jpg" },
+          { name: "Fitness & Supplements", image: "/assets/fitness.jpg" }
+        ]
+      },
+      {
+        groupName: "Electronics & Gadgets",
+        categories: [
+          { name: "Phones & Accessories / Laptops & Computers", image: "/assets/phones.jpg" },
+          { name: "Solar & Inverters", image: "/assets/solar.jpg" },
+          { name: "CCTV & Security Devices", image: "/assets/cctv.jpg" },
+          { name: "Game Consoles & Accessories", image: "/assets/games.jpg" }
+        ]
+      },
+      {
+        groupName: "Office & Services",
+        categories: [
+          { name: "Printing Press", image: "/assets/printing.jpg" },
+          { name: "Stationery & Office Supplies", image: "/assets/stationery.jpg" },
+          { name: "Internet & Data Services", image: "/assets/internet.jpg" },
+          { name: "Freelancers & Digital Services", image: "/assets/freelancers.jpg" }
+        ]
+      },
+      {
+        groupName: "Auto & Transport",
+        categories: [
+          { name: "Car Dealers / Tokunbo Cars", image: "/assets/cars.jpg" },
+          { name: "Car Spare Parts", image: "/assets/spare-parts.jpg" },
+          { name: "Auto Mechanics", image: "/assets/mechanics.jpg" },
+          { name: "Tyres, Batteries & Accessories", image: "/assets/tyres.jpg" },
+          { name: "Car Wash & Detailing", image: "/assets/car-wash.jpg" }
+        ]
+      },
+      {
+        groupName: "Laundry & Cleaning",
+        categories: [
+          { name: "Laundry Services", image: "/assets/laundry.jpg" },
+          { name: "Dry Cleaning", image: "/assets/dry-cleaning.jpg" },
+          { name: "House Cleaning", image: "/assets/house-cleaning.jpg" }
+        ]
+      },
+      {
+        groupName: "Agriculture",
+        categories: [
+          { name: "Animal Feed & Supplements", image: "/assets/animal-feed.jpg" },
+          { name: "Fish Farming", image: "/assets/fish-farming.jpg" }
+        ]
+      },
+      {
+        groupName: "Pets",
+        categories: [
+          { name: "Pets (Dogs, Cats, Birds)", image: "/assets/pets.jpg" },
+          { name: "Pet Food & Accessories", image: "/assets/pet-food.jpg" },
+          { name: "Veterinary Clinics", image: "/assets/veterinary.jpg" },
+          { name: "Pet Grooming", image: "/assets/pet-grooming.jpg" }
+        ]
+      },
+      {
+        groupName: "Real Estate",
+        categories: [
+          { name: "Real Estate Agents", image: "/assets/real-estate.jpg" },
+          { name: "Rentals & Sales", image: "/assets/rentals.jpg" },
+          { name: "Facility Management", image: "/assets/facility.jpg" },
+          { name: "Movers & Packers", image: "/assets/movers.jpg" }
+        ]
+      },
+      {
+        groupName: "Professional Services",
+        categories: [
+          { name: "Legal Services", image: "/assets/legal.jpg" },
+          { name: "Accounting & Tax", image: "/assets/accounting.jpg" },
+          { name: "Private Tutors", image: "/assets/tutors.jpg" },
+          { name: "Event Planners", image: "/assets/event-planners.jpg" },
+          { name: "Photography & Videography", image: "/assets/photography.jpg" },
+          { name: "Tech Repairs", image: "/assets/tech-repairs.jpg" }
+        ]
+      },
+      {
+        groupName: "Other",
+        categories: [
+          { name: "Other", image: "/assets/other.jpg" }
+        ]
+      }
+    ];
 
-    // Load sample products
-    function loadProducts() {
-      const categories = [
-        { id: 'fresh-vegetables', name: 'Fresh Vegetables' },
-        { id: 'grains-provisions', name: 'Grains & Provisions' },
-        { id: 'others', name: 'Other Items' }
+    document.addEventListener('DOMContentLoaded', () => {
+      const states = [
+        'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
+        'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'FCT', 'Gombe',
+        'Imo', 'Jigawa', 'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara',
+        'Lagos', 'Nasarawa', 'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau',
+        'Rivers', 'Sokoto', 'Taraba', 'Yobe', 'Zamfara'
       ];
 
-      categories.forEach(category => {
-        const container = document.getElementById(category.id);
-        
-        for (let i = 0; i < 5; i++) {
-          const product = document.createElement('div');
-          container.appendChild(product);
+      const stateSelect = document.getElementById('stateSelect');
+      const categorySections = document.getElementById('categorySections');
+      const loadingSpinner = document.getElementById('loadingSpinner');
+
+      // Populate state dropdown
+      states.forEach(state => {
+        const option = document.createElement('option');
+        option.value = state;
+        option.textContent = state;
+        if (state === 'FCT') option.selected = true;
+        stateSelect.appendChild(option);
+      });
+
+      // Show categories after a brief delay (simulating loading)
+      setTimeout(() => {
+        loadingSpinner.style.display = 'none';
+        renderCategorySections();
+      }, 1000);
+
+      // Handle state change
+      stateSelect.addEventListener('change', () => {
+        if (stateSelect.value) {
+          // You could add logic here to filter categories by state if needed
         }
       });
-    }
 
-    // Add to cart functionality
-    document.addEventListener('click', function(e) {
-      if (e.target.closest('.add-to-cart')) {
-        const cartCount = document.querySelector('.cart-count');
-        cartCount.textContent = parseInt(cartCount.textContent) + 1;
-        
-        // Show added feedback
-        const button = e.target.closest('.add-to-cart');
-        button.innerHTML = '<i class="fas fa-check"></i>';
-        setTimeout(() => {
-          button.innerHTML = '<i class="fas fa-plus"></i>';
-        }, 1000);
+      function renderCategorySections() {
+        groupedCategories.forEach(group => {
+          const section = document.createElement('div');
+          section.className = 'category-section';
+          
+          const header = document.createElement('h2');
+          header.className = 'category-header';
+          header.textContent = group.groupName;
+          
+          const scrollContainer = document.createElement('div');
+          scrollContainer.className = 'category-scroll';
+          
+          group.categories.forEach(category => {
+            const card = document.createElement('div');
+            card.className = 'category-card';
+            
+            card.innerHTML = `
+              <img src="${category.image}" alt="${category.name}" class="category-image" onerror="this.src='https://placehold.co/160x120/2c2c2c/00cc99/png?text=Category'">
+              <div class="category-name">${category.name}</div>
+            `;
+            
+            card.addEventListener('click', () => {
+              const selectedState = stateSelect.value;
+              if (!selectedState) {
+                alert('Please select a state first.');
+                return;
+              }
+
+              const query = new URLSearchParams({
+                state: selectedState,
+                category: category.name
+              }).toString();
+
+              window.location.href = `/agent-shop.html?${query}`;
+            });
+            
+            scrollContainer.appendChild(card);
+          });
+          
+          section.appendChild(header);
+          section.appendChild(scrollContainer);
+          categorySections.appendChild(section);
+        });
       }
     });
-
-    // Category selection
-    const categoryChips = document.querySelectorAll('.category-chip');
-    categoryChips.forEach(chip => {
-      chip.addEventListener('click', function() {
-        categoryChips.forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-      });
-    });
+    
   </script>
-
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="/js/config.js"></script>
-  <script src="/js/notifications.js"></script>
-  <script src="/js/buyer-agent-home.js"></script>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/notifications.js"></script>
 </body>
 </html>

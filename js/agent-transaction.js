@@ -1,12 +1,12 @@
-const API_BASE = '/api';
 const token = localStorage.getItem('vendplug-token');
+const API_BASE = '/api';
 
-// Load wallet balance
-window.addEventListener('DOMContentLoaded', async () => {
-  await loadWalletBalance();
+// Load balance on page load
+window.addEventListener('DOMContentLoaded', () => {
+  loadAgentWallet();
 });
 
-async function loadWalletBalance() {
+async function loadAgentWallet() {
   try {
     const res = await fetch(`${API_BASE}/wallet/balance`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -14,43 +14,17 @@ async function loadWalletBalance() {
     const data = await res.json();
     document.getElementById('wallet-balance').textContent = data.balance.toLocaleString();
   } catch (err) {
-    alert('Failed to load wallet balance');
+    alert('Failed to load wallet');
   }
 }
 
-// Transfer to vendor
-document.getElementById('transfer-form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const accountNumber = document.getElementById('recipient-account').value;
-  const amount = parseFloat(document.getElementById('transfer-amount').value);
-
-  if (!accountNumber || !amount || amount <= 0) return;
-
-  try {
-    const res = await fetch(`${API_BASE}/transactions/transfer`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ toAccountNumber: accountNumber, amount })
-    });
-    const data = await res.json();
-    document.getElementById('transfer-status').textContent = data.message;
-    await loadWalletBalance();
-  } catch (err) {
-    document.getElementById('transfer-status').textContent = 'Transfer failed.';
-  }
-});
-
-// Load transactions
+// Load agent transactions
 document.getElementById('load-transactions').addEventListener('click', async () => {
   try {
     const res = await fetch(`${API_BASE}/transactions/my-transactions`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const transactions = await res.json();
-
     const list = document.getElementById('transaction-list');
     list.innerHTML = '';
 
@@ -63,3 +37,30 @@ document.getElementById('load-transactions').addEventListener('click', async () 
     alert('Could not load transactions');
   }
 });
+
+// Optional: Payout logic
+/*
+document.getElementById('payout-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const bankAccount = document.getElementById('bank-account').value;
+  const amount = parseFloat(document.getElementById('payout-amount').value);
+  if (!bankAccount || !amount || amount <= 0) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/wallet/request-payout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({ bankAccount, amount })
+    });
+
+    const data = await res.json();
+    document.getElementById('payout-status').textContent = data.message;
+    await loadAgentWallet();
+  } catch (err) {
+    document.getElementById('payout-status').textContent = 'Payout failed.';
+  }
+});
+*/

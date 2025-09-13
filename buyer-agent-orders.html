@@ -1,69 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>My Orders | VendPlug</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VendPlug | Agent Orders</title>
   <style>
-    :root {
-      --primary: #00cc99;
-      --bg-dark: #121212;
-      --card: #1e1e1e;
-      --text-light: #fff;
-      --muted: #aaa;
-    }
-
     body {
-      background-color: var(--bg-dark);
+      background-color: #121212;
       font-family: 'Segoe UI', sans-serif;
-      margin: 0;
-      color: var(--text-light);
+      color: #fff;
+      padding: 1rem;
     }
 
-    header {
-      background-color: var(--card);
-      padding: 1rem;
+    h2 {
       text-align: center;
-      font-size: 1.3rem;
-      color: var(--primary);
-    }
-
-    .container {
-      padding: 1rem;
+      color: #00cc99;
     }
 
     .order-card {
-      background: var(--card);
-      padding: 1rem;
+      background-color: #1e1e1e;
       border-radius: 10px;
-      margin-bottom: 1rem;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      cursor: pointer;
+      transition: transform 0.2s;
     }
 
-    .order-card h4 {
-      margin: 0 0 0.5rem;
-      color: var(--primary);
+    .order-card:hover {
+      transform: scale(1.02);
     }
 
-    .order-card p {
-      margin: 0.25rem 0;
-      color: var(--muted);
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
     }
 
-    .spinner {
-      color: var(--muted);
-      text-align: center;
-      margin-top: 2rem;
+    .order-header h3 {
+      margin: 0;
+    }
+
+    .status-badge {
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      text-transform: capitalize;
+    }
+
+    .pending { background: orange; color: black; }
+    .accepted { background: green; color: white; }
+    .rejected { background: red; color: white; }
+    .fulfilled { background: #00cc99; color: black; }
+    .delivered { background: blue; color: white; }
+    .completed { background: purple; color: white; }
+
+    .product-list {
+      margin-top: 10px;
+    }
+
+    .product-list p {
+      margin: 2px 0;
+      font-size: 0.9rem;
+      color: #ccc;
     }
   </style>
 </head>
 <body>
-  <header>🧾 My Orders</header>
-  <div class="container">
-    <div id="spinner" class="spinner">Loading your orders...</div>
-    <div id="orders-list"></div>
+  <h2>Agent Orders</h2>
+
+  <div id="agentOrdersContainer">
+    <!-- Orders will render here -->
   </div>
+
   <script src="js/config.js"></script>
-  <script src="/js/buyer-agent-orders.js"></script>
+  <script src="js/buyer-agent-orders.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const buyer = JSON.parse(localStorage.getItem("vendplugBuyer"));
+
+
+    const socket = io(BACKEND, {
+      query: { userId: buyer?._id },
+      transports: ["websocket"],
+    });
+
+    socket.on("buyer-order-update", (data) => {
+      alert(`🔔 ${data.message}`);
+      // ✅ Refresh with correct function
+      fetchOrders();
+    });
+  </script>
+
+  <div style="display: flex; justify-content: end; margin-bottom: 1rem;">
+    <div style="position: relative; cursor: pointer;" onclick="toggleNotificationDropdown()">
+      <span style="font-size: 24px;">🔔</span>
+      <span id="notificationBadge" style="
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        background: red;
+        color: white;
+        font-size: 12px;
+        padding: 2px 5px;
+        border-radius: 50%;
+        display: none;
+      ">0</span>
+    </div>
+  </div>
+
+  <div id="notificationDropdown" style="
+    display: none;
+    background-color: #1e1e1e;
+    color: white;
+    position: absolute;
+    right: 10px;
+    top: 60px;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    z-index: 1000;
+  ">
+    <div id="notificationList" style="padding: 1rem;"></div>
+  </div>
 </body>
 </html>

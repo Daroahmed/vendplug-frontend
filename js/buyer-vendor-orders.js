@@ -22,14 +22,17 @@ async function fetchOrders() {
     const data = await res.json();
     if (!res.ok) throw new Error(data.message);
 
-    if (!data.length) {
-      container.innerHTML = "<p>You haven’t placed any vendor orders yet.</p>";
+    // Filter for vendor orders only
+    const vendorOrders = data.filter(order => order.type === 'vendor');
+    
+    if (vendorOrders.length === 0) {
+      container.innerHTML = "<p>You haven't placed any vendor orders yet.</p>";
       return;
     }
 
     container.innerHTML = "";
 
-    data.forEach(order => {
+    vendorOrders.forEach(order => {
       const card = document.createElement("div");
       card.className = "order-card";
 
