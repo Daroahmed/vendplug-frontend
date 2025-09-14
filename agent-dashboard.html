@@ -428,6 +428,47 @@
       font-size: 0.8rem;
       font-weight: 500;
     }
+    
+    .order-status.confirmed {
+      background: #28a745;
+    }
+    
+    .order-item.confirmed {
+      border-left: 4px solid #28a745;
+      background: #f8fff9;
+    }
+
+    .collapsible-header {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid #e0e0e0;
+      margin-bottom: 0;
+    }
+
+    .collapsible-header:hover {
+      background: #f5f5f5;
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 0 -1rem 0 -1rem;
+    }
+
+    .toggle-icon {
+      font-size: 0.8rem;
+      transition: transform 0.3s ease;
+    }
+
+    .toggle-icon.rotated {
+      transform: rotate(180deg);
+    }
+
+    .collapsible-content {
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
 
     .card-icon {
       width: 50px;
@@ -617,12 +658,29 @@
           <span class="stat-label">Available for Payout</span>
           <span class="stat-value" id="availablePayouts">₦0.00</span>
         </div>
+        <div class="stat-item">
+          <span class="stat-label">Successful Payouts/Confirmed</span>
+          <span class="stat-value" id="successfulPayouts">₦0.00</span>
+        </div>
       </div>
       
       <div class="queue-details">
-        <h3>📦 Orders Awaiting Buyer Confirmation</h3>
-        <div id="pendingOrdersList" class="orders-list">
+        <h3 class="collapsible-header" onclick="toggleSection('pendingOrders')">
+          📦 Orders Awaiting Buyer Confirmation
+          <span class="toggle-icon" id="pendingOrdersToggle">▼</span>
+        </h3>
+        <div id="pendingOrdersList" class="orders-list collapsible-content" style="display: none;">
           <!-- Pending orders will be loaded here -->
+        </div>
+      </div>
+      
+      <div class="queue-details">
+        <h3 class="collapsible-header" onclick="toggleSection('confirmedOrders')">
+          ✅ Confirmed Orders & Successful Payouts
+          <span class="toggle-icon" id="confirmedOrdersToggle">▼</span>
+        </h3>
+        <div id="confirmedOrdersList" class="orders-list collapsible-content" style="display: none;">
+          <!-- Confirmed orders will be loaded here -->
         </div>
       </div>
     </div>
@@ -811,21 +869,37 @@
         }
 
         // Fetch pending orders (delivered but not confirmed)
-        const response = await fetch(`/api/agent-orders?status=delivered&agent=${agent._id}`, {
+        const pendingResponse = await fetch(`/api/agent-orders?status=delivered&agent=${agent._id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        if (response.ok) {
-          const pendingOrders = await response.json();
+        // Fetch confirmed orders (fulfilled)
+        const confirmedResponse = await fetch(`/api/agent-orders?status=fulfilled&agent=${agent._id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (pendingResponse.ok && confirmedResponse.ok) {
+          const allDeliveredOrders = await pendingResponse.json();
+          const confirmedOrders = await confirmedResponse.json();
+          
+          // Filter out fulfilled orders from pending (only show truly pending delivered orders)
+          const pendingOrders = allDeliveredOrders.filter(order => order.status === 'delivered');
+          
           console.log('✅ Payout queue loaded:', pendingOrders);
+          console.log('✅ Confirmed orders loaded:', confirmedOrders);
 
           // Update stats
           document.getElementById('pendingConfirmations').textContent = pendingOrders.length;
           
           const totalExpected = pendingOrders.reduce((sum, order) => sum + order.totalAmount, 0);
           document.getElementById('expectedPayouts').textContent = `₦${totalExpected.toLocaleString()}`;
+
+          const totalConfirmed = confirmedOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+          document.getElementById('successfulPayouts').textContent = `₦${totalConfirmed.toLocaleString()}`;
 
           // Get wallet balance for available payouts
           const walletResponse = await fetch(`/api/wallet/agent`, {
@@ -859,15 +933,37 @@
                   <span class="order-amount">₦${order.totalAmount.toLocaleString()}</span>
                 </div>
                 <div class="order-details">
-                  <strong>Buyer:</strong> ${order.buyerName || 'Unknown'}<br>
+                  <strong>Buyer:</strong> ${order.buyer?.fullName || 'Unknown'}<br>
                   <strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}<br>
                   <strong>Status:</strong> <span class="order-status">Awaiting Confirmation</span>
                 </div>
               </div>
             `).join('');
           }
+
+          // Display confirmed orders
+          const confirmedOrdersList = document.getElementById('confirmedOrdersList');
+          if (confirmedOrders.length === 0) {
+            confirmedOrdersList.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 2rem;">No confirmed orders yet</p>';
+          } else {
+            confirmedOrdersList.innerHTML = confirmedOrders.map(order => `
+              <div class="order-item confirmed">
+                <div class="order-header">
+                  <span class="order-id">#${order._id.slice(-8)}</span>
+                  <span class="order-amount">₦${order.totalAmount.toLocaleString()}</span>
+                </div>
+                <div class="order-details">
+                  <strong>Buyer:</strong> ${order.buyer?.fullName || 'Unknown'}<br>
+                  <strong>Amount:</strong> ₦${order.totalAmount.toLocaleString()}<br>
+                  <strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}<br>
+                  <strong>Confirmed Date:</strong> ${order.deliveredAt ? new Date(order.deliveredAt).toLocaleDateString() : 'N/A'}<br>
+                  <strong>Status:</strong> <span class="order-status confirmed">Confirmed & Paid</span>
+                </div>
+              </div>
+            `).join('');
+          }
         } else {
-          console.error('❌ Failed to fetch payout queue:', response.status, response.statusText);
+          console.error('❌ Failed to fetch payout queue:', pendingResponse.status, pendingResponse.statusText);
         }
       } catch (error) {
         console.error('Error loading payout queue:', error);
@@ -996,6 +1092,20 @@
         closeShareModal();
       }
     });
+
+    // Toggle collapsible sections
+    function toggleSection(sectionName) {
+      const content = document.getElementById(sectionName + 'List');
+      const toggle = document.getElementById(sectionName + 'Toggle');
+      
+      if (content.style.display === 'none') {
+        content.style.display = 'block';
+        toggle.classList.remove('rotated');
+      } else {
+        content.style.display = 'none';
+        toggle.classList.add('rotated');
+      }
+    }
   </script>
 </body>
 </html>
