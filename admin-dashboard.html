@@ -1,1001 +1,1064 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>VendPlug | Vendor Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- QR Code Library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <style>
-    :root {
-      --primary: #00cc99;
-      --bg-dark: #121212;
-      --bg-card: #1e1e1e;
-      --bg-secondary: #2c2c2c;
-      --text-light: #fff;
-      --muted: #aaa;
-      --accent: #00cc99;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendplug Admin Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
 
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: var(--bg-dark);
-      color: var(--text-light);
-      margin: 0;
-      padding-top: 70px;
-    }
+        .container {
+            display: flex;
+            min-height: 100vh;
+        }
 
-    /* Header */
-    .header {
-      background-color: var(--bg-card);
-      padding: 1rem;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
 
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid #34495e;
+        }
 
-    .logo {
-      width: 40px;
-      height: 40px;
-      background-color: var(--primary);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      font-size: 20px;
-    }
+        .sidebar-header h2 {
+            color: #ecf0f1;
+            font-size: 1.5rem;
+        }
 
-    .header h1 {
-      font-size: 1.5rem;
-      color: var(--primary);
-      margin: 0;
-    }
+        .nav-menu {
+            list-style: none;
+            padding: 20px 0;
+        }
 
-    .user-menu {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
+        .nav-item {
+            margin: 5px 0;
+        }
 
-    .user-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--primary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: bold;
-      cursor: pointer;
-    }
+        .nav-link {
+            display: block;
+            padding: 12px 20px;
+            color: #bdc3c7;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
 
-    /* Dashboard Stats */
-    .dashboard-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-    }
+        .nav-link:hover,
+        .nav-link.active {
+            background: #34495e;
+            color: #ecf0f1;
+            border-left-color: #3498db;
+        }
 
-    .stat-card {
-      background: var(--bg-card);
-      padding: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-    }
+        .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+        }
 
-    .stat-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      background: rgba(0, 204, 153, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-right: 1rem;
-      color: var(--primary);
-      font-size: 1.5rem;
-    }
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 250px;
+            padding: 20px;
+        }
 
-    .stat-info h3 {
-      font-size: 1.8rem;
-      margin-bottom: 0.2rem;
-    }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
 
-    .stat-info p {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
+        .header h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
 
-    /* Dashboard Content */
-    .dashboard {
-      padding: 0 1.5rem 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+        .header p {
+            color: #7f8c8d;
+        }
 
-    .welcome-message {
-      text-align: center;
-      margin-bottom: 2rem;
-      color: var(--muted);
-    }
+        /* Dashboard Cards */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
 
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
 
+        .card:hover {
+            transform: translateY(-5px);
+        }
 
-    .section-title {
-      font-size: 1.5rem;
-      color: var(--primary);
-      margin-bottom: 1.5rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
-    }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            font-size: 1.5rem;
+            color: white;
+        }
 
-    .card {
-      background: var(--bg-card);
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-align: center;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      transition: transform 0.3s;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 150px;
-    }
+        .card-icon.users { background: #3498db; }
+        .card-icon.orders { background: #e74c3c; }
+        .card-icon.payouts { background: #f39c12; }
+        .card-icon.revenue { background: #27ae60; }
 
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    }
+        .card-title {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-    /* Share Shop Card */
-    .share-shop-card {
-      cursor: pointer;
-      background: linear-gradient(135deg, var(--primary), #00b386);
-      color: var(--bg-dark);
-    }
+        .card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
 
-    .share-shop-card:hover {
-      background: linear-gradient(135deg, #00b386, var(--primary));
-      transform: translateY(-5px) scale(1.02);
-    }
+        /* Content Sections */
+        .content-section {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
 
-    .share-shop-card .card-icon {
-      background: rgba(255, 255, 255, 0.2);
-      color: var(--bg-dark);
-    }
+        .section-header {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
 
-    .share-shop-card h3,
-    .share-shop-card p {
-      color: var(--bg-dark);
-    }
+        .section-header h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
 
-    /* Share Modal Styles */
-    .share-modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
+        .section-header p {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
 
-    .share-modal.show {
-      display: flex;
-    }
+        .section-content {
+            padding: 20px;
+        }
 
-    .share-modal-content {
-      background: var(--bg-card);
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 450px;
-      width: 90%;
-      text-align: center;
-      position: relative;
-    }
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
 
-    .share-modal-header {
-      margin-bottom: 1.5rem;
-    }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
 
-    .share-modal-header h2 {
-      color: var(--primary);
-      margin-bottom: 0.5rem;
-    }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
 
-    .share-modal-header p {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #2c3e50;
+        }
 
-    .close-modal {
-      position: absolute;
-      top: 15px;
-      right: 20px;
-      background: none;
-      border: none;
-      color: var(--text-light);
-      font-size: 1.5rem;
-      cursor: pointer;
-      padding: 5px;
-    }
+        tr:hover {
+            background: #f8f9fa;
+        }
 
-    .shop-link-display {
-      background: var(--bg-secondary);
-      border: 1px solid var(--primary);
-      border-radius: 8px;
-      padding: 1rem;
-      margin: 1.5rem 0;
-      word-break: break-all;
-      font-family: monospace;
-      font-size: 0.9rem;
-      color: var(--primary);
-    }
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
 
-    .share-options {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
 
-    .share-option {
-      background: var(--bg-secondary);
-      border: none;
-      border-radius: 8px;
-      padding: 1rem;
-      color: var(--text-light);
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.3s ease;
-    }
+        .btn-primary:hover {
+            background: #2980b9;
+        }
 
-    .share-option:hover {
-      background: var(--primary);
-      color: var(--bg-dark);
-      transform: translateY(-2px);
-    }
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
 
-    .share-option i {
-      font-size: 1.5rem;
-    }
+        .btn-success:hover {
+            background: #229954;
+        }
 
-    .share-option.whatsapp:hover {
-      background: #25D366;
-    }
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
 
-    .share-option.facebook:hover {
-      background: #1877F2;
-    }
+        .btn-danger:hover {
+            background: #c0392b;
+        }
 
-    .share-option.twitter:hover {
-      background: #1DA1F2;
-    }
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
 
-    .share-option.copy:hover {
-      background: var(--primary);
-    }
+        .btn-warning:hover {
+            background: #e67e22;
+        }
 
-    .copy-success {
-      background: var(--primary);
-      color: var(--bg-dark);
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      margin-top: 1rem;
-      display: none;
-      font-weight: 500;
-    }
+        /* Status badges */
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
 
-    .copy-success.show {
-      display: block;
-    }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-processing { background: #d1ecf1; color: #0c5460; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-failed { background: #f8d7da; color: #721c24; }
 
-    .qr-section {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: var(--bg-secondary);
-      border-radius: 8px;
-    }
+        /* Search and filters */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
 
-    .qr-code {
-      display: block;
-      margin: 0 auto;
-      max-width: 150px;
-      height: auto;
-    }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
 
-    /* Payout Queue Styles */
-    .payout-queue-container {
-      background: var(--bg-card);
-      border-radius: 12px;
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-    }
+        .filter-group label {
+            font-size: 0.9rem;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
 
-    .queue-stats {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 2rem;
-    }
+        .filter-group input,
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
 
-    .stat-item {
-      background: var(--bg-secondary);
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-    }
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
 
-    .stat-label {
-      display: block;
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 0.5rem;
-    }
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
 
-    .stat-value {
-      display: block;
-      color: var(--primary);
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
+        .pagination button:hover {
+            background: #f8f9fa;
+        }
 
-    .queue-details h3 {
-      color: var(--text-light);
-      margin-bottom: 1rem;
-      font-size: 1.2rem;
-    }
+        .pagination button.active {
+            background: #3498db;
+            color: white;
+            border-color: #3498db;
+        }
 
-    .orders-list {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
+        /* Loading states */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #7f8c8d;
+        }
 
-    .order-item {
-      background: var(--bg-secondary);
-      padding: 1rem;
-      border-radius: 8px;
-      border-left: 4px solid var(--primary);
-    }
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
 
-    .order-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-    .order-id {
-      font-weight: bold;
-      color: var(--primary);
-    }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
 
-    .order-amount {
-      font-size: 1.1rem;
-      color: var(--text-light);
-    }
+            .sidebar.open {
+                transform: translateX(0);
+            }
 
-    .order-details {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
+            .main-content {
+                margin-left: 0;
+            }
 
-    .order-status {
-      background: #ff9800;
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 500;
-    }
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
 
-    .card-icon {
-      width: 50px;
-      height: 50px;
-      border-radius: 12px;
-      background: rgba(0, 204, 153, 0.2);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-      color: var(--primary);
-      font-size: 1.5rem;
-    }
+            .filters {
+                flex-direction: column;
+            }
+        }
 
-    .card h3 {
-      margin: 0 0 0.5rem;
-      font-size: 1.1rem;
-      color: var(--primary);
-    }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
 
-    .card p {
-      font-size: 0.9rem;
-      margin: 0;
-      color: var(--muted);
-    }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: none;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 1000px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
 
-    /* Responsive Design */
-    @media (max-width: 768px) {
-      .dashboard-stats {
-        grid-template-columns: 1fr;
-      }
-      
-      .grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      }
-    }
+        .modal-header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-    @media (max-width: 480px) {
-      .header h1 {
-        font-size: 1.2rem;
-      }
-      
-      .grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .dashboard {
-        padding: 0 1rem 2rem;
-      }
-    }
-  </style>
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .dispute-info {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .info-item label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .parties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .party {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+
+        .party h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        .dispute-details {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .dispute-details h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+        }
+
+        .detail-item {
+            margin-bottom: 15px;
+        }
+
+        .detail-item label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+
+        .evidence-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .evidence-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .evidence-info {
+            flex: 1;
+        }
+
+        .evidence-preview img {
+            border-radius: 5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message-item {
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .message-content p {
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .dispute-resolution {
+            background: #e8f5e8;
+            padding: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .resolution-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+    </style>
 </head>
 <body>
-  <!-- Header -->
-  <div class="header">
-    <div class="logo-container">
-      <h1>Vendor Dashboard</h1>
-    </div>
-    <div class="user-menu">
-      <!-- Notification icon will be injected here by notifications.js -->
-      <div class="user-avatar">V</div>
-    </div>
-  </div>
-
-
-  <!-- Dashboard Content -->
-  <div class="dashboard">
-    <div class="welcome-message">
-      <h2>Welcome back, Vendor! 👋</h2>
-      <p>Here's what's happening with your store today</p>
-    </div>
-
-
-
-    <h2 class="section-title">Orders & Products</h2>
-    <div class="grid">
-      <a href="vendor-orders.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-clipboard-list"></i>
-          </div>
-          <h3>Incoming Orders</h3>
-          <p>View & manage incoming orders</p>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Vendplug Admin</h2>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active" data-section="dashboard">
+                        <i>📊</i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#users" class="nav-link" data-section="users">
+                        <i>👥</i> Users
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#orders" class="nav-link" data-section="orders">
+                        <i>📦</i> Orders
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#payouts" class="nav-link" data-section="payouts">
+                        <i>💰</i> Payouts
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#disputes" class="nav-link" data-section="disputes">
+                        <i>🚨</i> Disputes
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="staff-management.html" class="nav-link">
+                        <i>👨‍💼</i> Staff Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#staff-activity" class="nav-link" data-section="staff-activity">
+                        <i>📋</i> Staff Activity Log
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#logout" class="nav-link" id="logoutBtn">
+                        <i>🚪</i> Logout
+                    </a>
+                </li>
+            </ul>
         </div>
-      </a>
 
-      <a href="vendor-delivered-orders.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-check-circle"></i>
-          </div>
-          <h3>Delivered Orders</h3>
-          <p>View completed & delivered orders</p>
-        </div>
-      </a>
-
-      <a href="vendor-products.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-box-open"></i>
-          </div>
-          <h3>Manage Products</h3>
-          <p>Add, update, or remove listings</p>
-        </div>
-      </a>
-
-      <a href="vendor-stats.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-chart-line"></i>
-          </div>
-          <h3>Stats & Analytics</h3>
-          <p>Sales overview & performance</p>
-        </div>
-      </a>
-    </div>
-
-    <h2 class="section-title">Payouts & Finances</h2>
-    <div class="grid">
-      <a href="request-payout.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-paper-plane"></i>
-          </div>
-          <h3>Request Payout</h3>
-          <p>Withdraw funds to your bank</p>
-        </div>
-      </a>
-
-      <a href="bank-accounts.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-university"></i>
-          </div>
-          <h3>Bank Accounts</h3>
-          <p>Manage your bank details</p>
-        </div>
-      </a>
-
-      <a href="vendor-wallet.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-wallet"></i>
-          </div>
-          <h3>Wallet</h3>
-          <p>View balance & transactions</p>
-        </div>
-      </a>
-    </div>
-
-    <h2 class="section-title">Dispute Management</h2>
-    <div class="grid">
-      <a href="create-dispute.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h3>Create Dispute</h3>
-          <p>Report an issue with an order</p>
-        </div>
-      </a>
-
-      <a href="my-disputes.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-clipboard-list"></i>
-          </div>
-          <h3>My Disputes</h3>
-          <p>Track your dispute cases</p>
-        </div>
-      </a>
-    </div>
-
-    <!-- Payout Queue Section -->
-    <h2 class="section-title">📋 Payout Queue</h2>
-    <div class="payout-queue-container">
-      <div class="queue-stats">
-        <div class="stat-item">
-          <span class="stat-label">Pending Confirmations</span>
-          <span class="stat-value" id="pendingConfirmations">0</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Expected Payouts</span>
-          <span class="stat-value" id="expectedPayouts">₦0.00</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Available for Payout</span>
-          <span class="stat-value" id="availablePayouts">₦0.00</span>
-        </div>
-      </div>
-      
-      <div class="queue-details">
-        <h3>📦 Orders Awaiting Buyer Confirmation</h3>
-        <div id="pendingOrdersList" class="orders-list">
-          <!-- Pending orders will be loaded here -->
-        </div>
-      </div>
-    </div>
-
-    <h2 class="section-title">Account & Support</h2>
-    <div class="grid">
-      <a href="vendor-profile.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-user"></i>
-          </div>
-          <h3>Profile</h3>
-          <p>View & edit your details</p>
-        </div>
-      </a>
-
-      <div class="card share-shop-card" onclick="showShareModal()">
-        <div class="card-icon">
-          <i class="fas fa-share-alt"></i>
-        </div>
-        <h3>Share My Shop</h3>
-        <p>Share your shop link with customers</p>
-      </div>
-
-      <a href="support.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-headset"></i>
-          </div>
-          <h3>Support</h3>
-          <p>Get help with your account</p>
-        </div>
-      </a>
-
-      <a href="vendor-auth.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-sign-out-alt"></i>
-          </div>
-          <h3>Sign Out</h3>
-          <p>Secure logout from your account</p>
-        </div>
-      </a>
-    </div>
-  </div>
-
-  <!-- Share Shop Modal -->
-  <div class="share-modal" id="shareModal">
-    <div class="share-modal-content">
-      <button class="close-modal" onclick="closeShareModal()">
-        <i class="fas fa-times"></i>
-      </button>
-      
-      <div class="share-modal-header">
-        <h2>Share Your Shop</h2>
-        <p>Share your shop link with customers and grow your business!</p>
-      </div>
-
-      <div class="shop-link-display" id="shopLinkDisplay">
-        Loading shop link...
-      </div>
-
-      <div class="share-options">
-        <button class="share-option whatsapp" onclick="shareToWhatsApp()">
-          <i class="fab fa-whatsapp"></i>
-          <span>WhatsApp</span>
-        </button>
-        
-        <button class="share-option facebook" onclick="shareToFacebook()">
-          <i class="fab fa-facebook"></i>
-          <span>Facebook</span>
-        </button>
-        
-        <button class="share-option twitter" onclick="shareToTwitter()">
-          <i class="fab fa-twitter"></i>
-          <span>Twitter</span>
-        </button>
-        
-        <button class="share-option copy" onclick="copyShopLink()">
-          <i class="fas fa-copy"></i>
-          <span>Copy Link</span>
-        </button>
-      </div>
-
-      <div class="copy-success" id="copySuccess">
-        Link copied to clipboard! ✅
-      </div>
-
-      <div class="qr-section">
-        <h4>QR Code for Easy Sharing</h4>
-        <img id="qrCode" class="qr-code" alt="Shop QR Code">
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-  <script src="/js/config.js"></script>
-  <script src="/js/notifications.js"></script>
-  <script>
-    // Global variables for sharing
-    let vendorData = null;
-    let shopUrl = '';
-
-    // This would be replaced with your actual data loading logic
-    document.addEventListener('DOMContentLoaded', function() {
-      // Load vendor data for sharing
-      loadVendorData();
-      
-      // Load payout queue data
-      loadPayoutQueue();
-      
-      // Simulate loading data from backend
-      setTimeout(() => {
-        // Update stats with real data (this would come from your backend)
-        const stats = {
-          orders: 142,
-          revenue: 982450,
-          products: 56,
-          rating: 4.8
-        };
-        
-      }, 500);
-    });
-
-    // Load vendor data for sharing
-    async function loadVendorData() {
-      try {
-        // Get vendor ID from localStorage or token
-        const token = localStorage.getItem('vendplug-token');
-        if (!token) {
-          console.log('No vendor token found');
-          return;
-        }
-
-        // Get vendor ID from localStorage
-        const vendor = JSON.parse(localStorage.getItem('vendplugVendor'));
-        if (!vendor || !vendor._id) {
-          console.log('No vendor data found');
-          return;
-        }
-
-        // Fetch vendor data using vendor ID
-        const response = await fetch(`/api/vendors/${vendor._id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          vendorData = await response.json();
-          console.log('✅ Vendor data loaded:', vendorData);
-          
-          shopUrl = `${window.location.origin}/view-shop.html?vendor=${vendorData._id}`;
-          console.log('✅ Shop URL generated:', shopUrl);
-          
-          // Update shop link display
-          document.getElementById('shopLinkDisplay').textContent = shopUrl;
-          
-          // Generate QR code
-          generateQRCode(shopUrl);
-        } else {
-          console.error('❌ Failed to fetch vendor data:', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error('Error loading vendor data:', error);
-        // Fallback: use placeholder data
-        shopUrl = `${window.location.origin}/view-shop.html?vendor=your-vendor-id`;
-        document.getElementById('shopLinkDisplay').textContent = shopUrl;
-        generateQRCode(shopUrl);
-      }
-    }
-
-    // Load payout queue data
-    async function loadPayoutQueue() {
-      try {
-        const token = localStorage.getItem('vendplug-token');
-        if (!token) {
-          console.log('No vendor token found');
-          return;
-        }
-
-        const vendor = JSON.parse(localStorage.getItem('vendplugVendor'));
-        if (!vendor || !vendor._id) {
-          console.log('No vendor data found');
-          return;
-        }
-
-        // Fetch pending orders (delivered but not confirmed)
-        const response = await fetch(`/api/vendor-orders?status=delivered&vendor=${vendor._id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.ok) {
-          const pendingOrders = await response.json();
-          console.log('✅ Payout queue loaded:', pendingOrders);
-
-          // Update stats
-          document.getElementById('pendingConfirmations').textContent = pendingOrders.length;
-          
-          const totalExpected = pendingOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-          document.getElementById('expectedPayouts').textContent = `₦${totalExpected.toLocaleString()}`;
-
-          // Get wallet balance for available payouts
-          const walletResponse = await fetch(`/api/wallet/vendor`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (walletResponse.ok) {
-            const walletData = await walletResponse.json();
-            const balance = walletData.balance || 0;
-            document.getElementById('availablePayouts').textContent = `₦${balance.toLocaleString()}`;
-          } else if (walletResponse.status === 404) {
-            // Wallet doesn't exist yet, set balance to 0
-            document.getElementById('availablePayouts').textContent = '₦0.00';
-            console.log('ℹ️ Wallet not found - user may not have made any transactions yet');
-          } else {
-            console.error('❌ Failed to fetch wallet balance:', walletResponse.status);
-            document.getElementById('availablePayouts').textContent = '₦0.00';
-          }
-
-          // Display pending orders
-          const pendingOrdersList = document.getElementById('pendingOrdersList');
-          if (pendingOrders.length === 0) {
-            pendingOrdersList.innerHTML = '<p style="color: var(--muted); text-align: center; padding: 2rem;">No orders awaiting confirmation</p>';
-          } else {
-            pendingOrdersList.innerHTML = pendingOrders.map(order => `
-              <div class="order-item">
-                <div class="order-header">
-                  <span class="order-id">#${order._id.slice(-8)}</span>
-                  <span class="order-amount">₦${order.totalAmount.toLocaleString()}</span>
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section">
+                <div class="section-header">
+                    <h3>Dashboard Overview</h3>
+                    <p>Platform statistics and recent activities</p>
                 </div>
-                <div class="order-details">
-                  <strong>Buyer:</strong> ${order.buyerName || 'Unknown'}<br>
-                  <strong>Order Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}<br>
-                  <strong>Status:</strong> <span class="order-status">Awaiting Confirmation</span>
+                <div class="section-content">
+                    <!-- Financial Summary Card -->
+                    <div class="financial-summary" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h4 style="margin: 0 0 10px 0; font-weight: 600;">💰 Financial Overview</h4>
+                                <p style="margin: 0; opacity: 0.9; font-size: 0.95rem;">Total platform transaction volume and revenue</p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <div class="financial-stats">
+                                    <div class="stat-item" style="margin-bottom: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Total Transactions</div>
+                                        <div style="font-size: 1.8rem; font-weight: bold;" id="totalTransactionAmount">₦0</div>
+                                    </div>
+                                    <div class="stat-item" style="margin-bottom: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Total Orders</div>
+                                        <div style="font-size: 1.8rem; font-weight: bold;" id="totalOrderAmount">₦0</div>
+                                    </div>
+                                    <div class="stat-item" style="margin-bottom: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Total Payouts</div>
+                                        <div style="font-size: 1.8rem; font-weight: bold;" id="totalPayoutAmount">₦0</div>
+                                    </div>
+                                    <div class="stat-item" style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px;">
+                                        <div style="font-size: 0.85rem; opacity: 0.8;">Net Revenue</div>
+                                        <div style="font-size: 2.2rem; font-weight: bold; color: #4ade80;" id="netRevenue">₦0</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Global Dashboard Filter -->
+                    <div class="filters" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+                        <div class="filter-group">
+                            <label>Date Range</label>
+                            <input type="date" id="dashboardDateFrom" placeholder="From Date">
+                        </div>
+                        <div class="filter-group">
+                            <label>To</label>
+                            <input type="date" id="dashboardDateTo" placeholder="To Date">
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="adminDashboard.applyGlobalFilter()">Apply Filter</button>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-secondary" onclick="adminDashboard.clearGlobalFilter()">Clear</button>
+                        </div>
+                    </div>
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon users">👥</div>
+                                <div>
+                                    <div class="card-title">Total Users</div>
+                                    <div class="card-value" id="totalUsers">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon orders">📦</div>
+                                <div>
+                                    <div class="card-title">Total Orders</div>
+                                    <div class="card-value" id="totalOrders">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon payouts">💰</div>
+                                <div>
+                                    <div class="card-title">Pending Payouts</div>
+                                    <div class="card-value" id="pendingPayouts">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon revenue">📈</div>
+                                <div>
+                                    <div class="card-title">Processing Payouts</div>
+                                    <div class="card-value" id="processingPayouts">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon disputes">🚨</div>
+                                <div>
+                                    <div class="card-title">Open Disputes</div>
+                                    <div class="card-value" id="openDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon disputes">👥</div>
+                                <div>
+                                    <div class="card-title">Assigned Disputes</div>
+                                    <div class="card-value" id="assignedDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon disputes">🔍</div>
+                                <div>
+                                    <div class="card-title">Under Review</div>
+                                    <div class="card-value" id="underReviewDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: #27ae60;">✅</div>
+                                <div>
+                                    <div class="card-title">Resolved Disputes</div>
+                                    <div class="card-value" id="resolvedDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: #8e44ad;">📊</div>
+                                <div>
+                                    <div class="card-title">Total Disputes</div>
+                                    <div class="card-value" id="totalDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="cursor: pointer;" onclick="window.location.href='staff-management.html'">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">👨‍💼</div>
+                                <div>
+                                    <div class="card-title">Staff Management</div>
+                                    <div class="card-value" style="font-size: 0.9rem; color: #3498db;">Manage Team</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="cursor: pointer;" onclick="window.location.href='staff-login.html'">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);">🛡️</div>
+                                <div>
+                                    <div class="card-title">Staff Login</div>
+                                    <div class="card-value" style="font-size: 0.9rem; color: #27ae60;">Dispute Resolution</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card" style="cursor: pointer;" onclick="adminDashboard.showEscalatedDisputes()">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);">🚨</div>
+                                <div>
+                                    <div class="card-title">Escalated Disputes</div>
+                                    <div class="card-value" id="escalatedDisputes">0</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="content-section">
+                            <div class="section-header">
+                                <h4>Recent Orders</h4>
+                            </div>
+                            <div class="section-content">
+                                <div id="recentOrders" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading recent orders...
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="content-section">
+                            <div class="section-header">
+                                <h4>Recent Transactions</h4>
+                            </div>
+                            <div class="section-content">
+                                <div id="recentTransactions" class="loading">
+                                    <div class="spinner"></div>
+                                    Loading recent transactions...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            `).join('');
-          }
-        } else {
-          console.error('❌ Failed to fetch payout queue:', response.status, response.statusText);
-        }
-      } catch (error) {
-        console.error('Error loading payout queue:', error);
-      }
-    }
+            </div>
 
+            <!-- Users Section -->
+            <div id="users-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>User Management</h3>
+                    <p>Manage buyers, vendors, and agents</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search</label>
+                            <input type="text" id="userSearch" placeholder="Search by name or email">
+                        </div>
+                        <div class="filter-group">
+                            <label>Role</label>
+                            <select id="userRole">
+                                <option value="">All Roles</option>
+                                <option value="buyer">Buyers</option>
+                                <option value="vendor">Vendors</option>
+                                <option value="agent">Agents</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="userStatus">
+                                <option value="">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchUsers()">Search</button>
+                        </div>
+                    </div>
 
+                    <div id="usersTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading users...
+                    </div>
+                </div>
+            </div>
 
-    // Show share modal
-    function showShareModal() {
-      const modal = document.getElementById('shareModal');
-      modal.classList.add('show');
-      
-      // Load vendor data if not already loaded
-      if (!vendorData) {
-        loadVendorData();
-      }
-    }
+            <!-- Orders Section -->
+            <div id="orders-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Order Management</h3>
+                    <p>Monitor all platform orders</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Search</label>
+                            <input type="text" id="orderSearch" placeholder="Search by order ID or user">
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="orderStatus">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="accepted">Accepted</option>
+                                <option value="in-progress">In Progress</option>
+                                <option value="delivered">Delivered</option>
+                                <option value="fulfilled">Fulfilled</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Order Type</label>
+                            <select id="orderType">
+                                <option value="">All Types</option>
+                                <option value="vendor">Vendor Orders</option>
+                                <option value="agent">Agent Orders</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchOrders()">Search</button>
+                        </div>
+                    </div>
 
-    // Close share modal
-    function closeShareModal() {
-      const modal = document.getElementById('shareModal');
-      modal.classList.remove('show');
-    }
+                    <div id="ordersTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading orders...
+                    </div>
+                </div>
+            </div>
 
-    // Generate QR code
-    function generateQRCode(url) {
-      const qrCodeEl = document.getElementById('qrCode');
-      if (qrCodeEl && window.QRCode) {
-        QRCode.toCanvas(qrCodeEl, url, {
-          width: 150,
-          margin: 2,
-          color: {
-            dark: '#00cc99',
-            light: '#ffffff'
-          }
-        }, function (error) {
-          if (error) console.error('QR Code generation error:', error);
-        });
-      }
-    }
+            <!-- Payouts Section -->
+            <div id="payouts-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Payout Management</h3>
+                    <p>Approve and manage vendor/agent payouts</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="payoutStatus">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="failed">Failed</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchPayouts()">Filter</button>
+                        </div>
+                    </div>
 
-    // Share to WhatsApp
-    function shareToWhatsApp() {
-      if (!vendorData || !shopUrl) return;
-      
-      const message = `Check out my shop on Vendplug!\n\n🏪 ${vendorData.shopName || vendorData.fullName}\n📍 ${vendorData.state || 'Nigeria'}\n📱 ${vendorData.phoneNumber}\n\n${shopUrl}`;
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, '_blank');
-      
-      // Track sharing
-      trackShare('whatsapp');
-    }
+                    <div id="payoutsTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading payouts...
+                    </div>
+                </div>
+            </div>
 
-    // Share to Facebook
-    function shareToFacebook() {
-      if (!shopUrl) return;
-      
-      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shopUrl)}`;
-      window.open(facebookUrl, '_blank', 'width=600,height=400');
-      
-      // Track sharing
-      trackShare('facebook');
-    }
+            <!-- Disputes Section -->
+            <div id="disputes-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Dispute Management</h3>
+                    <p>Review and resolve customer disputes</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="disputeStatus">
+                                <option value="">All Statuses</option>
+                                <option value="open">Open</option>
+                                <option value="assigned">Assigned</option>
+                                <option value="under_review">Under Review</option>
+                                <option value="escalated">Escalated</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Priority</label>
+                            <select id="disputePriority">
+                                <option value="">All Priorities</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchDisputes()">Filter</button>
+                        </div>
+                    </div>
 
-    // Share to Twitter
-    function shareToTwitter() {
-      if (!vendorData || !shopUrl) return;
-      
-      const message = `Check out my shop ${vendorData.shopName || vendorData.fullName} on Vendplug! 🏪✨\n\n${shopUrl}`;
-      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`;
-      window.open(twitterUrl, '_blank', 'width=600,height=400');
-      
-      // Track sharing
-      trackShare('twitter');
-    }
+                    <div id="disputesTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading disputes...
+                    </div>
+                </div>
+            </div>
 
-    // Copy shop link
-    function copyShopLink() {
-      if (!shopUrl) return;
-      
-      navigator.clipboard.writeText(shopUrl).then(() => {
-        const copySuccess = document.getElementById('copySuccess');
-        copySuccess.classList.add('show');
-        
-        setTimeout(() => {
-          copySuccess.classList.remove('show');
-        }, 3000);
-      }).catch(err => {
-        console.error('Failed to copy:', err);
-        alert('Failed to copy link. Please try again.');
-      });
-      
-      // Track sharing
-      trackShare('copy');
-    }
+            <!-- Escalated Disputes Section -->
+            <div id="escalated-disputes-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Escalated Disputes</h3>
+                    <p>Review and take action on escalated disputes</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Priority</label>
+                            <select id="escalatedPriority">
+                                <option value="">All Priorities</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Escalation Reason</label>
+                            <select id="escalationReason">
+                                <option value="">All Reasons</option>
+                                <option value="complex_case">Complex Case</option>
+                                <option value="staff_unavailable">Staff Unavailable</option>
+                                <option value="requires_admin_decision">Requires Admin Decision</option>
+                                <option value="legal_issues">Legal Issues</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchEscalatedDisputes()">Filter</button>
+                        </div>
+                    </div>
 
-    // Track sharing analytics
-    function trackShare(platform) {
-      try {
-        // Send analytics to backend
-        fetch('/api/analytics/share', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            platform,
-            vendorId: vendorData?._id,
-            shopUrl,
-            timestamp: new Date().toISOString()
-          })
-        }).catch(err => console.log('Analytics error:', err));
-        
-        // Log locally
-        console.log(`Shop shared via ${platform}`);
-      } catch (error) {
-        console.log('Analytics tracking failed:', error);
-      }
-    }
+                    <div id="escalatedDisputesTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading escalated disputes...
+                    </div>
+                </div>
+            </div>
 
-    // Close modal when clicking outside
-    document.addEventListener('click', function(event) {
-      const modal = document.getElementById('shareModal');
-      if (event.target === modal) {
-        closeShareModal();
-      }
-    });
-  </script>
+            <!-- Staff Activity Log Section -->
+            <div id="staff-activity-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Staff Activity Log</h3>
+                    <p>Track all staff actions and dispute activities</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Staff Member</label>
+                            <select id="staffFilter">
+                                <option value="">All Staff</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Action Type</label>
+                            <select id="actionFilter">
+                                <option value="">All Actions</option>
+                                <option value="resolved">Dispute Resolved</option>
+                                <option value="refund">Refund Issued</option>
+                                <option value="no_refund">No Refund</option>
+                                <option value="partial_refund">Partial Refund</option>
+                                <option value="escalated">Dispute Escalated</option>
+                                <option value="under_review">Under Review</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Date Range</label>
+                            <input type="date" id="dateFrom">
+                        </div>
+                        <div class="filter-group">
+                            <label>To</label>
+                            <input type="date" id="dateTo">
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchStaffActivity()">Filter</button>
+                        </div>
+                    </div>
+
+                    <div id="staffActivityTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading staff activity...
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/dataFormatter.js"></script>
+    <script src="js/admin-dashboard.js"></script>
 </body>
 </html>

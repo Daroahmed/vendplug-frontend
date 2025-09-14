@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Vendplug</title>
+    <link rel="stylesheet" href="css/chat.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <a href="index.html">Vendplug</a>
+            </div>
+            <div class="nav-menu">
+                <a href="buyer-dashboard.html" class="nav-link">Dashboard</a>
+                <a href="buyer-orders.html" class="nav-link">Orders</a>
+                <a href="chat.html" class="nav-link active">Messages</a>
+                <a href="buyer-profile.html" class="nav-link">Profile</a>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Chat Container -->
+    <div class="chat-container">
+        <!-- Chat Sidebar -->
+        <div class="chat-sidebar">
+            <div class="chat-header">
+                <h2>Messages</h2>
+                <button class="btn-new-chat" onclick="showNewChatModal()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+            
+            <div class="chat-search">
+                <input type="text" id="chatSearch" placeholder="Search conversations...">
+                <i class="fas fa-search"></i>
+            </div>
+            
+            <div class="chat-list" id="chatList">
+                <!-- Chat items will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Chat Main Area -->
+        <div class="chat-main">
+            <div class="chat-welcome" id="chatWelcome">
+                <div class="welcome-content">
+                    <i class="fas fa-comments"></i>
+                    <h3>Welcome to Messages</h3>
+                    <p>Select a conversation to start chatting</p>
+                </div>
+            </div>
+
+            <div class="chat-messages" id="chatMessages" style="display: none;">
+                <!-- Messages will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- New Chat Modal -->
+    <div class="modal" id="newChatModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Start New Chat</h3>
+                <button class="modal-close" onclick="closeNewChatModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Chat with:</label>
+                    <select id="chatParticipantType" onchange="loadParticipants()">
+                        <option value="">Select type</option>
+                        <option value="Vendor">Vendor</option>
+                        <option value="Agent">Agent</option>
+                    </select>
+                </div>
+                <div class="form-group" id="participantSelect" style="display: none;">
+                    <label>Select participant:</label>
+                    <select id="chatParticipant">
+                        <option value="">Select participant</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeNewChatModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createNewChat()">Start Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Support Ticket Modal -->
+    <div class="modal" id="supportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Support Ticket</h3>
+                <button class="modal-close" onclick="closeSupportModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="supportForm">
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select id="supportCategory" required>
+                            <option value="">Select category</option>
+                            <option value="technical">Technical</option>
+                            <option value="billing">Billing</option>
+                            <option value="order">Order</option>
+                            <option value="dispute">Dispute</option>
+                            <option value="account">Account</option>
+                            <option value="payment">Payment</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Subject *</label>
+                        <input type="text" id="supportSubject" placeholder="Brief description of your issue" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Description *</label>
+                        <textarea id="supportDescription" rows="4" placeholder="Please provide detailed information about your issue" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Priority</label>
+                        <select id="supportPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSupportModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="createSupportTicket()">Create Ticket</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Input (hidden initially) -->
+    <div class="message-input-container" id="messageInputContainer" style="display: none;">
+        <div class="message-input">
+            <button class="btn-attach" onclick="triggerFileInput()">
+                <i class="fas fa-paperclip"></i>
+            </button>
+            <input type="file" id="fileInput" multiple accept="image/*,application/pdf,.doc,.docx,.txt" style="display: none;">
+            <div class="message-textarea">
+                <textarea id="messageInput" placeholder="Type your message..." rows="1"></textarea>
+            </div>
+            <button class="btn-send" onclick="sendMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <span id="typingText"></span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="js/chat.js"></script>
+</body>
+</html>
