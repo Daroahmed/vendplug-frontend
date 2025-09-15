@@ -77,6 +77,39 @@
       gap: 15px;
     }
 
+    /* Message Icon Styles */
+    .message-icon {
+      position: relative;
+      color: var(--text-light);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .message-icon:hover {
+      background: var(--bg-secondary);
+      color: var(--primary);
+    }
+
+    .message-badge {
+      position: absolute;
+      top: 0;
+      right: 0;
+      background-color: #ff4444;
+      color: white;
+      font-size: 0.7rem;
+      font-weight: bold;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 18px;
+    }
+
     .user-avatar {
       width: 40px;
       height: 40px;
@@ -529,6 +562,10 @@
     </div>
     <div class="user-menu">
       <!-- Notification icon will be injected here by notifications.js -->
+      <div class="message-icon" onclick="openMessages()">
+        <i class="fas fa-comments"></i>
+        <span class="message-badge" id="messageCount">0</span>
+      </div>
       <div class="user-avatar">V</div>
     </div>
   </div>
@@ -779,6 +816,7 @@
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/config.js"></script>
   <script src="/js/notifications.js"></script>
+  <script src="/js/messageNotifications.js"></script>
   <script>
     // Global variables for sharing
     let vendorData = null;
@@ -1106,6 +1144,44 @@
         toggle.classList.add('rotated');
       }
     }
+
+    // Open messages function
+    function openMessages() {
+      // Open chat interface in the same window
+      const chatUrl = 'chat.html?type=vendor';
+      window.location.href = chatUrl;
+    }
+
+    // Load unread message count
+    async function loadMessageCount() {
+      try {
+        const token = localStorage.getItem('vendplug-token');
+        if (!token) return;
+
+        const response = await fetch('/api/chats/unread-count', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const count = data.count || 0;
+          document.getElementById('messageCount').textContent = count;
+          document.getElementById('messageCount').style.display = count > 0 ? 'flex' : 'none';
+        }
+      } catch (error) {
+        console.error('Error loading message count:', error);
+      }
+    }
+
+    // Load message count on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      loadMessageCount();
+      
+      // Refresh message count every 30 seconds
+      setInterval(loadMessageCount, 30000);
+    });
   </script>
 </body>
 </html>

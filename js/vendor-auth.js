@@ -33,8 +33,11 @@ document.getElementById("vendorLoginForm").addEventListener("submit", async (e) 
       return;
     }
 
-    localStorage.setItem("vendplug-token", data.token);
-    localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
+    localStorage.setItem("vendplug-vendor-token", data.token);
+    // Remove token from vendor object before storing
+    const vendorData = { ...data.vendor };
+    delete vendorData.token; // Remove token from user object
+    localStorage.setItem("vendplugVendor", JSON.stringify(vendorData));
     window.location.href = "vendor-dashboard.html";
 
   } catch (err) {

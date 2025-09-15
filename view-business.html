@@ -121,6 +121,32 @@
       font-size: 1rem;
     }
 
+    /* Message Button Styles */
+    .message-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .message-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .message-btn i {
+      font-size: 1.1rem;
+    }
+
     .qr-section {
       margin-top: 1rem;
       padding: 1rem;
@@ -584,6 +610,41 @@
       }
     }
 
+    // Start chat function
+    function startChat(userType, userId, userName) {
+      console.log('Starting chat with:', { userType, userId, userName });
+      
+      // Check if user is logged in
+      const currentUser = JSON.parse(localStorage.getItem('vendplugBuyer'));
+      console.log('Current user:', currentUser);
+      
+      if (!currentUser) {
+        alert('Please log in to start a conversation');
+        window.location.href = 'buyer-auth.html';
+        return;
+      }
+
+      // Open chat interface
+      openChatInterface(userType, userId, userName);
+    }
+
+    // Open chat interface (placeholder - will be implemented with floating widget)
+    function openChatInterface(userType, userId, userName) {
+      try {
+        // For now, redirect to chat page with parameters
+        const chatUrl = `chat.html?type=direct&${userType}=${userId}&name=${encodeURIComponent(userName)}`;
+        console.log('Opening chat URL:', chatUrl);
+        
+        // Always redirect in the same window to avoid multiple tabs
+        window.location.href = chatUrl;
+      } catch (error) {
+        console.error('Error opening chat:', error);
+        // Fallback: redirect in same window
+        const chatUrl = `chat.html?type=direct&${userType}=${userId}&name=${encodeURIComponent(userName)}`;
+        window.location.href = chatUrl;
+      }
+    }
+
     // Update the existing DOMContentLoaded to initialize sharing
     const originalDOMContentLoaded = document.addEventListener;
     document.addEventListener('DOMContentLoaded', async () => {
@@ -624,6 +685,9 @@
                 <button class="copy-btn" onclick="copyAccount()">Copy</button>
               </p>
               <p><strong>Total Transactions:</strong> ${agent.totalTransactions || 0}</p>
+              <div style="margin-top: 15px;" id="messageButtonContainer">
+                <!-- Message button will be added here by JavaScript if user is a buyer -->
+              </div>
             </div>
           </div>
         `;
@@ -657,6 +721,28 @@
         agentProfileEl.innerHTML = '<p class="error-message">Error loading agent data.</p>';
         agentProductsEl.innerHTML = '';
       }
+    });
+
+    // Show message button only for buyers
+    function showMessageButtonIfBuyer() {
+      const currentUser = JSON.parse(localStorage.getItem('vendplugBuyer'));
+      if (currentUser && currentUser.role === 'buyer') {
+        const messageButtonContainer = document.getElementById('messageButtonContainer');
+        if (messageButtonContainer) {
+          const agentId = new URLSearchParams(window.location.search).get('agent');
+          messageButtonContainer.innerHTML = `
+            <button class="message-btn" onclick="startChat('agent', '${agentId}', 'Agent')">
+              <i class="fas fa-comments"></i>
+              Message Agent
+            </button>
+          `;
+        }
+      }
+    }
+
+    // Call the function after the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(showMessageButtonIfBuyer, 1000); // Wait for agent data to load
     });
   </script>
 </body>

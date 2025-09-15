@@ -7,15 +7,94 @@ class ChatManager {
         this.chats = [];
         this.participants = [];
         this.typingTimeout = null;
+        this.isAutoStarting = false;
         
         this.init();
     }
 
     async init() {
-        // Get current user
-        this.currentUser = JSON.parse(localStorage.getItem('vendplugUser'));
+        // Debug localStorage contents
+        console.log('🔍 Debugging localStorage:');
+        console.log('vendplugUser:', localStorage.getItem('vendplugUser'));
+        console.log('vendplugBuyer:', localStorage.getItem('vendplugBuyer'));
+        console.log('vendplugVendor:', localStorage.getItem('vendplugVendor'));
+        console.log('vendplugAgent:', localStorage.getItem('vendplugAgent'));
+        console.log('vendplug-buyer-token:', localStorage.getItem('vendplug-buyer-token'));
+        console.log('vendplug-vendor-token:', localStorage.getItem('vendplug-vendor-token'));
+        console.log('vendplug-agent-token:', localStorage.getItem('vendplug-agent-token'));
+        
+        // Get current user - prioritize based on which token exists
+        let currentUser = null;
+        let userRole = null;
+        let userToken = null;
+        
+        // Check for buyer
+        const buyerToken = localStorage.getItem('vendplug-buyer-token');
+        if (buyerToken) {
+            currentUser = JSON.parse(localStorage.getItem('vendplugBuyer'));
+            userRole = 'buyer';
+            userToken = buyerToken;
+        }
+        
+        // Check for vendor
+        const vendorToken = localStorage.getItem('vendplug-vendor-token');
+        if (vendorToken) {
+            currentUser = JSON.parse(localStorage.getItem('vendplugVendor'));
+            userRole = 'vendor';
+            userToken = vendorToken;
+        }
+        
+        // Check for agent
+        const agentToken = localStorage.getItem('vendplug-agent-token');
+        if (agentToken) {
+            currentUser = JSON.parse(localStorage.getItem('vendplugAgent'));
+            userRole = 'agent';
+            userToken = agentToken;
+        }
+        
+        // Fallback to checking user objects directly (for backward compatibility)
+        if (!currentUser) {
+            const buyerData = JSON.parse(localStorage.getItem('vendplugBuyer'));
+            const vendorData = JSON.parse(localStorage.getItem('vendplugVendor'));
+            const agentData = JSON.parse(localStorage.getItem('vendplugAgent'));
+            
+            // Check if any user object has an embedded token
+            if (buyerData && buyerData.token) {
+                currentUser = buyerData;
+                userRole = 'buyer';
+                userToken = buyerData.token;
+            } else if (vendorData && vendorData.token) {
+                currentUser = vendorData;
+                userRole = 'vendor';
+                userToken = vendorData.token;
+            } else if (agentData && agentData.token) {
+                currentUser = agentData;
+                userRole = 'agent';
+                userToken = agentData.token;
+            } else {
+                // Last resort - pick the first available user
+                currentUser = buyerData || vendorData || agentData;
+                if (currentUser) {
+                    userRole = currentUser.role;
+                    userToken = currentUser.token;
+                }
+            }
+        }
+        
+        this.currentUser = currentUser;
+        
+        // Add token to currentUser
+        if (this.currentUser) {
+            this.currentUser.token = userToken;
+        }
+        
+        console.log('Current user identified as:', this.currentUser);
+        console.log('User ID:', this.currentUser._id || this.currentUser.id);
+        console.log('User role:', this.currentUser.role);
+        
         if (!this.currentUser) {
-            window.location.href = 'index.html';
+            console.log('No user found in localStorage, redirecting to login');
+            window.location.href = 'buyer-auth.html';
             return;
         }
 
@@ -25,8 +104,125 @@ class ChatManager {
         // Load user chats
         await this.loadChats();
         
+        // Mark messages as read when chat is opened
+        this.markMessagesAsRead();
+        
         // Setup event listeners
         this.setupEventListeners();
+
+        // Check for URL parameters to auto-start a chat
+        this.handleUrlParameters();
+    }
+
+    handleUrlParameters() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const type = urlParams.get('type');
+        const vendorId = urlParams.get('vendor');
+        const agentId = urlParams.get('agent');
+        const name = urlParams.get('name');
+
+        // If we have direct chat parameters, auto-start the chat
+        if (type === 'direct' && (vendorId || agentId) && name) {
+            console.log('Auto-starting direct chat with:', { type, vendorId, agentId, name });
+            this.isAutoStarting = true;
+            
+            // Determine recipient type and ID
+            const recipientType = vendorId ? 'Vendor' : 'Agent';
+            const recipientId = vendorId || agentId;
+            
+            // Auto-start the chat
+            this.startDirectChat(recipientType, recipientId, decodeURIComponent(name));
+        }
+    }
+
+    async markMessagesAsRead() {
+        try {
+            // Mark all messages as read when chat is opened
+            if (window.messageNotificationManager) {
+                window.messageNotificationManager.markAsRead();
+            }
+        } catch (error) {
+            console.error('❌ Error marking messages as read:', error);
+        }
+    }
+
+    async startDirectChat(recipientType, recipientId, recipientName) {
+        try {
+            console.log('Starting direct chat:', { recipientType, recipientId, recipientName });
+            
+            // Show loading state
+            this.showLoading('Starting chat...');
+            
+            // Get token from localStorage based on user type
+            let token;
+            if (this.currentUser.role === 'buyer') {
+                token = localStorage.getItem('vendplug-buyer-token');
+            } else if (this.currentUser.role === 'vendor') {
+                token = localStorage.getItem('vendplug-vendor-token');
+            } else if (this.currentUser.role === 'agent') {
+                token = localStorage.getItem('vendplug-agent-token');
+            } else {
+                token = localStorage.getItem('vendplug-token');
+            }
+            if (!token) {
+                throw new Error('No authentication token found');
+            }
+
+            console.log('Making API call to create chat with token:', token ? 'present' : 'missing');
+            console.log('Request body:', {
+                participantId: recipientId,
+                participantType: recipientType
+            });
+
+            // Create or get existing chat
+            const response = await fetch('/api/chats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    participantId: recipientId,
+                    participantType: recipientType
+                })
+            });
+
+            console.log('API response status:', response.status);
+            console.log('API response ok:', response.ok);
+            console.log('API response headers:', Object.fromEntries(response.headers.entries()));
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.error('API Error:', errorData);
+                throw new Error(`Failed to create/get chat: ${response.status} - ${errorData.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            const chat = data.data;
+            
+            console.log('Chat created/retrieved:', chat);
+            
+            // Add the new chat to our local chats array
+            this.chats.unshift(chat);
+            this.renderChatList();
+            
+            // Hide loading state
+            this.hideLoading();
+            
+            // Open the chat
+            await this.selectChat(chat._id);
+            
+            // Hide the start new chat modal if it's open
+            const modal = document.getElementById('newChatModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+        } catch (error) {
+            console.error('Error starting direct chat:', error);
+            this.hideLoading();
+            this.showError('Failed to start chat. Please try again.');
+        }
     }
 
     initSocket() {
@@ -34,7 +230,7 @@ class ChatManager {
         
         this.socket.on('connect', () => {
             console.log('✅ Connected to chat server');
-            this.socket.emit('join_user', { userId: this.currentUser.id });
+            this.socket.emit('join_user', { userId: this.currentUser._id || this.currentUser.id });
         });
 
         this.socket.on('disconnect', () => {
@@ -94,18 +290,27 @@ class ChatManager {
 
     async loadChats() {
         try {
+            console.log('Loading chats for user:', this.currentUser);
+            console.log('Using token:', this.currentUser.token);
+            
             const response = await fetch('/api/chats', {
                 headers: {
                     'Authorization': `Bearer ${this.currentUser.token}`
                 }
             });
 
+            console.log('Chat API response status:', response.status);
+
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Chat API error response:', errorText);
                 throw new Error('Failed to load chats');
             }
 
             const data = await response.json();
+            console.log('Chat API response data:', data);
             this.chats = data.data || [];
+            console.log('Processed chats:', this.chats);
             this.renderChatList();
         } catch (error) {
             console.error('Error loading chats:', error);
@@ -128,9 +333,16 @@ class ChatManager {
         }
 
         chatList.innerHTML = this.chats.map(chat => {
-            const otherParticipant = chat.participants.find(p => 
-                p.user._id !== this.currentUser.id
-            );
+            const currentUserId = this.currentUser._id || this.currentUser.id;
+            const otherParticipant = chat.participants.find(p => {
+                const participantId = p.user._id || p.user.id;
+                return participantId.toString() !== currentUserId.toString();
+            });
+            
+            console.log('Chat participants:', chat.participants);
+            console.log('Current user ID:', currentUserId);
+            console.log('Other participant found:', otherParticipant);
+            console.log('Participant user data:', otherParticipant?.user);
             
             const lastMessage = chat.lastMessage;
             const preview = lastMessage ? 
@@ -140,7 +352,7 @@ class ChatManager {
                 'No messages yet';
 
             return `
-                <div class="chat-item" onclick="chatManager.selectChat('${chat._id}')" data-chat-id="${chat._id}">
+                <div class="chat-item" onclick="event.preventDefault(); chatManager.selectChat('${chat._id}')" data-chat-id="${chat._id}">
                     <div class="chat-item-header">
                         <div class="chat-participant">${otherParticipant?.user?.fullName || 'Unknown'}</div>
                         <div class="chat-time">${this.formatTime(chat.lastMessageAt)}</div>
@@ -170,7 +382,7 @@ class ChatManager {
         document.getElementById('messageInputContainer').style.display = 'block';
 
         // Join chat room
-        this.socket.emit('join_chat', { chatId, userId: this.currentUser.id });
+        this.socket.emit('join_chat', { chatId, userId: this.currentUser._id || this.currentUser.id });
 
         // Load messages
         await this.loadMessages(chatId);
@@ -202,6 +414,9 @@ class ChatManager {
     renderMessages(messages) {
         const messagesContainer = document.getElementById('chatMessages');
         
+        console.log('Rendering messages:', messages);
+        console.log('Current user ID:', this.currentUser._id || this.currentUser.id);
+        
         if (messages.length === 0) {
             messagesContainer.innerHTML = `
                 <div class="empty-state">
@@ -214,9 +429,12 @@ class ChatManager {
         }
 
         messagesContainer.innerHTML = messages.map(message => {
-            const isSent = message.sender._id === this.currentUser.id;
+            const isSent = message.sender._id === (this.currentUser._id || this.currentUser.id);
             const senderName = message.sender.fullName || 'Unknown';
             const initials = senderName.split(' ').map(n => n[0]).join('').toUpperCase();
+            
+            console.log('Message sender:', message.sender);
+            console.log('Is sent by current user:', isSent);
             
             return `
                 <div class="message ${isSent ? 'sent' : 'received'}" data-message-id="${message._id}">
@@ -257,6 +475,14 @@ class ChatManager {
         const content = messageInput.value.trim();
         
         if (!content || !this.currentChatId) return;
+
+        console.log('=== FRONTEND SEND MESSAGE DEBUG ===');
+        console.log('Current user:', this.currentUser);
+        console.log('User ID:', this.currentUser._id || this.currentUser.id);
+        console.log('User role:', this.currentUser.role);
+        console.log('Message content:', content);
+        console.log('Chat ID:', this.currentChatId);
+        console.log('Token being used:', this.currentUser.token);
 
         try {
             const response = await fetch(`/api/chats/${this.currentChatId}/messages`, {
@@ -344,7 +570,7 @@ class ChatManager {
         // Send typing start
         this.socket.emit('typing_start', {
             chatId: this.currentChatId,
-            userId: this.currentUser.id,
+            userId: this.currentUser._id || this.currentUser.id,
             userName: this.currentUser.fullName
         });
 
@@ -357,7 +583,7 @@ class ChatManager {
         this.typingTimeout = setTimeout(() => {
             this.socket.emit('typing_stop', {
                 chatId: this.currentChatId,
-                userId: this.currentUser.id,
+                userId: this.currentUser._id || this.currentUser.id,
                 userName: this.currentUser.fullName
             });
         }, 1000);
@@ -488,99 +714,47 @@ class ChatManager {
         // Simple error display - you can enhance this
         alert(message);
     }
-}
 
-// New Chat Modal Functions
-async function showNewChatModal() {
-    document.getElementById('newChatModal').classList.add('show');
-}
-
-function closeNewChatModal() {
-    document.getElementById('newChatModal').classList.remove('show');
-    document.getElementById('chatParticipantType').value = '';
-    document.getElementById('participantSelect').style.display = 'none';
-    document.getElementById('chatParticipant').innerHTML = '<option value="">Select participant</option>';
-}
-
-async function loadParticipants() {
-    const type = document.getElementById('chatParticipantType').value;
-    const participantSelect = document.getElementById('participantSelect');
-    const chatParticipant = document.getElementById('chatParticipant');
-    
-    if (!type) {
-        participantSelect.style.display = 'none';
-        return;
-    }
-
-    participantSelect.style.display = 'block';
-    chatParticipant.innerHTML = '<option value="">Loading...</option>';
-
-    try {
-        const endpoint = type === 'Vendor' ? '/api/vendors' : '/api/agents';
-        const response = await fetch(endpoint, {
-            headers: {
-                'Authorization': `Bearer ${chatManager.currentUser.token}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to load participants');
+    showLoading(message = 'Loading...') {
+        // Create or show loading indicator
+        let loadingEl = document.getElementById('loadingIndicator');
+        if (!loadingEl) {
+            loadingEl = document.createElement('div');
+            loadingEl.id = 'loadingIndicator';
+            loadingEl.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 20px;
+                border-radius: 8px;
+                z-index: 9999;
+                text-align: center;
+            `;
+            document.body.appendChild(loadingEl);
         }
-
-        const data = await response.json();
-        const participants = data.data || [];
-
-        chatParticipant.innerHTML = '<option value="">Select participant</option>' +
-            participants.map(p => `<option value="${p._id}">${p.fullName || p.businessName || p.shopName}</option>`).join('');
-
-    } catch (error) {
-        console.error('Error loading participants:', error);
-        chatParticipant.innerHTML = '<option value="">Error loading participants</option>';
-    }
-}
-
-async function createNewChat() {
-    const participantId = document.getElementById('chatParticipant').value;
-    const participantType = document.getElementById('chatParticipantType').value;
-
-    if (!participantId || !participantType) {
-        alert('Please select a participant');
-        return;
+        loadingEl.innerHTML = `
+            <div style="margin-bottom: 10px;">⏳</div>
+            <div>${message}</div>
+        `;
+        loadingEl.style.display = 'block';
     }
 
-    try {
-        const response = await fetch('/api/chats', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${chatManager.currentUser.token}`
-            },
-            body: JSON.stringify({
-                participantId,
-                participantType
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to create chat');
+    hideLoading() {
+        const loadingEl = document.getElementById('loadingIndicator');
+        if (loadingEl) {
+            loadingEl.style.display = 'none';
         }
-
-        const data = await response.json();
-        
-        // Close modal
-        closeNewChatModal();
-        
-        // Reload chats
-        await chatManager.loadChats();
-        
-        // Select the new chat
-        chatManager.selectChat(data.data._id);
-
-    } catch (error) {
-        console.error('Error creating chat:', error);
-        alert('Failed to create chat');
     }
 }
+
+// New Chat Modal Functions - REMOVED (no longer needed with auto-direct chat)
+
+// Modal functions removed - using auto-direct chat instead
+
+// createNewChat function removed - using auto-direct chat instead
 
 // Support Ticket Functions
 function showSupportModal() {

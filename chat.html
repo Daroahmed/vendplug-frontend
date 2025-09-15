@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messages - Vendplug</title>
     <link rel="stylesheet" href="css/chat.css">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="../css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -31,9 +31,7 @@
         <div class="chat-sidebar">
             <div class="chat-header">
                 <h2>Messages</h2>
-                <button class="btn-new-chat" onclick="showNewChatModal()">
-                    <i class="fas fa-plus"></i>
-                </button>
+                <!-- Add Chat button removed - using auto-direct chat from product pages -->
             </div>
             
             <div class="chat-search">
@@ -62,35 +60,7 @@
         </div>
     </div>
 
-    <!-- New Chat Modal -->
-    <div class="modal" id="newChatModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Start New Chat</h3>
-                <button class="modal-close" onclick="closeNewChatModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Chat with:</label>
-                    <select id="chatParticipantType" onchange="loadParticipants()">
-                        <option value="">Select type</option>
-                        <option value="Vendor">Vendor</option>
-                        <option value="Agent">Agent</option>
-                    </select>
-                </div>
-                <div class="form-group" id="participantSelect" style="display: none;">
-                    <label>Select participant:</label>
-                    <select id="chatParticipant">
-                        <option value="">Select participant</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeNewChatModal()">Cancel</button>
-                <button class="btn btn-primary" onclick="createNewChat()">Start Chat</button>
-            </div>
-        </div>
-    </div>
+    <!-- New Chat Modal removed - using auto-direct chat from product pages -->
 
     <!-- Support Ticket Modal -->
     <div class="modal" id="supportModal">

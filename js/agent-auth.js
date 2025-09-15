@@ -39,8 +39,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Store session
-        localStorage.setItem("vendplug-token", data.token);
-        localStorage.setItem("vendplugAgent", JSON.stringify(data.agent));
+        localStorage.setItem("vendplug-agent-token", data.token);
+        // Remove token from agent object before storing
+        const agentData = { ...data.agent };
+        delete agentData.token; // Remove token from user object
+        localStorage.setItem("vendplugAgent", JSON.stringify(agentData));
         localStorage.setItem("role", data.agent.role || "agent");
   
         loginMsg.textContent = "Login successful";

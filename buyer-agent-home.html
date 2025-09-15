@@ -69,29 +69,38 @@
     .header-actions {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 25px;
     }
 
-    .cart-icon {
+    .cart-icon, .message-icon, .notification-icon {
       position: relative;
       color: var(--text-light);
       font-size: 1.2rem;
+      text-decoration: none;
+      padding: 8px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
     }
 
-    .cart-count {
+    .cart-icon:hover, .message-icon:hover, .notification-icon:hover {
+      background-color: var(--bg-secondary);
+      color: var(--primary);
+    }
+
+    .cart-count, .message-badge, .notification-badge {
       position: absolute;
       top: -8px;
       right: -8px;
       background-color: var(--primary);
-      color: #000;
-      font-size: 0.7rem;
-      font-weight: bold;
-      width: 18px;
-      height: 18px;
+      color: var(--text-light);
       border-radius: 50%;
+      width: 20px;
+      height: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 0.7rem;
+      font-weight: bold;
     }
 
     /* Hamburger Menu */
@@ -347,6 +356,11 @@
       <a href="buyer-agent-checkout.html" class="cart-icon">
         <i class="fas fa-shopping-cart"></i>
         <span class="cart-count">3</span>
+      </a>
+      <!-- Message icon -->
+      <a href="chat.html" class="message-icon" id="messageIcon">
+        <i class="fas fa-comments"></i>
+        <span class="message-badge" id="messageBadge">0</span>
       </a>
       <!-- Notification icon will be injected here by notifications.js -->
     </div>
@@ -689,5 +703,6 @@
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="/js/config.js"></script>
     <script src="/js/notifications.js"></script>
+    <script src="/js/messageNotifications.js"></script>
 </body>
 </html>

@@ -30,8 +30,17 @@ document.getElementById("buyerLoginForm").addEventListener("submit", async (e) =
     const data = await res.json();
 
     if (res.ok && data.token) {
-      localStorage.setItem("vendplug-token", data.token);
-      localStorage.setItem("vendplugBuyer", JSON.stringify(data));
+        localStorage.setItem("vendplug-buyer-token", data.token);
+        // Store only the buyer object, not the entire response
+        const buyerData = {
+          _id: data._id,
+          fullName: data.fullName,
+          email: data.email,
+          phoneNumber: data.phoneNumber,
+          virtualAccount: data.virtualAccount,
+          role: data.role || "buyer"
+        };
+        localStorage.setItem("vendplugBuyer", JSON.stringify(buyerData));
       messageEl.textContent = "Login successful!";
       messageEl.style.color = "green";
       setTimeout(() => (window.location.href = "buyer-home.html"), 1000);

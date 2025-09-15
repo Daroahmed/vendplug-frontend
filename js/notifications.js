@@ -38,76 +38,66 @@ class NotificationManager {
   }
 
   setupUIElements() {
-    // Create notification container if it doesn't exist
-    if (!document.getElementById('notification-container')) {
-      const container = document.createElement('div');
-      container.id = 'notification-container';
-      container.innerHTML = `
-        <div class="notification-icon" id="notification-icon">
-          <i class="fas fa-bell"></i>
-          <span class="notification-badge" id="notification-badge">0</span>
-        </div>
-        <div class="notification-dropdown" id="notification-dropdown">
-          <div class="notification-header">
-            <h3>Notifications</h3>
-            <button id="mark-all-read">Mark all as read</button>
-          </div>
-          <div class="notification-list" id="notification-list"></div>
-        </div>
+    // Inject notification icon into header-actions if it exists
+    const headerActions = document.querySelector('.header-actions');
+    console.log('🔍 Looking for .header-actions:', headerActions);
+    console.log('🔍 Notification icon already exists:', document.getElementById('notification-icon'));
+    
+    if (headerActions && !document.getElementById('notification-icon')) {
+      // Create notification icon
+      const notificationIcon = document.createElement('a');
+      notificationIcon.href = '#';
+      notificationIcon.className = 'notification-icon';
+      notificationIcon.id = 'notification-icon';
+      notificationIcon.innerHTML = `
+        <i class="fas fa-bell"></i>
+        <span class="notification-badge" id="notification-badge">0</span>
       `;
-      document.body.appendChild(container);
+      
+      // Insert before the closing div of header-actions
+      headerActions.appendChild(notificationIcon);
+      
+      console.log('✅ Notification icon injected successfully');
+      console.log('🔍 Header actions now contains:', headerActions.innerHTML);
+    } else {
+      console.log('❌ Cannot inject notification icon - headerActions:', !!headerActions, 'icon exists:', !!document.getElementById('notification-icon'));
+    }
 
-      // Add styles
+    // Create notification dropdown if it doesn't exist
+    if (!document.getElementById('notification-dropdown')) {
+      const dropdown = document.createElement('div');
+      dropdown.id = 'notification-dropdown';
+      dropdown.className = 'notification-dropdown';
+      dropdown.innerHTML = `
+        <div class="notification-header">
+          <h3>Notifications</h3>
+          <button id="mark-all-read">Mark all as read</button>
+        </div>
+        <div class="notification-list" id="notification-list"></div>
+      `;
+      document.body.appendChild(dropdown);
+
+      // Add styles for notification dropdown only
       const styles = document.createElement('style');
       styles.textContent = `
-        #notification-container {
-          position: fixed;
-          top: 20px;
-          right: 20px;
-          z-index: 1000;
-        }
-
-        .notification-icon {
-          background: #00cc99;
-          color: white;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          position: relative;
-        }
-
-        .notification-badge {
-          position: absolute;
-          top: -5px;
-          right: -5px;
-          background: red;
-          color: white;
-          border-radius: 50%;
-          padding: 2px 6px;
-          font-size: 12px;
-          display: none;
-        }
-
         .notification-dropdown {
-          position: absolute;
-          top: 50px;
-          right: 0;
-          background: white;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          width: 300px;
+          position: fixed;
+          top: 60px;
+          right: 20px;
+          width: 350px;
           max-height: 400px;
-          overflow-y: auto;
+          background: var(--bg-card, #1e1e1e);
+          border: 1px solid var(--bg-secondary, #2c2c2c);
+          border-radius: 8px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          z-index: 1000;
           display: none;
+          overflow: hidden;
         }
 
         .notification-header {
-          padding: 15px;
-          border-bottom: 1px solid #eee;
+          padding: 1rem;
+          border-bottom: 1px solid var(--bg-secondary, #2c2c2c);
           display: flex;
           justify-content: space-between;
           align-items: center;
@@ -115,61 +105,71 @@ class NotificationManager {
 
         .notification-header h3 {
           margin: 0;
-          color: #333;
+          color: var(--text-light, #fff);
+          font-size: 1.1rem;
         }
 
         #mark-all-read {
-          background: none;
+          background: var(--primary, #00cc99);
+          color: white;
           border: none;
-          color: #00cc99;
+          padding: 0.5rem 1rem;
+          border-radius: 4px;
           cursor: pointer;
+          font-size: 0.9rem;
+        }
+
+        #mark-all-read:hover {
+          opacity: 0.9;
         }
 
         .notification-list {
-          padding: 0;
+          max-height: 300px;
+          overflow-y: auto;
         }
 
         .notification-item {
-          padding: 15px;
-          border-bottom: 1px solid #eee;
+          padding: 1rem;
+          border-bottom: 1px solid var(--bg-secondary, #2c2c2c);
           cursor: pointer;
+          transition: background-color 0.2s;
         }
 
         .notification-item:hover {
-          background: #f9f9f9;
+          background-color: var(--bg-secondary, #2c2c2c);
         }
 
         .notification-item.unread {
-          background: #f0f9ff;
+          background-color: rgba(0, 204, 153, 0.1);
         }
 
         .notification-title {
           font-weight: bold;
-          color: #333;
-          margin-bottom: 5px;
+          color: var(--text-light, #fff);
+          margin-bottom: 0.25rem;
         }
 
         .notification-message {
-          color: #666;
-          font-size: 14px;
+          color: var(--muted, #aaa);
+          font-size: 0.9rem;
+          margin-bottom: 0.5rem;
         }
 
         .notification-time {
-          color: #999;
-          font-size: 12px;
-          margin-top: 5px;
+          color: var(--muted, #aaa);
+          font-size: 0.8rem;
         }
 
         .notification-toast {
           position: fixed;
-          bottom: 20px;
+          top: 20px;
           right: 20px;
-          background: #00cc99;
+          background: var(--primary, #00cc99);
           color: white;
-          padding: 15px 20px;
+          padding: 1rem 1.5rem;
           border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-          z-index: 1000;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+          z-index: 1001;
           animation: slideIn 0.3s ease-out;
         }
 
@@ -179,12 +179,14 @@ class NotificationManager {
         }
       `;
       document.head.appendChild(styles);
+    }
 
-      // Add event listeners
-      const icon = document.getElementById('notification-icon');
-      const dropdown = document.getElementById('notification-dropdown');
-      const markAllRead = document.getElementById('mark-all-read');
+    // Add event listeners (outside the if block to avoid scope issues)
+    const icon = document.getElementById('notification-icon');
+    const dropdown = document.getElementById('notification-dropdown');
+    const markAllRead = document.getElementById('mark-all-read');
 
+    if (icon && dropdown && markAllRead) {
       icon.addEventListener('click', () => {
         dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
       });
@@ -195,7 +197,7 @@ class NotificationManager {
 
       // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
-        if (!container.contains(e.target)) {
+        if (!dropdown.contains(e.target) && !icon.contains(e.target)) {
           dropdown.style.display = 'none';
         }
       });
@@ -223,7 +225,15 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      const token = localStorage.getItem('vendplug-token');
+      // Get the correct token based on user role
+      const tokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
+      const token = localStorage.getItem(tokenKey);
+      
+      if (!token) {
+        console.log('❌ No token found for role:', userData.role);
+        return;
+      }
+
       const res = await fetch(`${BACKEND}/api/notifications`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -243,7 +253,17 @@ class NotificationManager {
 
   async markAsRead(notificationId) {
     try {
-      const token = localStorage.getItem('vendplug-token');
+      const userData = this.getCurrentUserData();
+      if (!userData) return;
+
+      const tokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
+      const token = localStorage.getItem(tokenKey);
+      
+      if (!token) {
+        console.log('❌ No token found for role:', userData.role);
+        return;
+      }
+
       const res = await fetch(`${BACKEND}/api/notifications/${notificationId}/read`, {
         method: 'PUT',
         headers: {
@@ -267,7 +287,17 @@ class NotificationManager {
 
   async markAllAsRead() {
     try {
-      const token = localStorage.getItem('vendplug-token');
+      const userData = this.getCurrentUserData();
+      if (!userData) return;
+
+      const tokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
+      const token = localStorage.getItem(tokenKey);
+      
+      if (!token) {
+        console.log('❌ No token found for role:', userData.role);
+        return;
+      }
+
       const res = await fetch(`${BACKEND}/api/notifications/read-all`, {
         method: 'PUT',
         headers: {
@@ -328,11 +358,22 @@ class NotificationManager {
   }
 }
 
-// Initialize notification manager
-const notificationManager = new NotificationManager();
-
-// Load existing notifications
-notificationManager.loadNotifications();
-
-// Export for global use
-window.notificationManager = notificationManager;
+// Initialize notification manager when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 DOM Content Loaded - Initializing notification manager');
+  const notificationManager = new NotificationManager();
+  
+  // Load existing notifications
+  notificationManager.loadNotifications();
+  
+  // Export for global use
+  window.notificationManager = notificationManager;
+  
+  // Fallback: try again after a short delay if icon wasn't injected
+  setTimeout(() => {
+    if (!document.getElementById('notification-icon')) {
+      console.log('🔄 Retrying notification icon injection...');
+      notificationManager.setupUIElements();
+    }
+  }, 1000);
+});
