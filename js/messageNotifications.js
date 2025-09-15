@@ -40,19 +40,55 @@ class MessageNotificationManager {
     this.messageBadge = document.getElementById('messageBadge') || document.getElementById('messageCount');
     this.messageIcon = document.getElementById('messageIcon') || document.querySelector('.message-icon');
     
+    console.log('🔍 Message badge element:', this.messageBadge);
+    console.log('🔍 Message icon element:', this.messageIcon);
+    
     if (this.messageBadge) {
       this.updateMessageBadge();
+    } else {
+      console.log('❌ Message badge not found in DOM');
     }
   }
 
   getCurrentUserData() {
-    // Check multiple possible storage keys
+    // Check for user data and prioritize based on token presence
+    const roles = [
+      { key: 'vendplugBuyer', tokenKey: 'vendplug-buyer-token', role: 'buyer' },
+      { key: 'vendplugVendor', tokenKey: 'vendplug-vendor-token', role: 'vendor' },
+      { key: 'vendplugAgent', tokenKey: 'vendplug-agent-token', role: 'agent' }
+    ];
+    
+    for (const { key, tokenKey, role } of roles) {
+      const userData = JSON.parse(localStorage.getItem(key) || 'null');
+      const newToken = localStorage.getItem(tokenKey);
+      const oldToken = localStorage.getItem('vendplug-token');
+      
+      console.log(`🔍 Message system checking ${role}:`, {
+        userData: !!userData,
+        newToken: !!newToken,
+        oldToken: !!oldToken,
+        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
+      });
+      
+      if (userData && (newToken || oldToken)) {
+        console.log(`✅ Found ${role} user with token:`, userData._id);
+        return { ...userData, role };
+      }
+    }
+    
+    // Fallback: return first available user data (for backward compatibility)
     const buyerData = JSON.parse(localStorage.getItem('vendplugBuyer') || 'null');
     const vendorData = JSON.parse(localStorage.getItem('vendplugVendor') || 'null');
     const agentData = JSON.parse(localStorage.getItem('vendplugAgent') || 'null');
     
-    // Return the first available user data
-    return buyerData || vendorData || agentData;
+    const userData = buyerData || vendorData || agentData;
+    if (userData) {
+      console.log(`⚠️ Found user without token (fallback):`, userData._id);
+    } else {
+      console.log('❌ No user data found in localStorage');
+    }
+    
+    return userData;
   }
 
   async loadUnreadCount() {
@@ -80,7 +116,7 @@ class MessageNotificationManager {
   }
 
   getUserToken(userData) {
-    // Check for separate token storage first
+    // Check for separate token storage first (new format)
     const buyerToken = localStorage.getItem('vendplug-buyer-token');
     const vendorToken = localStorage.getItem('vendplug-vendor-token');
     const agentToken = localStorage.getItem('vendplug-agent-token');
@@ -88,6 +124,13 @@ class MessageNotificationManager {
     if (buyerToken && userData.role === 'buyer') return buyerToken;
     if (vendorToken && userData.role === 'vendor') return vendorToken;
     if (agentToken && userData.role === 'agent') return agentToken;
+    
+    // Check for old token format
+    const oldToken = localStorage.getItem('vendplug-token');
+    if (oldToken) {
+      console.log('🔑 Using old token format for', userData.role);
+      return oldToken;
+    }
     
     // Fallback to embedded token
     return userData.token;
@@ -97,6 +140,23 @@ class MessageNotificationManager {
     if (this.messageBadge) {
       this.messageBadge.textContent = this.unreadCount;
       this.messageBadge.style.display = this.unreadCount > 0 ? 'flex' : 'none';
+      console.log('📊 Updated message badge:', this.unreadCount, 'display:', this.messageBadge.style.display);
+    } else {
+      console.log('❌ Message badge element not found');
+    }
+    
+    // Also update the notification icon if it exists
+    this.updateNotificationIcon();
+  }
+
+  updateNotificationIcon() {
+    // Update the notification icon to include message count
+    const notificationBadge = document.getElementById('notification-badge');
+    if (notificationBadge && window.notificationManager) {
+      const totalUnread = (window.notificationManager.unreadCount || 0) + this.unreadCount;
+      notificationBadge.textContent = totalUnread;
+      notificationBadge.style.display = totalUnread > 0 ? 'flex' : 'none';
+      console.log('📊 Updated notification badge with total count:', totalUnread);
     }
   }
 
@@ -174,8 +234,11 @@ class MessageNotificationManager {
   }
 }
 
-// Initialize message notification manager
-const messageNotificationManager = new MessageNotificationManager();
-
-// Export for use in other scripts
-window.messageNotificationManager = messageNotificationManager;
+// Initialize message notification manager when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🚀 DOM Content Loaded - Initializing message notification manager');
+  const messageNotificationManager = new MessageNotificationManager();
+  
+  // Export for use in other scripts
+  window.messageNotificationManager = messageNotificationManager;
+});

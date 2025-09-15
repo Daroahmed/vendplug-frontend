@@ -38,9 +38,9 @@ class NotificationManager {
   }
 
   setupUIElements() {
-    // Inject notification icon into header-actions if it exists
-    const headerActions = document.querySelector('.header-actions');
-    console.log('🔍 Looking for .header-actions:', headerActions);
+    // Try to find header actions container (different for different pages)
+    const headerActions = document.querySelector('.header-actions') || document.querySelector('.user-menu');
+    console.log('🔍 Looking for header container:', headerActions);
     console.log('🔍 Notification icon already exists:', document.getElementById('notification-icon'));
     
     if (headerActions && !document.getElementById('notification-icon')) {
@@ -205,18 +205,48 @@ class NotificationManager {
   }
 
   getCurrentUserData() {
-    // Check for user data in localStorage based on role
+    // Check for user data in localStorage and prioritize based on token presence
     const roles = ['Buyer', 'Vendor', 'Agent'];
+    
+    // Debug: Log all localStorage keys
+    console.log('🔍 All localStorage keys:', Object.keys(localStorage));
+    
     for (const role of roles) {
       const userData = localStorage.getItem(`vendplug${role}`);
-      if (userData) {
+      const newToken = localStorage.getItem(`vendplug-${role.toLowerCase()}-token`);
+      const oldToken = localStorage.getItem('vendplug-token');
+      
+      console.log(`🔍 Checking ${role}:`, {
+        userData: !!userData,
+        newToken: !!newToken,
+        oldToken: !!oldToken,
+        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
+      });
+      
+      if (userData && (newToken || oldToken)) {
         const parsed = JSON.parse(userData);
+        console.log(`✅ Found ${role} user with token:`, parsed._id);
         return {
           id: parsed._id,
           role: role.toLowerCase()
         };
       }
     }
+    
+    // Fallback: return first available user data (for backward compatibility)
+    for (const role of roles) {
+      const userData = localStorage.getItem(`vendplug${role}`);
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        console.log(`⚠️ Found ${role} user without token (fallback):`, parsed._id);
+        return {
+          id: parsed._id,
+          role: role.toLowerCase()
+        };
+      }
+    }
+    
+    console.log('❌ No user data found in localStorage');
     return null;
   }
 
@@ -225,14 +255,19 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      // Get the correct token based on user role
-      const tokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
-      const token = localStorage.getItem(tokenKey);
+      // Get the correct token based on user role (check both new and old formats)
+      const newTokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
+      const newToken = localStorage.getItem(newTokenKey);
+      const oldToken = localStorage.getItem('vendplug-token');
+      
+      const token = newToken || oldToken;
       
       if (!token) {
         console.log('❌ No token found for role:', userData.role);
         return;
       }
+      
+      console.log(`🔑 Using token for ${userData.role}:`, newToken ? 'new format' : 'old format');
 
       const res = await fetch(`${BACKEND}/api/notifications`, {
         headers: {
@@ -256,8 +291,11 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      const tokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
-      const token = localStorage.getItem(tokenKey);
+      const newTokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
+      const newToken = localStorage.getItem(newTokenKey);
+      const oldToken = localStorage.getItem('vendplug-token');
+      
+      const token = newToken || oldToken;
       
       if (!token) {
         console.log('❌ No token found for role:', userData.role);
@@ -290,8 +328,11 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      const tokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
-      const token = localStorage.getItem(tokenKey);
+      const newTokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
+      const newToken = localStorage.getItem(newTokenKey);
+      const oldToken = localStorage.getItem('vendplug-token');
+      
+      const token = newToken || oldToken;
       
       if (!token) {
         console.log('❌ No token found for role:', userData.role);
@@ -320,18 +361,22 @@ class NotificationManager {
     const badge = document.getElementById('notification-badge');
     const list = document.getElementById('notification-list');
 
-    // Update badge
-    if (this.unreadCount > 0) {
-      badge.style.display = 'block';
-      badge.textContent = this.unreadCount;
-    } else {
-      badge.style.display = 'none';
+    // Update badge if it exists
+    if (badge) {
+      if (this.unreadCount > 0) {
+        badge.style.display = 'block';
+        badge.textContent = this.unreadCount;
+      } else {
+        badge.style.display = 'none';
+      }
     }
 
-    // Update list
-    list.innerHTML = this.notifications.length ? 
-      this.notifications.map(n => this.renderNotification(n)).join('') :
-      '<div class="notification-item">No notifications</div>';
+    // Update list if it exists
+    if (list) {
+      list.innerHTML = this.notifications.length ? 
+        this.notifications.map(n => this.renderNotification(n)).join('') :
+        '<div class="notification-item">No notifications</div>';
+    }
   }
 
   renderNotification(notification) {
