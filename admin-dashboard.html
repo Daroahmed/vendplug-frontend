@@ -593,6 +593,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="#support-tickets" class="nav-link" data-section="support-tickets">
+                        <i>🎫</i> Support Tickets
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="staff-management.html" class="nav-link">
                         <i>👨‍💼</i> Staff Management
                     </a>
@@ -747,6 +752,15 @@
                                 <div>
                                     <div class="card-title">Total Disputes</div>
                                     <div class="card-value" id="totalDisputes">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-icon" style="background: #e67e22;">🎫</div>
+                                <div>
+                                    <div class="card-title">Support Tickets</div>
+                                    <div class="card-value" id="totalSupportTickets">-</div>
                                 </div>
                             </div>
                         </div>
@@ -1051,6 +1065,74 @@
                     <div id="staffActivityTable" class="loading">
                         <div class="spinner"></div>
                         Loading staff activity...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Support Tickets Section -->
+            <div id="support-tickets-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Support Tickets Management</h3>
+                    <p>Monitor and manage customer support tickets</p>
+                </div>
+                <div class="section-content">
+                    <div class="filters">
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select id="supportStatus">
+                                <option value="">All Statuses</option>
+                                <option value="open">Open</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="closed">Closed</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Priority</label>
+                            <select id="supportPriority">
+                                <option value="">All Priorities</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Category</label>
+                            <select id="supportCategory">
+                                <option value="">All Categories</option>
+                                <option value="technical">Technical</option>
+                                <option value="billing">Billing</option>
+                                <option value="order">Order</option>
+                                <option value="account">Account</option>
+                                <option value="payment">Payment</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Assigned To</label>
+                            <select id="supportAssignedTo">
+                                <option value="">All Staff</option>
+                                <option value="unassigned">Unassigned</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Search</label>
+                            <input type="text" id="supportSearch" placeholder="Search by ticket ID or subject">
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="searchSupportTickets()">Filter</button>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-secondary" onclick="clearSupportFilters()">Clear</button>
+                        </div>
+                    </div>
+
+                    <div id="supportTicketsTable" class="loading">
+                        <div class="spinner"></div>
+                        Loading support tickets...
                     </div>
                 </div>
             </div>

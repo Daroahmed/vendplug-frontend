@@ -76,6 +76,9 @@ class StaffDisputeDashboard {
                 this.updateDashboardStats(analyticsData.data);
             }
 
+            // Load support ticket stats
+            await this.loadSupportTicketStats();
+
             // Load recent disputes
             await this.loadRecentDisputes();
             
@@ -93,6 +96,76 @@ class StaffDisputeDashboard {
         document.getElementById('resolvedToday').textContent = data.resolvedToday || 0;
         document.getElementById('pendingCount').textContent = data.pendingReview || 0;
         document.getElementById('overdueCount').textContent = data.overdueDisputes || 0;
+    }
+
+    async loadSupportTicketStats() {
+        try {
+            // Load my support tickets count
+            const myTicketsResponse = await fetch(`/api/support/staff/tickets/my?limit=1`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (myTicketsResponse.ok) {
+                const myTicketsData = await myTicketsResponse.json();
+                document.getElementById('assignedSupportCount').textContent = myTicketsData.data.pagination.totalItems || 0;
+            }
+
+            // Load available support tickets count
+            const availableTicketsResponse = await fetch(`/api/support/staff/tickets/available?limit=1`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (availableTicketsResponse.ok) {
+                const availableTicketsData = await availableTicketsResponse.json();
+                document.getElementById('availableSupportCount').textContent = availableTicketsData.data.pagination.totalItems || 0;
+            }
+
+            // Load resolved today count
+            const today = new Date().toISOString().split('T')[0];
+            const resolvedResponse = await fetch(`/api/support/staff/tickets/my?status=resolved&limit=1`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (resolvedResponse.ok) {
+                const resolvedData = await resolvedResponse.json();
+                // Filter for today's resolved tickets
+                const todayResolved = resolvedData.data.tickets.filter(ticket => {
+                    const ticketDate = new Date(ticket.updatedAt).toISOString().split('T')[0];
+                    return ticketDate === today;
+                });
+                document.getElementById('resolvedSupportCount').textContent = todayResolved.length;
+            }
+
+            // Load in progress count
+            const inProgressResponse = await fetch(`/api/support/staff/tickets/my?status=in_progress&limit=1`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (inProgressResponse.ok) {
+                const inProgressData = await inProgressResponse.json();
+                document.getElementById('pendingSupportCount').textContent = inProgressData.data.pagination.totalItems || 0;
+            }
+
+        } catch (error) {
+            console.error('Error loading support ticket stats:', error);
+            // Set default values on error
+            document.getElementById('assignedSupportCount').textContent = '0';
+            document.getElementById('availableSupportCount').textContent = '0';
+            document.getElementById('resolvedSupportCount').textContent = '0';
+            document.getElementById('pendingSupportCount').textContent = '0';
+        }
     }
 
     async loadRecentDisputes() {
@@ -222,7 +295,7 @@ class StaffDisputeDashboard {
     async loadMyDisputes() {
         try {
             const statusFilter = document.getElementById('statusFilter').value;
-            const url = `${this.apiBaseUrl}/my-disputes${statusFilter ? `?status=${statusFilter}` : ''}&t=${Date.now()}`;
+            const url = `${this.apiBaseUrl}/disputes/my${statusFilter ? `?status=${statusFilter}` : ''}&t=${Date.now()}`;
             
             const response = await fetch(url, {
                 headers: {
@@ -322,7 +395,7 @@ class StaffDisputeDashboard {
     async loadAvailableDisputes() {
         try {
             const categoryFilter = document.getElementById('categoryFilter').value;
-            const url = `${this.apiBaseUrl}/available-disputes${categoryFilter ? `?category=${categoryFilter}` : ''}`;
+            const url = `${this.apiBaseUrl}/disputes/available${categoryFilter ? `?category=${categoryFilter}` : ''}`;
             
             const response = await fetch(url, {
                 headers: {
@@ -384,6 +457,482 @@ class StaffDisputeDashboard {
         `).join('');
 
         container.innerHTML = html;
+    }
+
+    // Support Tickets Management
+    async loadMySupportTickets() {
+        try {
+            const statusFilter = document.getElementById('supportStatusFilter').value;
+            const priorityFilter = document.getElementById('supportPriorityFilter').value;
+            
+            let url = `/api/support/staff/tickets/my`;
+            const params = new URLSearchParams();
+            if (statusFilter) params.append('status', statusFilter);
+            if (priorityFilter) params.append('priority', priorityFilter);
+            if (params.toString()) url += `?${params.toString()}`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load my support tickets');
+            }
+
+            const data = await response.json();
+            this.renderMySupportTickets(data.data.tickets);
+            document.getElementById('supportTicketCount').textContent = data.data.tickets.length;
+
+        } catch (error) {
+            console.error('Error loading my support tickets:', error);
+            document.getElementById('mySupportTicketsList').innerHTML = 
+                '<div class="text-center text-muted">Failed to load my support tickets</div>';
+        }
+    }
+
+    async loadAvailableSupportTickets() {
+        try {
+            const categoryFilter = document.getElementById('supportCategoryFilter').value;
+            const priorityFilter = document.getElementById('availableSupportPriorityFilter').value;
+            
+            let url = `/api/support/staff/tickets/available`;
+            const params = new URLSearchParams();
+            if (categoryFilter) params.append('category', categoryFilter);
+            if (priorityFilter) params.append('priority', priorityFilter);
+            if (params.toString()) url += `?${params.toString()}`;
+            
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load available support tickets');
+            }
+
+            const data = await response.json();
+            this.renderAvailableSupportTickets(data.data.tickets);
+
+        } catch (error) {
+            console.error('Error loading available support tickets:', error);
+            document.getElementById('availableSupportTicketsList').innerHTML = 
+                '<div class="text-center text-muted">Failed to load available support tickets</div>';
+        }
+    }
+
+    renderMySupportTickets(tickets) {
+        const container = document.getElementById('mySupportTicketsList');
+        
+        if (tickets.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted">No assigned support tickets</div>';
+            return;
+        }
+
+        const html = tickets.map(ticket => `
+            <div class="card support-ticket-card mb-3 ${ticket.priority}-priority">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="mb-0 me-3">#${ticket.ticketNumber || ticket._id.slice(-8)}</h5>
+                                <span class="status-badge status-${ticket.status}">${ticket.status.replace('_', ' ')}</span>
+                                <span class="priority-badge priority-${ticket.priority} ms-2">${ticket.priority}</span>
+                            </div>
+                            <h6 class="mb-1">${ticket.subject}</h6>
+                            <p class="text-muted mb-2">${ticket.description.substring(0, 100)}...</p>
+                            <div class="d-flex align-items-center text-muted">
+                                <small>
+                                    <i class="fas fa-tag me-1"></i>${this.formatSupportCategory(ticket.category)}
+                                    <i class="fas fa-calendar ms-3 me-1"></i>${new Date(ticket.createdAt).toLocaleDateString()}
+                                    <i class="fas fa-user ms-3 me-1"></i>${ticket.requester?.fullName || 'Unknown'}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-primary me-2" onclick="dashboard.viewSupportTicket('${ticket._id}')">
+                                <i class="fas fa-eye me-1"></i>View
+                            </button>
+                            <button class="btn btn-success" onclick="dashboard.updateSupportTicketStatus('${ticket._id}')">
+                                <i class="fas fa-edit me-1"></i>Update
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+    }
+
+    renderAvailableSupportTickets(tickets) {
+        const container = document.getElementById('availableSupportTicketsList');
+        
+        if (tickets.length === 0) {
+            container.innerHTML = '<div class="text-center text-muted">No available support tickets</div>';
+            return;
+        }
+
+        const html = tickets.map(ticket => `
+            <div class="card support-ticket-card mb-3 ${ticket.priority}-priority">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center mb-2">
+                                <h5 class="mb-0 me-3">#${ticket.ticketNumber || ticket._id.slice(-8)}</h5>
+                                <span class="status-badge status-${ticket.status}">${ticket.status.replace('_', ' ')}</span>
+                                <span class="priority-badge priority-${ticket.priority} ms-2">${ticket.priority}</span>
+                            </div>
+                            <h6 class="mb-1">${ticket.subject}</h6>
+                            <p class="text-muted mb-2">${ticket.description.substring(0, 100)}...</p>
+                            <div class="d-flex align-items-center text-muted">
+                                <small>
+                                    <i class="fas fa-tag me-1"></i>${this.formatSupportCategory(ticket.category)}
+                                    <i class="fas fa-calendar ms-3 me-1"></i>${new Date(ticket.createdAt).toLocaleDateString()}
+                                    <i class="fas fa-user ms-3 me-1"></i>${ticket.requester?.fullName || 'Unknown'}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <button class="btn btn-primary me-2" onclick="dashboard.viewSupportTicket('${ticket._id}')">
+                                <i class="fas fa-eye me-1"></i>View
+                            </button>
+                            <button class="btn btn-warning" onclick="dashboard.assignSupportTicket('${ticket._id}')">
+                                <i class="fas fa-user-plus me-1"></i>Assign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = html;
+    }
+
+    formatSupportCategory(category) {
+        const categories = {
+            'technical': 'Technical',
+            'billing': 'Billing',
+            'order': 'Order',
+            'account': 'Account',
+            'payment': 'Payment',
+            'other': 'Other'
+        };
+        return categories[category] || category;
+    }
+
+    async viewSupportTicket(ticketId) {
+        try {
+            const response = await fetch(`/api/support/staff/tickets/${ticketId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load support ticket details');
+            }
+
+            const data = await response.json();
+            this.showSupportTicketModal(data.data);
+
+        } catch (error) {
+            console.error('Error loading support ticket details:', error);
+            this.showError('Failed to load support ticket details');
+        }
+    }
+
+    showSupportTicketModal(ticket) {
+        const modalHTML = `
+            <div class="modal" id="supportTicketModal" style="display: block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Support Ticket #${ticket.ticketNumber || ticket._id.slice(-8)}</h3>
+                        <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="ticket-details">
+                            <div class="detail-row">
+                                <strong>Requester:</strong> ${ticket.requester?.fullName || 'Unknown'}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Category:</strong> ${this.formatSupportCategory(ticket.category)}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Subject:</strong> ${ticket.subject}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Priority:</strong> <span class="priority-badge priority-${ticket.priority}">${ticket.priority.toUpperCase()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Status:</strong> <span class="status-badge status-${ticket.status}">${ticket.status.replace('_', ' ').toUpperCase()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Assigned To:</strong> ${ticket.assignedTo?.fullName || 'Unassigned'}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Created:</strong> ${new Date(ticket.createdAt).toLocaleString()}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Description:</strong>
+                                <p>${ticket.description}</p>
+                            </div>
+                        </div>
+                        <div class="ticket-chat-section">
+                            <h4>Conversation</h4>
+                            <div class="chat-container" id="supportTicketChat-${ticket._id}">
+                                <div class="chat-messages" id="chatMessages-${ticket._id}">
+                                    <!-- Messages will be loaded here -->
+                                </div>
+                                <div class="chat-input">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="chatInput-${ticket._id}" placeholder="Type a message..." onkeypress="if(event.key==='Enter') dashboard.sendSupportMessage('${ticket._id}')">
+                                        <button class="btn btn-primary" onclick="dashboard.sendSupportMessage('${ticket._id}')">
+                                            <i class="fas fa-paper-plane"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button onclick="dashboard.updateSupportTicketStatus('${ticket._id}')" class="btn btn-primary">Update Status</button>
+                            <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        
+        // Load chat messages for this support ticket
+        if (ticket.chat) {
+            const chatId = ticket.chat._id || ticket.chat;
+            this.loadSupportTicketChat(ticket._id, chatId);
+        }
+    }
+
+    async loadSupportTicketChat(ticketId, chatId) {
+        try {
+            const response = await fetch(`/api/support/staff/tickets/${ticketId}/messages`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load chat messages');
+            }
+
+            const data = await response.json();
+            console.log('📨 Staff chat data received:', data);
+            this.renderSupportTicketMessages(ticketId, data.data || []);
+
+        } catch (error) {
+            console.error('Error loading support ticket chat:', error);
+            const messagesContainer = document.getElementById(`chatMessages-${ticketId}`);
+            if (messagesContainer) {
+                messagesContainer.innerHTML = '<div class="text-center text-muted">Failed to load messages</div>';
+            }
+        }
+    }
+
+    renderSupportTicketMessages(ticketId, messages) {
+        const messagesContainer = document.getElementById(`chatMessages-${ticketId}`);
+        if (!messagesContainer) return;
+
+        if (!messages || messages.length === 0) {
+            messagesContainer.innerHTML = `
+                <div class="no-messages">
+                    <i class="fas fa-comments"></i>
+                    <p>No messages yet. Start the conversation!</p>
+                </div>
+            `;
+            return;
+        }
+
+        messagesContainer.innerHTML = messages.map(message => {
+            const isStaff = message.senderType === 'Admin' || message.senderType === 'Staff';
+            const senderName = this.getSenderDisplayName(message);
+            const initials = this.getSenderInitials(senderName);
+            const messageTime = new Date(message.createdAt).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            return `
+                <div class="message-bubble ${isStaff ? 'message-sent' : 'message-received'}">
+                    <div class="message-avatar">${initials}</div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <strong>${senderName}</strong>
+                            <small>${messageTime}</small>
+                        </div>
+                        <div class="message-text">${this.escapeHtml(message.content)}</div>
+                        ${message.attachments && message.attachments.length > 0 ? 
+                            `<div class="message-attachments">
+                                ${message.attachments.map(attachment => `
+                                    <div class="attachment-item">
+                                        <i class="fas fa-paperclip"></i>
+                                        <a href="${attachment.url || attachment.secure_url}" target="_blank">${attachment.filename}</a>
+                                    </div>
+                                `).join('')}
+                            </div>` : ''
+                        }
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    getSenderDisplayName(message) {
+        if (message.senderType === 'Staff' || message.senderType === 'Admin') {
+            return message.sender?.fullName || 'Support Staff';
+        }
+        
+        if (message.sender?.fullName) {
+            return message.sender.fullName;
+        }
+        
+        return message.senderType || 'User';
+    }
+
+    getSenderInitials(name) {
+        if (!name) return 'U';
+        
+        const words = name.split(' ');
+        if (words.length >= 2) {
+            return (words[0][0] + words[1][0]).toUpperCase();
+        }
+        
+        return name.charAt(0).toUpperCase();
+    }
+
+    async sendSupportMessage(ticketId) {
+        const messageInput = document.getElementById(`chatInput-${ticketId}`);
+        const message = messageInput.value.trim();
+        
+        if (!message) return;
+
+        try {
+            // Disable send button and show loading
+            const sendBtn = messageInput.nextElementSibling;
+            const originalContent = sendBtn.innerHTML;
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            // Send message using staff-specific endpoint
+            const response = await fetch(`/api/support/staff/tickets/${ticketId}/message`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content: message })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to send message');
+            }
+
+            messageInput.value = '';
+            
+            // Reload messages
+            const ticketResponse = await fetch(`/api/support/staff/tickets/${ticketId}`, {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (ticketResponse.ok) {
+                const ticketData = await ticketResponse.json();
+                const chatId = ticketData.data.chat._id || ticketData.data.chat;
+                await this.loadSupportTicketChat(ticketId, chatId);
+            }
+
+        } catch (error) {
+            console.error('Error sending support message:', error);
+            this.showError('Failed to send message: ' + error.message);
+        } finally {
+            // Re-enable send button
+            const sendBtn = messageInput.nextElementSibling;
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i>';
+            }
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async assignSupportTicket(ticketId) {
+        if (!confirm('Are you sure you want to assign this support ticket to yourself?')) return;
+
+        try {
+            const response = await fetch(`/api/support/staff/tickets/${ticketId}/assign`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ assignedTo: this.currentStaff._id })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to assign support ticket');
+            }
+
+            this.showSuccess('Support ticket assigned successfully');
+            this.loadAvailableSupportTickets();
+            this.loadMySupportTickets();
+
+        } catch (error) {
+            console.error('Error assigning support ticket:', error);
+            this.showError('Failed to assign support ticket');
+        }
+    }
+
+    async updateSupportTicketStatus(ticketId) {
+        const status = prompt('Enter new status (open, in_progress, resolved, closed):');
+        if (!status) return;
+
+        try {
+            const response = await fetch(`/api/support/staff/tickets/${ticketId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update support ticket status');
+            }
+
+            this.showSuccess('Support ticket status updated successfully');
+            this.loadMySupportTickets();
+            this.loadAvailableSupportTickets();
+
+        } catch (error) {
+            console.error('Error updating support ticket status:', error);
+            this.showError('Failed to update support ticket status');
+        }
     }
 
     async loadAnalytics() {
@@ -1320,25 +1869,56 @@ class StaffDisputeDashboard {
     showMyDisputes() {
         this.hideAllViews();
         document.getElementById('myDisputesView').style.display = 'block';
-        document.querySelector('.nav-link[href="#"]').classList.remove('active');
-        document.querySelector('.nav-link[onclick="showMyDisputes()"]').classList.add('active');
+        // Remove active class from all nav buttons
+        document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+        // Add active class to current button
+        const currentBtn = document.querySelector('button[onclick="showMyDisputes()"]');
+        if (currentBtn) currentBtn.classList.add('active');
         this.loadMyDisputes();
     }
 
     showAvailableDisputes() {
         this.hideAllViews();
         document.getElementById('availableDisputesView').style.display = 'block';
-        document.querySelector('.nav-link[href="#"]').classList.remove('active');
-        document.querySelector('.nav-link[onclick="showAvailableDisputes()"]').classList.add('active');
+        // Remove active class from all nav buttons
+        document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+        // Add active class to current button
+        const currentBtn = document.querySelector('button[onclick="showAvailableDisputes()"]');
+        if (currentBtn) currentBtn.classList.add('active');
         this.loadAvailableDisputes();
     }
 
     showAnalytics() {
         this.hideAllViews();
         document.getElementById('analyticsView').style.display = 'block';
-        document.querySelector('.nav-link[href="#"]').classList.remove('active');
-        document.querySelector('.nav-link[onclick="showAnalytics()"]').classList.add('active');
+        // Remove active class from all nav buttons
+        document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+        // Add active class to current button
+        const currentBtn = document.querySelector('button[onclick="showAnalytics()"]');
+        if (currentBtn) currentBtn.classList.add('active');
         this.loadAnalytics();
+    }
+
+    showMySupportTickets() {
+        this.hideAllViews();
+        document.getElementById('mySupportTicketsView').style.display = 'block';
+        // Remove active class from all nav buttons
+        document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+        // Add active class to current button
+        const currentBtn = document.querySelector('button[onclick="showMySupportTickets()"]');
+        if (currentBtn) currentBtn.classList.add('active');
+        this.loadMySupportTickets();
+    }
+
+    showAvailableSupportTickets() {
+        this.hideAllViews();
+        document.getElementById('availableSupportTicketsView').style.display = 'block';
+        // Remove active class from all nav buttons
+        document.querySelectorAll('.nav-link').forEach(btn => btn.classList.remove('active'));
+        // Add active class to current button
+        const currentBtn = document.querySelector('button[onclick="showAvailableSupportTickets()"]');
+        if (currentBtn) currentBtn.classList.add('active');
+        this.loadAvailableSupportTickets();
     }
 
     showSettings() {
@@ -1349,7 +1929,144 @@ class StaffDisputeDashboard {
         document.getElementById('dashboardView').style.display = 'none';
         document.getElementById('myDisputesView').style.display = 'none';
         document.getElementById('availableDisputesView').style.display = 'none';
+        document.getElementById('mySupportTicketsView').style.display = 'none';
+        document.getElementById('availableSupportTicketsView').style.display = 'none';
         document.getElementById('analyticsView').style.display = 'none';
+    }
+
+    setupRealTimeUpdates() {
+        // Initialize Socket.IO connection
+        if (typeof io !== 'undefined') {
+            this.socket = io();
+            
+            // Listen for support ticket notifications
+            this.socket.on('new-notification', (notification) => {
+                this.handleNotification(notification);
+            });
+            
+            // Listen for support ticket updates
+            this.socket.on('support-ticket-updated', (data) => {
+                this.handleSupportTicketUpdate(data);
+            });
+            
+            // Listen for new support tickets
+            this.socket.on('new-support-ticket', (data) => {
+                this.handleNewSupportTicket(data);
+            });
+            
+            // Listen for support ticket messages
+            this.socket.on('support-ticket-message', (data) => {
+                this.handleSupportTicketMessage(data);
+            });
+            
+            // Listen for support ticket status updates
+            this.socket.on('support-ticket-status-updated', (data) => {
+                this.handleSupportTicketStatusUpdate(data);
+            });
+            
+            console.log('✅ Real-time updates initialized');
+        } else {
+            console.warn('⚠️ Socket.IO not available');
+        }
+    }
+
+    handleNotification(notification) {
+        // Show notification toast
+        this.showNotificationToast(notification.title, notification.message);
+        
+        // Update relevant sections if needed
+        if (notification.notificationType === 'NEW_SUPPORT_TICKET') {
+            this.loadAvailableSupportTickets();
+        } else if (notification.notificationType === 'TICKET_ASSIGNED') {
+            this.loadMySupportTickets();
+            this.loadAvailableSupportTickets();
+        }
+    }
+
+    handleSupportTicketUpdate(data) {
+        // Refresh support ticket lists
+        this.loadMySupportTickets();
+        this.loadAvailableSupportTickets();
+        
+        // Show update notification
+        this.showNotificationToast('Support Ticket Updated', `Ticket ${data.ticketNumber} has been updated`);
+    }
+
+    handleNewSupportTicket(data) {
+        // Refresh available support tickets
+        this.loadAvailableSupportTickets();
+        
+        // Show new ticket notification
+        this.showNotificationToast('New Support Ticket', `New ${data.category} ticket: ${data.ticketNumber}`);
+    }
+
+    handleSupportTicketMessage(data) {
+        // If we're currently viewing this ticket, add the message to the chat
+        const currentTicketId = this.currentSupportTicketId;
+        if (currentTicketId && currentTicketId === data.ticketId) {
+            // Add the new message to the chat
+            this.addMessageToChat(data.message);
+        }
+        
+        // Show notification for new messages
+        if (data.senderType !== 'Staff') {
+            this.showNotificationToast('New Support Message', `New message in ticket ${data.ticketNumber}`);
+        }
+    }
+
+    handleSupportTicketStatusUpdate(data) {
+        // Refresh support ticket lists
+        this.loadMySupportTickets();
+        this.loadAvailableSupportTickets();
+        
+        // Show status update notification
+        this.showNotificationToast('Ticket Status Updated', `Ticket ${data.ticketNumber} status updated to ${data.status}`);
+    }
+
+    addMessageToChat(message) {
+        const messagesContainer = document.getElementById(`chatMessages-${this.currentSupportTicketId}`);
+        if (!messagesContainer) return;
+
+        // Remove "no messages" if it exists
+        const noMessages = messagesContainer.querySelector('.no-messages');
+        if (noMessages) {
+            noMessages.remove();
+        }
+
+        // Create message element
+        const messageElement = document.createElement('div');
+        messageElement.innerHTML = this.renderSupportTicketMessage(this.currentSupportTicketId, [message]);
+        
+        // Append to messages container
+        messagesContainer.appendChild(messageElement.firstElementChild);
+        
+        // Scroll to bottom
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    showNotificationToast(title, message) {
+        // Create toast notification
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.innerHTML = `
+            <div class="toast-header">
+                <strong>${title}</strong>
+                <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+            </div>
+            <div class="toast-body">
+                ${message}
+            </div>
+        `;
+        
+        // Add to page
+        document.body.appendChild(toast);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 5000);
     }
 
     // Utility functions
@@ -1406,19 +2123,74 @@ class StaffDisputeDashboard {
 }
 
 // Global functions for onclick handlers
-function showDashboard() { dashboard.showDashboard(); }
-function showMyDisputes() { dashboard.showMyDisputes(); }
-function showAvailableDisputes() { dashboard.showAvailableDisputes(); }
-function showAnalytics() { dashboard.showAnalytics(); }
-function showSettings() { dashboard.showSettings(); }
-function refreshDashboard() { dashboard.refreshDashboard(); }
-function filterDisputes() { dashboard.filterDisputes(); }
-function filterAvailableDisputes() { dashboard.filterAvailableDisputes(); }
-function loadMyDisputes() { dashboard.loadMyDisputes(); }
-function loadAvailableDisputes() { dashboard.loadAvailableDisputes(); }
-function loadAnalytics() { dashboard.loadAnalytics(); }
-function submitResolution() { dashboard.submitResolution(); }
-function submitAssignment() { dashboard.submitAssignment(); }
+function showDashboard() { 
+    if (dashboard) dashboard.showDashboard(); 
+    else console.error('Dashboard not initialized yet');
+}
+function showMyDisputes() { 
+    if (dashboard) dashboard.showMyDisputes(); 
+    else console.error('Dashboard not initialized yet');
+}
+function showAvailableDisputes() { 
+    if (dashboard) dashboard.showAvailableDisputes(); 
+    else console.error('Dashboard not initialized yet');
+}
+function showMySupportTickets() { 
+    if (dashboard) dashboard.showMySupportTickets(); 
+    else console.error('Dashboard not initialized yet');
+}
+function showAvailableSupportTickets() { 
+    if (dashboard) dashboard.showAvailableSupportTickets(); 
+    else console.error('Dashboard not initialized yet');
+}
+function showAnalytics() { 
+    if (dashboard) dashboard.showAnalytics(); 
+    else console.error('Dashboard not initialized yet');
+}
+function showSettings() { 
+    if (dashboard) dashboard.showSettings(); 
+    else console.error('Dashboard not initialized yet');
+}
+function refreshDashboard() { 
+    if (dashboard) dashboard.refreshDashboard(); 
+    else console.error('Dashboard not initialized yet');
+}
+function filterDisputes() { 
+    if (dashboard) dashboard.filterDisputes(); 
+    else console.error('Dashboard not initialized yet');
+}
+function filterAvailableDisputes() { 
+    if (dashboard) dashboard.filterAvailableDisputes(); 
+    else console.error('Dashboard not initialized yet');
+}
+function loadMyDisputes() { 
+    if (dashboard) dashboard.loadMyDisputes(); 
+    else console.error('Dashboard not initialized yet');
+}
+function loadAvailableDisputes() { 
+    if (dashboard) dashboard.loadAvailableDisputes(); 
+    else console.error('Dashboard not initialized yet');
+}
+function loadMySupportTickets() { 
+    if (dashboard) dashboard.loadMySupportTickets(); 
+    else console.error('Dashboard not initialized yet');
+}
+function loadAvailableSupportTickets() { 
+    if (dashboard) dashboard.loadAvailableSupportTickets(); 
+    else console.error('Dashboard not initialized yet');
+}
+function loadAnalytics() { 
+    if (dashboard) dashboard.loadAnalytics(); 
+    else console.error('Dashboard not initialized yet');
+}
+function submitResolution() { 
+    if (dashboard) dashboard.submitResolution(); 
+    else console.error('Dashboard not initialized yet');
+}
+function submitAssignment() { 
+    if (dashboard) dashboard.submitAssignment(); 
+    else console.error('Dashboard not initialized yet');
+}
 
 function logout() {
     localStorage.removeItem('staff-token');

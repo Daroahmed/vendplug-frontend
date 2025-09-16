@@ -7,7 +7,8 @@ class AdminDashboard {
             users: 1,
             orders: 1,
             payouts: 1,
-            disputes: 1
+            disputes: 1,
+            supportTickets: 1
         };
         this.currentLimit = 20;
         
@@ -224,6 +225,12 @@ class AdminDashboard {
         if (totalDisputesElement) {
             totalDisputesElement.textContent = counts.totalDisputes || 0;
         }
+        
+        // Update support tickets
+        const totalSupportTicketsElement = document.getElementById('totalSupportTickets');
+        if (totalSupportTicketsElement) {
+            totalSupportTicketsElement.textContent = counts.totalSupportTickets || 0;
+        }
     }
 
     updateRecentOrders(orders) {
@@ -294,6 +301,9 @@ class AdminDashboard {
                 break;
             case 'disputes':
                 this.loadDisputes();
+                break;
+            case 'support-tickets':
+                this.loadSupportTickets();
                 break;
             case 'escalated-disputes':
                 this.loadEscalatedDisputes();
@@ -770,6 +780,9 @@ class AdminDashboard {
             case 'payouts':
                 this.loadPayouts();
                 break;
+            case 'supportTickets':
+                this.loadSupportTickets();
+                break;
         }
     }
 
@@ -926,6 +939,319 @@ class AdminDashboard {
         `;
 
         container.innerHTML = disputesHTML;
+    }
+
+    // Support Tickets Management
+    async loadSupportTickets() {
+        try {
+            const response = await fetch(`/api/support/admin/tickets?page=${this.currentPage.supportTickets}&limit=${this.currentLimit}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load support tickets');
+
+            const data = await response.json();
+            this.displaySupportTickets(data.data);
+
+        } catch (error) {
+            console.error('❌ Load support tickets error:', error);
+            this.showError('Failed to load support tickets');
+        }
+    }
+
+    async searchSupportTickets() {
+        const status = document.getElementById('supportStatus').value;
+        const priority = document.getElementById('supportPriority').value;
+        const category = document.getElementById('supportCategory').value;
+        const assignedTo = document.getElementById('supportAssignedTo').value;
+        const search = document.getElementById('supportSearch').value;
+
+        try {
+            const params = new URLSearchParams({
+                page: 1,
+                limit: this.currentLimit
+            });
+            if (status) params.append('status', status);
+            if (priority) params.append('priority', priority);
+            if (category) params.append('category', category);
+            if (assignedTo) params.append('assignedTo', assignedTo);
+            if (search) params.append('search', search);
+
+            const response = await fetch(`/api/support/staff/tickets?${params}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to search support tickets');
+
+            const data = await response.json();
+            this.displaySupportTickets(data.data);
+
+        } catch (error) {
+            console.error('❌ Search support tickets error:', error);
+            this.showError('Failed to search support tickets');
+        }
+    }
+
+    displaySupportTickets(data) {
+        const container = document.getElementById('supportTicketsTable');
+        
+        if (!data.tickets || data.tickets.length === 0) {
+            container.innerHTML = '<p>No support tickets found</p>';
+            return;
+        }
+
+        const ticketsHTML = `
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticket ID</th>
+                            <th>Requester</th>
+                            <th>Category</th>
+                            <th>Subject</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Assigned To</th>
+                            <th>Created</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.tickets.map(ticket => `
+                            <tr>
+                                <td>#${ticket.ticketNumber || ticket._id.slice(-8)}</td>
+                                <td>${ticket.requester?.fullName || 'Unknown'}</td>
+                                <td>${this.formatSupportCategory(ticket.category)}</td>
+                                <td>${ticket.subject}</td>
+                                <td><span class="priority-badge priority-${ticket.priority}">${ticket.priority.toUpperCase()}</span></td>
+                                <td><span class="status-badge status-${ticket.status}">${ticket.status.replace('_', ' ').toUpperCase()}</span></td>
+                                <td>${ticket.assignedTo?.fullName || 'Unassigned'}</td>
+                                <td>${new Date(ticket.createdAt).toLocaleDateString()}</td>
+                                <td>
+                                    <button onclick="adminDashboard.viewSupportTicket('${ticket._id}')" class="btn btn-sm btn-primary">View</button>
+                                    ${!ticket.assignedTo ? `<button onclick="adminDashboard.assignSupportTicket('${ticket._id}')" class="btn btn-sm btn-warning">Assign</button>` : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${this.createPagination(data.pagination, 'supportTickets')}
+        `;
+
+        container.innerHTML = ticketsHTML;
+    }
+
+    formatSupportCategory(category) {
+        const categories = {
+            'technical': 'Technical',
+            'billing': 'Billing',
+            'order': 'Order',
+            'account': 'Account',
+            'payment': 'Payment',
+            'other': 'Other'
+        };
+        return categories[category] || category;
+    }
+
+    async viewSupportTicket(ticketId) {
+        try {
+            const response = await fetch(`/api/support/admin/tickets/${ticketId}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load support ticket details');
+
+            const data = await response.json();
+            this.showSupportTicketModal(data.data);
+
+        } catch (error) {
+            console.error('❌ View support ticket error:', error);
+            this.showError('Failed to load support ticket details');
+        }
+    }
+
+    showSupportTicketModal(ticket) {
+        const modalHTML = `
+            <div class="modal" id="supportTicketModal" style="display: block;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Support Ticket #${ticket.ticketNumber || ticket._id.slice(-8)}</h3>
+                        <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="ticket-details">
+                            <div class="detail-row">
+                                <strong>Requester:</strong> ${ticket.requester?.fullName || 'Unknown'}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Category:</strong> ${this.formatSupportCategory(ticket.category)}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Subject:</strong> ${ticket.subject}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Priority:</strong> <span class="priority-badge priority-${ticket.priority}">${ticket.priority.toUpperCase()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Status:</strong> <span class="status-badge status-${ticket.status}">${ticket.status.replace('_', ' ').toUpperCase()}</span>
+                            </div>
+                            <div class="detail-row">
+                                <strong>Assigned To:</strong> ${ticket.assignedTo?.fullName || 'Unassigned'}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Created:</strong> ${new Date(ticket.createdAt).toLocaleString()}
+                            </div>
+                            <div class="detail-row">
+                                <strong>Description:</strong>
+                                <p>${ticket.description}</p>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            ${!ticket.assignedTo ? `<button onclick="adminDashboard.assignSupportTicket('${ticket._id}')" class="btn btn-warning">Assign Ticket</button>` : ''}
+                            <button onclick="adminDashboard.updateSupportTicketStatus('${ticket._id}')" class="btn btn-primary">Update Status</button>
+                            <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    async assignSupportTicket(ticketId) {
+        try {
+            // Fetch available staff for assignment
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to load staff');
+
+            const data = await response.json();
+            const staff = data.staff || [];
+
+            if (staff.length === 0) {
+                this.showError('No staff available for assignment');
+                return;
+            }
+
+            // Create staff selection modal
+            const staffOptions = staff.map(s => `<option value="${s._id}">${s.fullName} (${s.email})</option>`).join('');
+            
+            const modalHTML = `
+                <div class="modal" id="staffSelectionModal" style="display: block;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>Assign Support Ticket</h3>
+                            <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Select Staff Member:</label>
+                                <select id="selectedStaff" class="form-control">
+                                    ${staffOptions}
+                                </select>
+                            </div>
+                            <div class="modal-actions">
+                                <button onclick="adminDashboard.confirmAssignSupportTicket('${ticketId}')" class="btn btn-primary">Assign</button>
+                                <button onclick="this.closest('.modal').remove()" class="btn btn-secondary">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+        } catch (error) {
+            console.error('❌ Assign support ticket error:', error);
+            this.showError('Failed to load staff for assignment');
+        }
+    }
+
+    async confirmAssignSupportTicket(ticketId) {
+        const staffId = document.getElementById('selectedStaff').value;
+        if (!staffId) {
+            this.showError('Please select a staff member');
+            return;
+        }
+
+        try {
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/support/admin/tickets/${ticketId}/assign`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ assignedTo: staffId })
+            });
+
+            if (!response.ok) throw new Error('Failed to assign support ticket');
+
+            const data = await response.json();
+            const staffName = document.getElementById('selectedStaff').selectedOptions[0].text;
+
+            this.showSuccess(`Support ticket assigned successfully to ${staffName}`);
+            this.loadSupportTickets();
+            
+            // Close the modal
+            const modal = document.getElementById('staffSelectionModal');
+            if (modal) {
+                modal.remove();
+            }
+
+        } catch (error) {
+            console.error('❌ Assign support ticket error:', error);
+            this.showError('Failed to assign support ticket');
+        }
+    }
+
+    async updateSupportTicketStatus(ticketId) {
+        const status = prompt('Enter new status (open, in_progress, resolved, closed):');
+        if (!status) return;
+
+        try {
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/support/admin/tickets/${ticketId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            });
+
+            if (!response.ok) throw new Error('Failed to update support ticket status');
+
+            this.showSuccess('Support ticket status updated successfully');
+            this.loadSupportTickets();
+
+        } catch (error) {
+            console.error('❌ Update support ticket status error:', error);
+            this.showError('Failed to update support ticket status');
+        }
+    }
+
+    clearSupportFilters() {
+        document.getElementById('supportStatus').value = '';
+        document.getElementById('supportPriority').value = '';
+        document.getElementById('supportCategory').value = '';
+        document.getElementById('supportAssignedTo').value = '';
+        document.getElementById('supportSearch').value = '';
+        this.loadSupportTickets();
     }
 
     formatCategory(category) {
