@@ -24,9 +24,14 @@ class MessageNotificationManager {
     // Listen for new messages
     this.socket.on('new_message', (data) => {
       console.log('📨 New message received:', data);
-      this.unreadCount++;
-      this.updateMessageBadge();
-      this.showMessageToast(data.message);
+      
+      // Only process messages for the current user
+      const currentUser = this.getCurrentUserData();
+      if (currentUser && data.recipientId === currentUser.id) {
+        this.unreadCount++;
+        this.updateMessageBadge();
+        this.showMessageToast(data.message);
+      }
     });
 
     // Handle connection errors
@@ -51,7 +56,40 @@ class MessageNotificationManager {
   }
 
   getCurrentUserData() {
-    // Check for user data and prioritize based on token presence
+    // Determine user type based on current page context first
+    const currentPage = window.location.pathname;
+    let expectedRole = null;
+    
+    if (currentPage.includes('buyer')) {
+      expectedRole = { key: 'vendplugBuyer', tokenKey: 'vendplug-buyer-token', role: 'buyer' };
+    } else if (currentPage.includes('vendor')) {
+      expectedRole = { key: 'vendplugVendor', tokenKey: 'vendplug-vendor-token', role: 'vendor' };
+    } else if (currentPage.includes('agent')) {
+      expectedRole = { key: 'vendplugAgent', tokenKey: 'vendplug-agent-token', role: 'agent' };
+    }
+    
+    console.log('🔍 Message system - Current page context:', currentPage, 'Expected role:', expectedRole?.role);
+    
+    // If we can determine the expected role from the page, prioritize that user
+    if (expectedRole) {
+      const userData = JSON.parse(localStorage.getItem(expectedRole.key) || 'null');
+      const newToken = localStorage.getItem(expectedRole.tokenKey);
+      const oldToken = localStorage.getItem('vendplug-token');
+      
+      console.log(`🔍 Message system checking expected ${expectedRole.role}:`, {
+        userData: !!userData,
+        newToken: !!newToken,
+        oldToken: !!oldToken,
+        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
+      });
+      
+      if (userData && (newToken || oldToken)) {
+        console.log(`✅ Found expected ${expectedRole.role} user with token:`, userData._id);
+        return { ...userData, role: expectedRole.role };
+      }
+    }
+    
+    // Fallback: Check all roles (for backward compatibility)
     const roles = [
       { key: 'vendplugBuyer', tokenKey: 'vendplug-buyer-token', role: 'buyer' },
       { key: 'vendplugVendor', tokenKey: 'vendplug-vendor-token', role: 'vendor' },

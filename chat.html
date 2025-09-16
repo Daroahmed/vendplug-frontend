@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Messages - Vendplug</title>
-    <link rel="stylesheet" href="css/chat.css">
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="CSS/chat.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -113,7 +112,7 @@
     <!-- Message Input (hidden initially) -->
     <div class="message-input-container" id="messageInputContainer" style="display: none;">
         <div class="message-input">
-            <button class="btn-attach" onclick="triggerFileInput()">
+            <button class="btn-attach" onclick="triggerFileInput()" title="Attach File">
                 <i class="fas fa-paperclip"></i>
             </button>
             <input type="file" id="fileInput" multiple accept="image/*,application/pdf,.doc,.docx,.txt" style="display: none;">

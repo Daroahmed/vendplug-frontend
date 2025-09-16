@@ -25,10 +25,14 @@ class NotificationManager {
 
     // Listen for new notifications
     this.socket.on('new-notification', (notification) => {
-      this.notifications.unshift(notification);
-      this.unreadCount++;
-      this.updateUI();
-      this.showToast(notification);
+      // Only process notifications for the current user
+      const currentUser = this.getCurrentUserData();
+      if (currentUser && notification.userId === currentUser.id) {
+        this.notifications.unshift(notification);
+        this.unreadCount++;
+        this.updateUI();
+        this.showToast(notification);
+      }
     });
 
     // Handle connection errors
@@ -205,11 +209,45 @@ class NotificationManager {
   }
 
   getCurrentUserData() {
-    // Check for user data in localStorage and prioritize based on token presence
-    const roles = ['Buyer', 'Vendor', 'Agent'];
+    // Determine user type based on current page context first
+    const currentPage = window.location.pathname;
+    let expectedRole = null;
     
-    // Debug: Log all localStorage keys
-    console.log('🔍 All localStorage keys:', Object.keys(localStorage));
+    if (currentPage.includes('buyer')) {
+      expectedRole = 'Buyer';
+    } else if (currentPage.includes('vendor')) {
+      expectedRole = 'Vendor';
+    } else if (currentPage.includes('agent')) {
+      expectedRole = 'Agent';
+    }
+    
+    console.log('🔍 Current page context:', currentPage, 'Expected role:', expectedRole);
+    
+    // If we can determine the expected role from the page, prioritize that user
+    if (expectedRole) {
+      const userData = localStorage.getItem(`vendplug${expectedRole}`);
+      const newToken = localStorage.getItem(`vendplug-${expectedRole.toLowerCase()}-token`);
+      const oldToken = localStorage.getItem('vendplug-token');
+      
+      console.log(`🔍 Checking expected ${expectedRole}:`, {
+        userData: !!userData,
+        newToken: !!newToken,
+        oldToken: !!oldToken,
+        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
+      });
+      
+      if (userData && (newToken || oldToken)) {
+        const parsed = JSON.parse(userData);
+        console.log(`✅ Found expected ${expectedRole} user with token:`, parsed._id);
+        return {
+          id: parsed._id,
+          role: expectedRole.toLowerCase()
+        };
+      }
+    }
+    
+    // Fallback: Check all roles (for backward compatibility)
+    const roles = ['Buyer', 'Vendor', 'Agent'];
     
     for (const role of roles) {
       const userData = localStorage.getItem(`vendplug${role}`);

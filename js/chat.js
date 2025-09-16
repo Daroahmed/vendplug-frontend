@@ -52,6 +52,18 @@ class ChatManager {
             userToken = agentToken;
         }
         
+        // Check for old token format as fallback
+        const oldToken = localStorage.getItem('vendplug-token');
+        if (!currentUser && oldToken) {
+            // Try to determine which user type based on available data
+            const agentData = JSON.parse(localStorage.getItem('vendplugAgent') || 'null');
+            if (agentData) {
+                currentUser = agentData;
+                userRole = 'agent';
+                userToken = oldToken;
+            }
+        }
+        
         // Fallback to checking user objects directly (for backward compatibility)
         if (!currentUser) {
             const buyerData = JSON.parse(localStorage.getItem('vendplugBuyer'));
@@ -453,12 +465,67 @@ class ChatManager {
                         ` : ''}
                         ${message.attachments && message.attachments.length > 0 ? `
                             <div class="message-attachments">
-                                ${message.attachments.map(attachment => `
-                                    <a href="${attachment.url}" target="_blank" class="attachment">
-                                        <i class="fas fa-file"></i>
-                                        ${attachment.originalName}
-                                    </a>
-                                `).join('')}
+                                ${message.attachments.map(attachment => {
+                                    console.log('🔍 Full attachment data:', JSON.stringify(attachment, null, 2));
+                                    const isImage = attachment.mimeType && attachment.mimeType.startsWith('image/');
+                                    const fileIcon = this.getFileIcon(attachment.mimeType);
+                                    
+                                    if (isImage) {
+                                        let imageUrl = attachment.url || attachment.secure_url || attachment.cloudinaryId;
+                                        
+                                        // Fallback: construct URL from cloudinaryId if no URL is available
+                                        if (!imageUrl && attachment.cloudinaryId) {
+                                            imageUrl = `https://res.cloudinary.com/demo/image/upload/v1/${attachment.cloudinaryId}`;
+                                            console.log('🔧 Constructed fallback URL from cloudinaryId:', imageUrl);
+                                        }
+                                        
+                                        // Another fallback: construct URL from filename if it looks like a cloudinary ID
+                                        if (!imageUrl && attachment.filename) {
+                                            imageUrl = `https://res.cloudinary.com/demo/image/upload/v1/${attachment.filename}`;
+                                            console.log('🔧 Constructed fallback URL from filename:', imageUrl);
+                                        }
+                                        
+                                        console.log('🖼️ Image URL:', imageUrl);
+                                        
+                                        if (!imageUrl) {
+                                            console.error('❌ No image URL found for attachment:', attachment);
+                                            return `
+                                                <div class="attachment-image">
+                                                    <div class="attachment-error">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        <span>Image not available</span>
+                                                    </div>
+                                                    <div class="attachment-info">
+                                                        <span class="attachment-name">${attachment.originalName}</span>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }
+                                        
+                                        return `
+                                            <div class="attachment-image">
+                                                <img src="${imageUrl}" alt="${attachment.originalName}" 
+                                                     onclick="chatManager.openImageModal('${imageUrl}', '${attachment.originalName}')"
+                                                     class="attachment-preview">
+                                                <div class="attachment-info">
+                                                    <span class="attachment-name">${attachment.originalName}</span>
+                                                    <a href="${imageUrl}" target="_blank" class="attachment-download">
+                                                        <i class="fas fa-download"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        `;
+                                    } else {
+                                        const fileUrl = attachment.url || attachment.secure_url || attachment.cloudinaryId;
+                                        return `
+                                            <a href="${fileUrl || '#'}" target="_blank" class="attachment">
+                                                <i class="${fileIcon}"></i>
+                                                <span class="attachment-name">${attachment.originalName}</span>
+                                                <span class="attachment-size">${this.formatFileSize(attachment.size)}</span>
+                                            </a>
+                                        `;
+                                    }
+                                }).join('')}
                             </div>
                         ` : ''}
                     </div>
@@ -632,6 +699,17 @@ class ChatManager {
         Array.from(files).forEach(file => {
             formData.append('attachments', file);
         });
+        
+        // Add required fields for file upload
+        formData.append('content', `📎 ${files.length} file(s) uploaded`);
+        formData.append('messageType', 'file');
+
+        console.log('📤 Uploading files:', {
+            chatId: this.currentChatId,
+            fileCount: files.length,
+            fileNames: Array.from(files).map(f => f.name),
+            token: this.currentUser.token ? 'Present' : 'Missing'
+        });
 
         try {
             const response = await fetch(`/api/chats/${this.currentChatId}/messages`, {
@@ -643,7 +721,9 @@ class ChatManager {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to upload files');
+                const errorData = await response.json();
+                console.error('Upload error response:', errorData);
+                throw new Error(`Failed to upload files: ${errorData.message || 'Unknown error'}`);
             }
 
             // Reload messages
@@ -657,7 +737,171 @@ class ChatManager {
     }
 
     triggerFileInput() {
-        document.getElementById('fileInput').click();
+        console.log('📎 ChatManager.triggerFileInput called');
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput) {
+            console.log('✅ File input found, clicking...');
+            fileInput.click();
+        } else {
+            console.log('❌ File input not found');
+        }
+    }
+
+    getFileIcon(mimeType) {
+        if (!mimeType) return 'fas fa-file';
+        
+        if (mimeType.startsWith('image/')) return 'fas fa-image';
+        if (mimeType.includes('pdf')) return 'fas fa-file-pdf';
+        if (mimeType.includes('word') || mimeType.includes('document')) return 'fas fa-file-word';
+        if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'fas fa-file-excel';
+        if (mimeType.includes('powerpoint') || mimeType.includes('presentation')) return 'fas fa-file-powerpoint';
+        if (mimeType.includes('text')) return 'fas fa-file-alt';
+        if (mimeType.includes('video')) return 'fas fa-file-video';
+        if (mimeType.includes('audio')) return 'fas fa-file-audio';
+        if (mimeType.includes('zip') || mimeType.includes('archive')) return 'fas fa-file-archive';
+        
+        return 'fas fa-file';
+    }
+
+    formatFileSize(bytes) {
+        if (!bytes) return '';
+        
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    openImageModal(imageUrl, imageName) {
+        // Create modal for full-size image viewing
+        const modal = document.createElement('div');
+        modal.className = 'image-modal';
+        modal.innerHTML = `
+            <div class="image-modal-content">
+                <div class="image-modal-header">
+                    <h3>${imageName}</h3>
+                    <button class="image-modal-close" onclick="this.closest('.image-modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="image-modal-body">
+                    <img src="${imageUrl}" alt="${imageName}" class="image-modal-image">
+                </div>
+                <div class="image-modal-footer">
+                    <a href="${imageUrl}" target="_blank" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt"></i> Open in New Tab
+                    </a>
+                    <a href="${imageUrl}" download="${imageName}" class="btn btn-secondary">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        `;
+        
+        // Add modal styles
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        `;
+        
+        // Add CSS for modal content
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            .image-modal-content {
+                background: white;
+                border-radius: 8px;
+                max-width: 90vw;
+                max-height: 90vh;
+                display: flex;
+                flex-direction: column;
+                animation: slideIn 0.3s ease;
+            }
+            @keyframes slideIn {
+                from { transform: scale(0.8); opacity: 0; }
+                to { transform: scale(1); opacity: 1; }
+            }
+            .image-modal-header {
+                padding: 15px 20px;
+                border-bottom: 1px solid #eee;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .image-modal-header h3 {
+                margin: 0;
+                font-size: 16px;
+                color: #333;
+            }
+            .image-modal-close {
+                background: none;
+                border: none;
+                font-size: 20px;
+                cursor: pointer;
+                color: #666;
+            }
+            .image-modal-body {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                overflow: hidden;
+            }
+            .image-modal-image {
+                max-width: 100%;
+                max-height: 70vh;
+                object-fit: contain;
+                border-radius: 4px;
+            }
+            .image-modal-footer {
+                padding: 15px 20px;
+                border-top: 1px solid #eee;
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+            }
+            .btn {
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                text-decoration: none;
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 14px;
+            }
+            .btn-primary {
+                background: #007bff;
+                color: white;
+            }
+            .btn-secondary {
+                background: #6c757d;
+                color: white;
+            }
+        `;
+        
+        document.head.appendChild(style);
+        document.body.appendChild(modal);
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
     }
 
     autoResizeTextarea(textarea) {
@@ -750,6 +994,23 @@ class ChatManager {
     }
 }
 
+// Make functions globally accessible
+window.triggerFileInput = function() {
+    console.log('🔗 triggerFileInput called');
+    if (window.chatManager) {
+        console.log('✅ ChatManager found, calling triggerFileInput');
+        window.chatManager.triggerFileInput();
+    } else {
+        console.log('❌ ChatManager not found');
+    }
+};
+
+window.sendMessage = function() {
+    if (window.chatManager) {
+        window.chatManager.sendMessage();
+    }
+};
+
 // New Chat Modal Functions - REMOVED (no longer needed with auto-direct chat)
 
 // Modal functions removed - using auto-direct chat instead
@@ -823,4 +1084,11 @@ function logout() {
 let chatManager;
 document.addEventListener('DOMContentLoaded', () => {
     chatManager = new ChatManager();
+    window.chatManager = chatManager; // Make it globally accessible
+    
+    // Test if functions are accessible
+    console.log('🧪 Testing global functions:');
+    console.log('triggerFileInput exists:', typeof window.triggerFileInput);
+    console.log('sendMessage exists:', typeof window.sendMessage);
+    console.log('chatManager exists:', typeof window.chatManager);
 });
