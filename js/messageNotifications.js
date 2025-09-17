@@ -72,18 +72,16 @@ class MessageNotificationManager {
     
     // If we can determine the expected role from the page, prioritize that user
     if (expectedRole) {
-      const userData = JSON.parse(localStorage.getItem(expectedRole.key) || 'null');
-      const newToken = localStorage.getItem(expectedRole.tokenKey);
-      const oldToken = localStorage.getItem('vendplug-token');
+      const userData = getCurrentUser();
+      const token = getAuthToken();
       
       console.log(`🔍 Message system checking expected ${expectedRole.role}:`, {
         userData: !!userData,
-        newToken: !!newToken,
-        oldToken: !!oldToken,
-        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
+        token: !!token,
+        tokenValue: token ? `${token.substring(0, 10)}...` : 'null'
       });
       
-      if (userData && (newToken || oldToken)) {
+      if (userData && token) {
         console.log(`✅ Found expected ${expectedRole.role} user with token:`, userData._id);
         return { ...userData, role: expectedRole.role };
       }
@@ -97,18 +95,16 @@ class MessageNotificationManager {
     ];
     
     for (const { key, tokenKey, role } of roles) {
-      const userData = JSON.parse(localStorage.getItem(key) || 'null');
-      const newToken = localStorage.getItem(tokenKey);
-      const oldToken = localStorage.getItem('vendplug-token');
+      const userData = getCurrentUser();
+      const token = getAuthToken();
       
       console.log(`🔍 Message system checking ${role}:`, {
         userData: !!userData,
-        newToken: !!newToken,
-        oldToken: !!oldToken,
-        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
+        token: !!token,
+        tokenValue: token ? `${token.substring(0, 10)}...` : 'null'
       });
       
-      if (userData && (newToken || oldToken)) {
+      if (userData && token) {
         console.log(`✅ Found ${role} user with token:`, userData._id);
         return { ...userData, role };
       }
@@ -154,24 +150,15 @@ class MessageNotificationManager {
   }
 
   getUserToken(userData) {
-    // Check for separate token storage first (new format)
-    const buyerToken = localStorage.getItem('vendplug-buyer-token');
-    const vendorToken = localStorage.getItem('vendplug-vendor-token');
-    const agentToken = localStorage.getItem('vendplug-agent-token');
-    
-    if (buyerToken && userData.role === 'buyer') return buyerToken;
-    if (vendorToken && userData.role === 'vendor') return vendorToken;
-    if (agentToken && userData.role === 'agent') return agentToken;
-    
-    // Check for old token format
-    const oldToken = localStorage.getItem('vendplug-token');
-    if (oldToken) {
-      console.log('🔑 Using old token format for', userData.role);
-      return oldToken;
+    // Use smart auth utility
+    const token = getAuthToken();
+    if (token) {
+      console.log('🔑 Using smart auth token for', userData.role);
+      return token;
     }
     
-    // Fallback to embedded token
-    return userData.token;
+    console.log('❌ No token found for role:', userData.role);
+    return null;
   }
 
   updateMessageBadge() {

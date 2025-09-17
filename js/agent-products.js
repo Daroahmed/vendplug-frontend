@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const agent = JSON.parse(localStorage.getItem('vendplugAgent'));
-    const token = agent?.token;
+    const agent = getCurrentUser();
+    const token = getAuthToken();
     const BACKEND = window.BACKEND_URL || "";
-  
+
     if (!token) {
-      alert('Unauthorized. Please log in again.');
-      window.location.href = '/agent-auth.html';
-      return;
+        alert('Unauthorized. Please log in again.');
+        redirectToLogin();
+        return;
     }
   
     const addProductForm = document.getElementById('addProductForm');

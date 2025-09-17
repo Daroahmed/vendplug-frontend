@@ -61,18 +61,15 @@ class SupportManager {
                 userKey,
                 tokenKey,
                 hasUser: !!localStorage.getItem(userKey),
-                hasToken: !!localStorage.getItem(tokenKey),
-                hasOldToken: !!localStorage.getItem('vendplug-token')
+                hasToken: !!getAuthToken()
             });
             
             const userData = localStorage.getItem(userKey);
-            const roleToken = localStorage.getItem(tokenKey);
-            const oldToken = localStorage.getItem('vendplug-token');
+            const token = getAuthToken();
             
-            if (userData && (roleToken || oldToken)) {
+            if (userData && token) {
                 try {
                     user = JSON.parse(userData);
-                    token = roleToken || oldToken;
                     userType = type;
                     console.log(`✅ Found ${type} user:`, user);
                     break;

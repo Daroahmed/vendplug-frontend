@@ -71,7 +71,7 @@ async function loadVendorDetails(vendorId) {
       }
 
       try {
-        const token = localStorage.getItem('vendplug-agent-token');
+        const token = getAuthToken();
         if (!token) {
           return alert("You must be logged in to leave a review.");
         }
@@ -124,7 +124,7 @@ function displayMoreReviews() {
 // Add to Cart Logic
 // Assuming you have BACKEND_URL and token already
 async function addToCart(productId, quantity = 1) {
-  const token = localStorage.getItem('vendplug-agent-token');
+  const token = getAuthToken();
 
   if (!token) {
       alert("Please log in to add items to your cart.");

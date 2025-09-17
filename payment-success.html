@@ -106,6 +106,7 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="/js/auth-utils.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', async function() {
             console.log('🚀 Payment success page loaded');
@@ -121,8 +122,8 @@
             
             console.log('🔍 Payment reference:', reference);
             
-            // Get token from localStorage
-            const token = localStorage.getItem('vendplug-token');
+            // Get token using smart auth utility
+            const token = getAuthToken();
             if (!token) {
                 showError('No authentication token found. Please login again.');
                 return;
@@ -164,6 +165,5 @@
             document.getElementById('errorMessage').textContent = message;
         }
     </script>
-      <script src="/js/auth-utils.js"></script>
 </body>
 </html>

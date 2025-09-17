@@ -209,86 +209,19 @@ class NotificationManager {
   }
 
   getCurrentUserData() {
-    // Determine user type based on current page context first
-    const currentPage = window.location.pathname;
-    let expectedRole = null;
+    // Use smart auth utility to get current user
+    const userData = getCurrentUser();
+    const userType = getCurrentUserType();
     
-    if (currentPage.includes('buyer')) {
-      expectedRole = 'Buyer';
-    } else if (currentPage.includes('vendor')) {
-      expectedRole = 'Vendor';
-    } else if (currentPage.includes('agent')) {
-      expectedRole = 'Agent';
-    } else if (currentPage.includes('staff')) {
-      expectedRole = 'Staff';
-    } else if (currentPage.includes('admin')) {
-      expectedRole = 'Admin';
+    if (userData && userType) {
+      console.log(`✅ Found ${userType} user:`, userData._id);
+      return {
+        id: userData._id,
+        role: userType
+      };
     }
     
-    console.log('🔍 Current page context:', currentPage, 'Expected role:', expectedRole);
-    
-    // If we can determine the expected role from the page, prioritize that user
-    if (expectedRole) {
-      const userData = localStorage.getItem(`vendplug${expectedRole}`);
-      const newToken = localStorage.getItem(`vendplug-${expectedRole.toLowerCase()}-token`);
-      const oldToken = localStorage.getItem('vendplug-token');
-      
-      console.log(`🔍 Checking expected ${expectedRole}:`, {
-        userData: !!userData,
-        newToken: !!newToken,
-        oldToken: !!oldToken,
-        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
-      });
-      
-      if (userData && (newToken || oldToken)) {
-        const parsed = JSON.parse(userData);
-        console.log(`✅ Found expected ${expectedRole} user with token:`, parsed._id);
-        return {
-          id: parsed._id,
-          role: expectedRole.toLowerCase()
-        };
-      }
-    }
-    
-    // Fallback: Check all roles (for backward compatibility)
-    const roles = ['Buyer', 'Vendor', 'Agent', 'Staff', 'Admin'];
-    
-    for (const role of roles) {
-      const userData = localStorage.getItem(`vendplug${role}`);
-      const newToken = localStorage.getItem(`vendplug-${role.toLowerCase()}-token`);
-      const oldToken = localStorage.getItem('vendplug-token');
-      
-      console.log(`🔍 Checking ${role}:`, {
-        userData: !!userData,
-        newToken: !!newToken,
-        oldToken: !!oldToken,
-        tokenValue: newToken ? `${newToken.substring(0, 10)}...` : (oldToken ? `${oldToken.substring(0, 10)}...` : 'null')
-      });
-      
-      if (userData && (newToken || oldToken)) {
-        const parsed = JSON.parse(userData);
-        console.log(`✅ Found ${role} user with token:`, parsed._id);
-        return {
-          id: parsed._id,
-          role: role.toLowerCase()
-        };
-      }
-    }
-    
-    // Fallback: return first available user data (for backward compatibility)
-    for (const role of roles) {
-      const userData = localStorage.getItem(`vendplug${role}`);
-      if (userData) {
-        const parsed = JSON.parse(userData);
-        console.log(`⚠️ Found ${role} user without token (fallback):`, parsed._id);
-        return {
-          id: parsed._id,
-          role: role.toLowerCase()
-        };
-      }
-    }
-    
-    console.log('❌ No user data found in localStorage');
+    console.log('❌ No user data found');
     return null;
   }
 
@@ -297,19 +230,15 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      // Get the correct token based on user role (check both new and old formats)
-      const newTokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
-      const newToken = localStorage.getItem(newTokenKey);
-      const oldToken = localStorage.getItem('vendplug-token');
-      
-      const token = newToken || oldToken;
+      // Get the correct token using smart auth utility
+      const token = getAuthToken();
       
       if (!token) {
         console.log('❌ No token found for role:', userData.role);
         return;
       }
       
-      console.log(`🔑 Using token for ${userData.role}:`, newToken ? 'new format' : 'old format');
+      console.log(`🔑 Using smart auth token for ${userData.role}`);
 
       const res = await fetch(`${BACKEND}/api/notifications`, {
         headers: {
@@ -333,11 +262,7 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      const newTokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
-      const newToken = localStorage.getItem(newTokenKey);
-      const oldToken = localStorage.getItem('vendplug-token');
-      
-      const token = newToken || oldToken;
+      const token = getAuthToken();
       
       if (!token) {
         console.log('❌ No token found for role:', userData.role);
@@ -370,11 +295,7 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      const newTokenKey = `vendplug-${userData.role.toLowerCase()}-token`;
-      const newToken = localStorage.getItem(newTokenKey);
-      const oldToken = localStorage.getItem('vendplug-token');
-      
-      const token = newToken || oldToken;
+      const token = getAuthToken();
       
       if (!token) {
         console.log('❌ No token found for role:', userData.role);
