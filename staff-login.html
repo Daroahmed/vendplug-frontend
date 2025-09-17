@@ -168,6 +168,7 @@
         <a href="admin-dashboard.html" class="back-link">← Back to Admin Dashboard</a>
     </div>
 
+    <script src="js/auth-utils.js"></script>
     <script>
         class StaffLogin {
             constructor() {
@@ -240,7 +241,7 @@
 
                     if (data.success) {
                         // Store token and staff info
-                        localStorage.setItem('staff-token', data.data.token);
+                        localStorage.setItem('vendplug-staff-token', data.data.token);
                         localStorage.setItem('staff-info', JSON.stringify(data.data.staff));
                         
                         console.log('✅ Token stored:', data.data.token.substring(0, 50) + '...');

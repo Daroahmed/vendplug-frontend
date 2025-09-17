@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   // CONFIG & STATE
   // =========================
-  const token = localStorage.getItem('vendplug-token');
+  const token = getAuthToken();
   const baseURL = window.BACKEND_URL; // ✅ from config.js
 
   if (!baseURL) {
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!token) {
     alert('Please login first');
-    window.location.href = '/buyer-auth.html';
+    redirectToLogin();
     return;
   }
 

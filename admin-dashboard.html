@@ -617,6 +617,19 @@
 
         <!-- Main Content -->
         <div class="main-content">
+            <!-- Header with Notifications -->
+            <div class="header">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1>Admin Dashboard</h1>
+                        <p>Platform management and monitoring</p>
+                    </div>
+                    <div class="header-actions" style="display: flex; align-items: center; gap: 1rem;">
+                        <!-- Notification icon will be injected here by notifications.js -->
+                    </div>
+                </div>
+            </div>
+            
             <!-- Dashboard Section -->
             <div id="dashboard-section" class="content-section">
                 <div class="section-header">
@@ -1139,8 +1152,11 @@
         </div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script src="js/config.js"></script>
     <script src="js/dataFormatter.js"></script>
+    <script src="js/auth-utils.js"></script>
+    <script src="js/notifications.js"></script>
     <script src="js/admin-dashboard.js"></script>
 </body>
 </html>

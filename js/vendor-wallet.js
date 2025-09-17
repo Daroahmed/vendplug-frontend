@@ -1,15 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
   const accountNumberEl = document.getElementById('accountNumber');
   const balanceEl = document.getElementById('balance');
-  const vendor = JSON.parse(localStorage.getItem('vendplugVendor'));
+  const vendor = getCurrentUser();
+  const token = getAuthToken();
 
-  if (!vendor || !vendor.token) {
+  if (!vendor || !token) {
     alert('Unauthorized. Please log in again.');
-    window.location.href = '/vendor-auth.html';
+    redirectToLogin();
     return;
   }
-
-  const token = vendor.token;
   const resolvedNameEl = document.getElementById('resolvedName');
 
   fetchWallet();

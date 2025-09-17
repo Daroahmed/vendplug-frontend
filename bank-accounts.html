@@ -196,26 +196,19 @@
     </div>
 
     <script src="js/config.js"></script>
+    <script src="js/auth-utils.js"></script>
     <script>
         let banks = [];
-        let userToken = localStorage.getItem('vendplug-token');
+        let userToken = getAuthToken();
         let userRole = null;
         
-        // Get role from vendor or agent data
-        const vendorData = localStorage.getItem('vendplugVendor');
-        const agentData = localStorage.getItem('vendplugAgent');
-        
-        if (vendorData) {
-            const vendor = JSON.parse(vendorData);
-            userRole = vendor.role || 'vendor';
-        } else if (agentData) {
-            const agent = JSON.parse(agentData);
-            userRole = agent.role || 'agent';
-        }
+        // Get user data using smart utility
+        const userData = getCurrentUser();
+        userRole = getCurrentUserType() || userData?.role || 'buyer';
 
         // Check authentication
-        if (!userToken || !userRole) {
-            window.location.href = 'login.html';
+        if (!userToken) {
+            redirectToLogin();
         }
 
         // Load banks on page load

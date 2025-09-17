@@ -414,8 +414,10 @@
       <div class="spinner"></div>
     </div>
   </div>
-
+  
+  <script src="/js/auth-utils.js"></script>
   <script>
+    
     document.addEventListener('DOMContentLoaded', () => {
       const agent = JSON.parse(localStorage.getItem('vendplugAgent'));
       const token = agent?.token;
@@ -656,5 +658,6 @@
       window.deleteProduct = deleteProduct;
     });
   </script>
+  
 </body>
 </html>

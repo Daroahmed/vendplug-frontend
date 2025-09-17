@@ -1,7 +1,7 @@
 // vendor-orders.js
 
 // ✅ Consistent token key
-const token = localStorage.getItem("vendplug-token");
+const token = localStorage.getItem("vendplug-vendor-token");
 if (!token) {
   console.warn("⚠️ No vendor token found. Did you login?");
 }

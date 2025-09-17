@@ -351,6 +351,7 @@
     </div>
   </div>
 
+  <script src="js/auth-utils.js"></script>
   <script>
     console.log("✅ agent-auth.js loaded");
 
@@ -446,7 +447,7 @@
           return;
         }
 
-        localStorage.setItem("vendplug-token", data.token);
+        localStorage.setItem("vendplug-agent-token", data.token);
         localStorage.setItem("vendplugAgent", JSON.stringify(data.agent));
         window.location.href = "agent-dashboard.html";
 
@@ -520,7 +521,7 @@
           throw new Error(data.message || "Agent registration failed");
         }
 
-        localStorage.setItem("vendplug-token", data.token);
+        localStorage.setItem("vendplug-agent-token", data.token);
         localStorage.setItem("vendplugAgent", JSON.stringify(data.agent));
         window.location.href = "agent-dashboard.html";
 
@@ -530,5 +531,6 @@
       }
     });
   </script>
+
 </body>
 </html>

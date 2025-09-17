@@ -219,6 +219,10 @@ class NotificationManager {
       expectedRole = 'Vendor';
     } else if (currentPage.includes('agent')) {
       expectedRole = 'Agent';
+    } else if (currentPage.includes('staff')) {
+      expectedRole = 'Staff';
+    } else if (currentPage.includes('admin')) {
+      expectedRole = 'Admin';
     }
     
     console.log('🔍 Current page context:', currentPage, 'Expected role:', expectedRole);
@@ -247,7 +251,7 @@ class NotificationManager {
     }
     
     // Fallback: Check all roles (for backward compatibility)
-    const roles = ['Buyer', 'Vendor', 'Agent'];
+    const roles = ['Buyer', 'Vendor', 'Agent', 'Staff', 'Admin'];
     
     for (const role of roles) {
       const userData = localStorage.getItem(`vendplug${role}`);

@@ -849,6 +849,7 @@
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/config.js"></script>
+  <script src="/js/auth-utils.js"></script>
   <script src="/js/notifications.js"></script>
   <script>
     // Global variables for sharing
@@ -880,7 +881,7 @@
     async function loadAgentData() {
       try {
         // Get agent ID from localStorage or token
-        const token = localStorage.getItem('vendplug-token');
+        const token = localStorage.getItem('vendplug-agent-token');
         if (!token) {
           console.log('No agent token found');
           return;
@@ -927,7 +928,7 @@
     // Load payout queue data
     async function loadPayoutQueue() {
       try {
-        const token = localStorage.getItem('vendplug-token');
+        const token = localStorage.getItem('vendplug-agent-token');
         if (!token) {
           console.log('No agent token found');
           return;
@@ -1188,7 +1189,7 @@
     // Load unread message count
     async function loadMessageCount() {
       try {
-        const token = localStorage.getItem('vendplug-token');
+        const token = localStorage.getItem('vendplug-agent-token');
         if (!token) return;
 
         const response = await fetch('/api/chats/unread-count', {

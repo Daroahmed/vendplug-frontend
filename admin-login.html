@@ -181,6 +181,7 @@
         </div>
     </div>
 
+    <script src="js/auth-utils.js"></script>
     <script>
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -213,7 +214,7 @@
 
                 if (data.success) {
                     // Store admin token
-                    localStorage.setItem('admin-token', data.data.token);
+                    localStorage.setItem('vendplug-admin-token', data.data.token);
                     
                     // Show success message
                     successMessage.textContent = 'Login successful! Redirecting...';

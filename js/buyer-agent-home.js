@@ -1,9 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   // 🔐 1. Enforce buyer login
-  const token = localStorage.getItem("vendplug-token");
+  const token = getAuthToken();
   if (!token) {
     alert("You must be logged in to view this page.");
-    window.location.href = "/buyer-auth.html";
+    redirectToLogin();
     return;
   }
 

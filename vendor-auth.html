@@ -352,6 +352,7 @@
     </div>
   </div>
 
+  <script src="js/auth-utils.js"></script>
   <script>
     console.log("✅ vendor-auth.js loaded");
 
@@ -447,7 +448,7 @@
           return;
         }
 
-        localStorage.setItem("vendplug-token", data.token);
+        localStorage.setItem("vendplug-vendor-token", data.token);
         localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
         window.location.href = "vendor-dashboard.html";
 
@@ -523,7 +524,7 @@
           throw new Error(data.message || "Vendor registration failed");
         }
 
-        localStorage.setItem("vendplug-token", data.token);
+        localStorage.setItem("vendplug-vendor-token", data.token);
         localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
         window.location.href = "vendor-dashboard.html";
 

@@ -1,7 +1,7 @@
 // agent-delivered-orders.js
 
 // ✅ Consistent token key
-const token = localStorage.getItem("vendplug-token");
+const token = localStorage.getItem("vendplug-agent-token");
 if (!token) {
   console.warn("⚠️ No agent token found. Did you login?");
 }

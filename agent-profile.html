@@ -122,7 +122,7 @@
   <script src="/js/config.js"></script>
   <script>
     const agent = JSON.parse(localStorage.getItem("vendplugAgent"));
-    const token = localStorage.getItem("vendplug-token");
+    const token = getAuthToken();
     const BACKEND = window.BACKEND_URL || "";
 
     if (!agent || !token) {
@@ -195,5 +195,6 @@
       }
     }
   </script>
+    <script src="/js/auth-utils.js"></script>
 </body>
 </html>

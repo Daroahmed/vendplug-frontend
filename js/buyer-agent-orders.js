@@ -2,10 +2,11 @@ console.log("📦 buyer-agent-orders.js loaded");
 
 const BACKEND = window.BACKEND_URL || "";
 const container = document.getElementById("agentOrdersContainer");
-const token = localStorage.getItem("vendplug-token");
+const token = getAuthToken();
 
 if (!token) {
   container.innerHTML = "<p>Please log in to view your orders.</p>";
+  redirectToLogin();
 } else {
   fetchOrders();
 }

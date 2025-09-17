@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const data = await res.json();
         if (!res.ok) return alert(data.message || "Login failed");
 
-        localStorage.setItem("vendplug-token", data.token);
+        localStorage.setItem("vendplug-buyer-token", data.token);
         localStorage.setItem("buyer", JSON.stringify(data.user));
         location.href = "buyer-dashboard.html";
       } catch (err) {

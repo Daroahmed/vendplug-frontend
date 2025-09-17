@@ -23,75 +23,10 @@ class ChatManager {
         console.log('vendplug-vendor-token:', localStorage.getItem('vendplug-vendor-token'));
         console.log('vendplug-agent-token:', localStorage.getItem('vendplug-agent-token'));
         
-        // Get current user - prioritize based on which token exists
-        let currentUser = null;
-        let userRole = null;
-        let userToken = null;
-        
-        // Check for buyer
-        const buyerToken = localStorage.getItem('vendplug-buyer-token');
-        if (buyerToken) {
-            currentUser = JSON.parse(localStorage.getItem('vendplugBuyer'));
-            userRole = 'buyer';
-            userToken = buyerToken;
-        }
-        
-        // Check for vendor
-        const vendorToken = localStorage.getItem('vendplug-vendor-token');
-        if (vendorToken) {
-            currentUser = JSON.parse(localStorage.getItem('vendplugVendor'));
-            userRole = 'vendor';
-            userToken = vendorToken;
-        }
-        
-        // Check for agent
-        const agentToken = localStorage.getItem('vendplug-agent-token');
-        if (agentToken) {
-            currentUser = JSON.parse(localStorage.getItem('vendplugAgent'));
-            userRole = 'agent';
-            userToken = agentToken;
-        }
-        
-        // Check for old token format as fallback
-        const oldToken = localStorage.getItem('vendplug-token');
-        if (!currentUser && oldToken) {
-            // Try to determine which user type based on available data
-            const agentData = JSON.parse(localStorage.getItem('vendplugAgent') || 'null');
-            if (agentData) {
-                currentUser = agentData;
-                userRole = 'agent';
-                userToken = oldToken;
-            }
-        }
-        
-        // Fallback to checking user objects directly (for backward compatibility)
-        if (!currentUser) {
-            const buyerData = JSON.parse(localStorage.getItem('vendplugBuyer'));
-            const vendorData = JSON.parse(localStorage.getItem('vendplugVendor'));
-            const agentData = JSON.parse(localStorage.getItem('vendplugAgent'));
-            
-            // Check if any user object has an embedded token
-            if (buyerData && buyerData.token) {
-                currentUser = buyerData;
-                userRole = 'buyer';
-                userToken = buyerData.token;
-            } else if (vendorData && vendorData.token) {
-                currentUser = vendorData;
-                userRole = 'vendor';
-                userToken = vendorData.token;
-            } else if (agentData && agentData.token) {
-                currentUser = agentData;
-                userRole = 'agent';
-                userToken = agentData.token;
-            } else {
-                // Last resort - pick the first available user
-                currentUser = buyerData || vendorData || agentData;
-                if (currentUser) {
-                    userRole = currentUser.role;
-                    userToken = currentUser.token;
-                }
-            }
-        }
+        // Get current user using smart auth utility
+        const currentUser = getCurrentUser();
+        const userRole = getCurrentUserType();
+        const userToken = getAuthToken();
         
         this.currentUser = currentUser;
         
@@ -165,17 +100,8 @@ class ChatManager {
             // Show loading state
             this.showLoading('Starting chat...');
             
-            // Get token from localStorage based on user type
-            let token;
-            if (this.currentUser.role === 'buyer') {
-                token = localStorage.getItem('vendplug-buyer-token');
-            } else if (this.currentUser.role === 'vendor') {
-                token = localStorage.getItem('vendplug-vendor-token');
-            } else if (this.currentUser.role === 'agent') {
-                token = localStorage.getItem('vendplug-agent-token');
-            } else {
-                token = localStorage.getItem('vendplug-token');
-            }
+            // Get token using smart auth utility
+            const token = getAuthToken();
             if (!token) {
                 throw new Error('No authentication token found');
             }

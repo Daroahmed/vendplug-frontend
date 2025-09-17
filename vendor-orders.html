@@ -392,6 +392,7 @@
   </div>
 
   <!-- Scripts -->
+  <script src="/js/auth-utils.js"></script>
   <script src="js/config.js"></script>
   <script src="js/vendor-orders.js" defer></script>
   <script>
@@ -407,7 +408,7 @@
         if (startDate) url += `startDate=${startDate}&`;
         if (endDate) url += `endDate=${endDate}&`;
   
-        const token = localStorage.getItem("vendplug-token");
+        const token = getAuthToken();
   
         const res = await fetch(url, {
           headers: {
@@ -425,6 +426,5 @@
       fetchOrders();
     });
   </script>
-  
 </body>
 </html>

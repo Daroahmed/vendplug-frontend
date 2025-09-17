@@ -1,15 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
   const accountNumberEl = document.getElementById('accountNumber');
   const balanceEl = document.getElementById('balance');
-  const agent = JSON.parse(localStorage.getItem('vendplugAgent'));
+  const agent = getCurrentUser();
+  const token = getAuthToken();
 
-  if (!agent || !agent.token) {
+  if (!agent || !token) {
     alert('Unauthorized. Please log in again.');
-    window.location.href = '/agent-auth.html';
+    redirectToLogin();
     return;
   }
-
-  const token = agent.token;
   const resolvedNameEl = document.getElementById('resolvedName');
 
   fetchWallet();

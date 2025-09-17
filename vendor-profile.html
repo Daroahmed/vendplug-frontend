@@ -123,9 +123,10 @@
   </div>
 
   <script src="/js/config.js"></script>
+  <script src="/js/auth-utils.js"></script>
   <script>
     const vendor = JSON.parse(localStorage.getItem("vendplugVendor"));
-    const token = localStorage.getItem("vendplug-token");
+    const token = getAuthToken();
     const BACKEND = window.BACKEND_URL || "";
 
     if (!vendor || !token) {
@@ -200,5 +201,6 @@
       }
     }
   </script>
+    <script src="/js/auth-utils.js"></script>
 </body>
 </html>

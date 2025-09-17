@@ -289,15 +289,16 @@
         </div>
     </div>
 
+    <script src="js/auth-utils.js"></script>
     <script>
-        // Get user token and role
-        const userToken = localStorage.getItem('vendplug-token');
-        const userData = JSON.parse(localStorage.getItem('vendplugVendor') || localStorage.getItem('vendplugAgent') || localStorage.getItem('vendplugBuyer') || '{}');
-        const userRole = userData.role || 'buyer';
+        // Get user token and role using smart utilities
+        const userToken = getAuthToken();
+        const userData = getCurrentUser();
+        const userRole = getCurrentUserType() || 'buyer';
 
         // Check authentication
         if (!userToken) {
-            window.location.href = '/login.html';
+            redirectToLogin();
         }
 
         // Load disputes on page load

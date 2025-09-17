@@ -1,8 +1,8 @@
 console.log("📦 buyer-order-details.js loaded");
 
 const BACKEND = window.BACKEND_URL || "";
-const token = localStorage.getItem("vendplug-token");
-const buyer = JSON.parse(localStorage.getItem("vendplugBuyer"));
+const token = getAuthToken();
+const buyer = getCurrentUser();
 const detailsDiv = document.getElementById("orderDetails");
 
 // Copy to clipboard function

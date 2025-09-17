@@ -1,9 +1,9 @@
-const token = localStorage.getItem('vendplug-token'); // consistent token naming
-const role = localStorage.getItem('role');
+const token = getAuthToken();
+const role = getCurrentUserType();
 
 // Redirect to login if no token or not an agent
 if (!token || role !== 'agent') {
-  window.location.href = '/agent-auth.html';
+  redirectToLogin();
 }
 
 // Greet agent
@@ -25,7 +25,7 @@ fetch('/api/agents/stats', {
     if (res.status === 401 || res.status === 403) {
       // Invalid or expired token
       alert('Your session has expired. Please log in again.');
-      localStorage.removeItem('vendplug-token');
+      localStorage.removeItem('vendplug-agent-token');
       localStorage.removeItem('role');
       localStorage.removeItem('name');
       window.location.href = '/agent-auth.html';
