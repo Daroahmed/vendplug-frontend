@@ -10,7 +10,7 @@ class StaffManagement {
 
     async init() {
         // Check authentication
-        const token = localStorage.getItem('admin-token');
+        const token = localStorage.getItem('vendplug-admin-token');
         if (!token) {
             this.redirectToLogin();
             return;
@@ -36,7 +36,7 @@ class StaffManagement {
         try {
             const response = await fetch(`${this.apiBaseUrl}/profile`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -63,7 +63,7 @@ class StaffManagement {
         try {
             const response = await fetch(`${this.apiBaseUrl}/staff`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -105,7 +105,7 @@ class StaffManagement {
             // Load dispute statistics for all staff
             const response = await fetch(`${this.apiBaseUrl}/disputes/staff-stats`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -429,7 +429,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formData)
@@ -532,7 +532,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff/${staffId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(formData)
@@ -574,7 +574,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff/${staffId}`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -612,7 +612,7 @@ class StaffManagement {
             const response = await fetch(`${this.apiBaseUrl}/staff/${staffId}/reset-password`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ newPassword })
@@ -723,7 +723,7 @@ class StaffManagement {
             // Load staff's disputes
             const response = await fetch(`${this.apiBaseUrl}/disputes/staff/${staffId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -878,7 +878,7 @@ class StaffManagement {
         try {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -1029,7 +1029,7 @@ function previewCSV() { staffManager.previewCSV(); }
 function importStaff() { staffManager.importStaff(); }
 
 function logout() {
-    localStorage.removeItem('admin-token');
+    localStorage.removeItem('vendplug-admin-token');
     window.location.href = 'admin-login.html';
 }
 

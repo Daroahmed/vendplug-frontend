@@ -14,20 +14,26 @@ class SupportManager {
         // Add a small delay to ensure localStorage is fully loaded
         await new Promise(resolve => setTimeout(resolve, 100));
         
-        // Get current user
-        this.currentUser = this.getCurrentUser();
-        if (!this.currentUser) {
-            console.error('❌ No user found, redirecting to login');
-            console.log('🔍 Debug info:', {
-                localStorage: Object.keys(localStorage),
-                currentPath: window.location.pathname,
-                userAgent: navigator.userAgent
-            });
-            this.redirectToLogin();
+        // Check authentication using standardized auth-utils
+        if (!isAuthenticated()) {
+            console.error('❌ No user authenticated, redirecting to login');
+            redirectToLogin();
+            return;
+        }
+
+        // Get current user using standardized function
+        this.currentUser = getCurrentUser();
+        this.userType = getCurrentUserType();
+        this.token = getAuthToken();
+
+        if (!this.currentUser || !this.token) {
+            console.error('❌ User data or token missing, redirecting to login');
+            redirectToLogin();
             return;
         }
 
         console.log('✅ Current user:', this.currentUser);
+        console.log('✅ User type:', this.userType);
 
         // Load tickets
         await this.loadTickets();
@@ -39,84 +45,6 @@ class SupportManager {
         this.setupRealTimeUpdates();
     }
 
-    getCurrentUser() {
-        console.log('🔍 Detecting current user...');
-        
-        // Try to get user from localStorage based on current page
-        const currentPath = window.location.pathname;
-        console.log('📍 Current path:', currentPath);
-        
-        let user = null;
-        let token = null;
-        let userType = null;
-
-        // Check all possible user types and tokens
-        const userTypes = ['buyer', 'vendor', 'agent'];
-        
-        for (const type of userTypes) {
-            const userKey = `vendplug${type.charAt(0).toUpperCase() + type.slice(1)}`;
-            const tokenKey = `vendplug-${type}-token`;
-            
-            console.log(`🔍 Checking ${type}:`, {
-                userKey,
-                tokenKey,
-                hasUser: !!localStorage.getItem(userKey),
-                hasToken: !!getAuthToken()
-            });
-            
-            const userData = localStorage.getItem(userKey);
-            const token = getAuthToken();
-            
-            if (userData && token) {
-                try {
-                    user = JSON.parse(userData);
-                    userType = type;
-                    console.log(`✅ Found ${type} user:`, user);
-                    break;
-                } catch (e) {
-                    console.error(`❌ Error parsing ${type} user data:`, e);
-                }
-            }
-        }
-
-        if (user && token) {
-            console.log('✅ User authenticated:', { userType, user: user.fullName || user.email });
-            return { ...user, token, userType };
-        }
-
-        console.log('❌ No authenticated user found');
-        console.log('📊 Available localStorage keys:', Object.keys(localStorage));
-        return null;
-    }
-
-    redirectToLogin() {
-        console.log('🔄 Redirecting to login...');
-        
-        // Try to determine user type from localStorage first
-        const userTypes = ['buyer', 'vendor', 'agent'];
-        let detectedType = null;
-        
-        for (const type of userTypes) {
-            const userKey = `vendplug${type.charAt(0).toUpperCase() + type.slice(1)}`;
-            const tokenKey = `vendplug-${type}-token`;
-            
-            if (localStorage.getItem(userKey) || localStorage.getItem(tokenKey)) {
-                detectedType = type;
-                break;
-            }
-        }
-        
-        // If we detected a user type, redirect to that login page
-        if (detectedType) {
-            console.log(`🔄 Redirecting to ${detectedType} login`);
-            window.location.href = `${detectedType}-auth.html`;
-            return;
-        }
-        
-        // Fallback to auth selection
-        console.log('🔄 Redirecting to auth selection');
-        window.location.href = 'auth-selection.html';
-    }
 
     async loadTickets() {
         try {
@@ -125,7 +53,7 @@ class SupportManager {
             const response = await fetch('/api/support/tickets', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'Authorization': `Bearer ${this.token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -234,7 +162,7 @@ class SupportManager {
             const response = await fetch(`/api/support/tickets/${ticketId}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'Authorization': `Bearer ${this.token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -420,7 +348,7 @@ class SupportManager {
             const response = await fetch(`/api/support/tickets/${ticket._id}/messages`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'Authorization': `Bearer ${this.token}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -458,15 +386,15 @@ class SupportManager {
 
     renderMessage(message) {
         // Convert userType to match senderType format (capitalize first letter)
-        const currentUserType = this.currentUser.userType ? 
-            this.currentUser.userType.charAt(0).toUpperCase() + this.currentUser.userType.slice(1) : 
+        const currentUserType = this.userType ? 
+            this.userType.charAt(0).toUpperCase() + this.userType.slice(1) : 
             null;
         const isSent = message.senderType === currentUserType;
         
         console.log('🔍 Message sender check:', {
             messageSenderType: message.senderType,
             currentUserType: currentUserType,
-            originalUserType: this.currentUser.userType,
+            originalUserType: this.userType,
             isSent: isSent
         });
         const senderName = this.getSenderName(message);
@@ -490,8 +418,8 @@ class SupportManager {
 
     getSenderName(message) {
         // Convert userType to match senderType format (capitalize first letter)
-        const currentUserType = this.currentUser.userType ? 
-            this.currentUser.userType.charAt(0).toUpperCase() + this.currentUser.userType.slice(1) : 
+        const currentUserType = this.userType ? 
+            this.userType.charAt(0).toUpperCase() + this.userType.slice(1) : 
             null;
             
         if (message.senderType === currentUserType) {
@@ -543,7 +471,7 @@ class SupportManager {
             const response = await fetch(`/api/support/tickets/${this.currentTicket._id}/message`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'Authorization': `Bearer ${this.token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ content: message })
@@ -620,7 +548,7 @@ class SupportManager {
             const response = await fetch('/api/support/tickets', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${this.currentUser.token}`,
+                    'Authorization': `Bearer ${this.token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(ticketData)

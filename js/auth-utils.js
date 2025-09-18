@@ -17,7 +17,6 @@ function getAuthToken() {
   const token = buyerToken || agentToken || vendorToken || staffToken || adminToken;
   
   if (token) {
-    console.log("🔑 Token found:", token.substring(0, 10) + "...");
     return token;
   }
   
@@ -37,11 +36,29 @@ function getAuthToken() {
  * @returns {string|null} The user type or null if not found
  */
 function getCurrentUserType() {
-  if (localStorage.getItem("vendplug-buyer-token")) return "buyer";
-  if (localStorage.getItem("vendplug-agent-token")) return "agent";
-  if (localStorage.getItem("vendplug-vendor-token")) return "vendor";
-  if (localStorage.getItem("vendplug-staff-token")) return "staff";
-  if (localStorage.getItem("vendplug-admin-token")) return "admin";
+  // Check higher privilege tokens first (admin, staff)
+  if (localStorage.getItem("vendplug-admin-token")) {
+    console.log("🔍 Detected admin token");
+    return "admin";
+  }
+  if (localStorage.getItem("vendplug-staff-token")) {
+    console.log("🔍 Detected staff token");
+    return "staff";
+  }
+  // Then check regular user tokens
+  if (localStorage.getItem("vendplug-buyer-token")) {
+    console.log("🔍 Detected buyer token");
+    return "buyer";
+  }
+  if (localStorage.getItem("vendplug-agent-token")) {
+    console.log("🔍 Detected agent token");
+    return "agent";
+  }
+  if (localStorage.getItem("vendplug-vendor-token")) {
+    console.log("🔍 Detected vendor token");
+    return "vendor";
+  }
+  console.log("🔍 No tokens detected");
   return null;
 }
 
@@ -110,6 +127,42 @@ function clearAuth() {
   localStorage.removeItem("role");
 }
 
+/**
+ * Clear tokens for other user types to prevent conflicts
+ * @param {string} currentUserType - The current user type to keep
+ */
+function clearOtherUserTokens(currentUserType) {
+  const tokensToRemove = {
+    buyer: ["vendplug-agent-token", "vendplug-vendor-token", "vendplug-staff-token", "vendplug-admin-token"],
+    agent: ["vendplug-buyer-token", "vendplug-vendor-token", "vendplug-staff-token", "vendplug-admin-token"],
+    vendor: ["vendplug-buyer-token", "vendplug-agent-token", "vendplug-staff-token", "vendplug-admin-token"],
+    staff: ["vendplug-buyer-token", "vendplug-agent-token", "vendplug-vendor-token", "vendplug-admin-token"],
+    admin: ["vendplug-buyer-token", "vendplug-agent-token", "vendplug-vendor-token", "vendplug-staff-token"]
+  };
+  
+  const userDataToRemove = {
+    buyer: ["vendplugAgent", "vendplugVendor", "vendplugStaff", "vendplugAdmin", "staff-info"],
+    agent: ["vendplugBuyer", "vendplugVendor", "vendplugStaff", "vendplugAdmin", "staff-info"],
+    vendor: ["vendplugBuyer", "vendplugAgent", "vendplugStaff", "vendplugAdmin", "staff-info"],
+    staff: ["vendplugBuyer", "vendplugAgent", "vendplugVendor", "vendplugAdmin"],
+    admin: ["vendplugBuyer", "vendplugAgent", "vendplugVendor", "staff-info"]
+  };
+  
+  if (tokensToRemove[currentUserType]) {
+    tokensToRemove[currentUserType].forEach(token => {
+      localStorage.removeItem(token);
+    });
+  }
+  
+  if (userDataToRemove[currentUserType]) {
+    userDataToRemove[currentUserType].forEach(data => {
+      localStorage.removeItem(data);
+    });
+  }
+  
+  console.log(`🧹 Cleared tokens for other user types, keeping: ${currentUserType}`);
+}
+
 // Export functions for global use
 window.getAuthToken = getAuthToken;
 window.getCurrentUserType = getCurrentUserType;
@@ -117,3 +170,4 @@ window.isAuthenticated = isAuthenticated;
 window.redirectToLogin = redirectToLogin;
 window.getCurrentUser = getCurrentUser;
 window.clearAuth = clearAuth;
+window.clearOtherUserTokens = clearOtherUserTokens;

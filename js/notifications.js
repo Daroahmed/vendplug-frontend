@@ -214,9 +214,11 @@ class NotificationManager {
     const userType = getCurrentUserType();
     
     if (userData && userType) {
-      console.log(`✅ Found ${userType} user:`, userData._id);
+      // Handle different ID field names for different user types
+      const userId = userData._id || userData.id;
+      console.log(`✅ Found ${userType} user:`, userId);
       return {
-        id: userData._id,
+        id: userId,
         role: userType
       };
     }

@@ -362,11 +362,11 @@
                             </div>
                             <div class="meta-item">
                                 <div class="meta-label">Order ID</div>
-                                <div class="meta-value">${dispute.orderId._id}</div>
+                                <div class="meta-value">${dispute.orderId?._id || 'N/A'}</div>
                             </div>
                             <div class="meta-item">
                                 <div class="meta-label">Order Amount</div>
-                                <div class="meta-value">₦${dispute.orderId.totalAmount?.toLocaleString() || 'N/A'}</div>
+                                <div class="meta-value">₦${dispute.orderId?.totalAmount?.toLocaleString() || 'N/A'}</div>
                             </div>
                             <div class="meta-item">
                                 <div class="meta-label">Created</div>

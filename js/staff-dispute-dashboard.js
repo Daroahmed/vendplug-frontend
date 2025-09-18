@@ -9,9 +9,28 @@ class StaffDisputeDashboard {
 
     async init() {
         // Check authentication
-        const token = localStorage.getItem('staff-token');
-        if (!token) {
-            this.redirectToLogin();
+        if (!isAuthenticated()) {
+            redirectToLogin();
+            return;
+        }
+
+        // Check if user is staff
+        const userType = getCurrentUserType();
+        if (userType !== 'staff') {
+            console.error('❌ Access denied: User is not staff, userType:', userType);
+            alert('Access denied. This page is only for staff members.');
+            // Redirect to appropriate dashboard based on user type
+            if (userType === 'buyer') {
+                window.location.href = 'buyer-home.html';
+            } else if (userType === 'vendor') {
+                window.location.href = 'vendor-dashboard.html';
+            } else if (userType === 'agent') {
+                window.location.href = 'agent-dashboard.html';
+            } else if (userType === 'admin') {
+                window.location.href = 'admin-dashboard.html';
+            } else {
+                redirectToLogin();
+            }
             return;
         }
 
@@ -35,7 +54,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch('/api/staff/profile', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -66,7 +85,7 @@ class StaffDisputeDashboard {
             // Load analytics for dashboard stats
             const analyticsResponse = await fetch(`${this.apiBaseUrl}/disputes/stats?period=30`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -103,7 +122,7 @@ class StaffDisputeDashboard {
             // Load my support tickets count
             const myTicketsResponse = await fetch(`/api/support/staff/tickets/my?limit=1`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -116,7 +135,7 @@ class StaffDisputeDashboard {
             // Load available support tickets count
             const availableTicketsResponse = await fetch(`/api/support/staff/tickets/available?limit=1`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -130,7 +149,7 @@ class StaffDisputeDashboard {
             const today = new Date().toISOString().split('T')[0];
             const resolvedResponse = await fetch(`/api/support/staff/tickets/my?status=resolved&limit=1`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -148,7 +167,7 @@ class StaffDisputeDashboard {
             // Load in progress count
             const inProgressResponse = await fetch(`/api/support/staff/tickets/my?status=in_progress&limit=1`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -172,7 +191,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch(`${this.apiBaseUrl}/disputes/my?limit=5`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -231,7 +250,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch(`${this.apiBaseUrl}/disputes/stats?period=30`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -299,7 +318,7 @@ class StaffDisputeDashboard {
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -399,7 +418,7 @@ class StaffDisputeDashboard {
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -473,7 +492,7 @@ class StaffDisputeDashboard {
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -506,7 +525,7 @@ class StaffDisputeDashboard {
             
             const response = await fetch(url, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -629,7 +648,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch(`/api/support/staff/tickets/${ticketId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -721,7 +740,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch(`/api/support/staff/tickets/${ticketId}/messages`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -834,7 +853,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`/api/support/staff/tickets/${ticketId}/message`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ content: message })
@@ -850,7 +869,7 @@ class StaffDisputeDashboard {
             // Reload messages
             const ticketResponse = await fetch(`/api/support/staff/tickets/${ticketId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -887,7 +906,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`/api/support/staff/tickets/${ticketId}/assign`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ assignedTo: this.currentStaff._id })
@@ -915,7 +934,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`/api/support/staff/tickets/${ticketId}/status`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ status })
@@ -940,7 +959,7 @@ class StaffDisputeDashboard {
             const period = document.getElementById('analyticsPeriod').value;
             const response = await fetch(`${this.apiBaseUrl}/disputes/stats?period=${period}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -1060,7 +1079,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -1274,7 +1293,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDispute.disputeId}/message`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ message })
@@ -1330,7 +1349,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/resolve`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1370,7 +1389,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch('/api/admin/staff/available', {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -1409,7 +1428,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/assign`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1439,7 +1458,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}/status`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ status })
@@ -1464,7 +1483,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}/start-review`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -1516,7 +1535,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/escalate`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1586,7 +1605,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/request-info`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1655,7 +1674,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/priority`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ 
@@ -1704,7 +1723,7 @@ class StaffDisputeDashboard {
         try {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${disputeId}/internal-notes`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -1768,7 +1787,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/internal-notes`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ note })
@@ -1827,7 +1846,7 @@ class StaffDisputeDashboard {
             const response = await fetch(`${this.apiBaseUrl}/disputes/${this.currentDisputeId}/contact`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('staff-token')}`,
+                    'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ contactType, message, isInternal })

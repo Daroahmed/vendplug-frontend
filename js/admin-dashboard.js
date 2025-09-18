@@ -2,7 +2,7 @@
 class AdminDashboard {
     constructor() {
         this.currentSection = 'dashboard';
-        this.adminToken = localStorage.getItem('admin-token');
+        this.adminToken = localStorage.getItem('vendplug-admin-token');
         this.currentPage = {
             users: 1,
             orders: 1,
@@ -45,8 +45,28 @@ class AdminDashboard {
     }
 
     checkAuth() {
-        if (!this.adminToken) {
-            window.location.href = 'admin-login.html';
+        if (!isAuthenticated()) {
+            redirectToLogin();
+            return;
+        }
+
+        // Check if user is admin
+        const userType = getCurrentUserType();
+        if (userType !== 'admin') {
+            console.error('❌ Access denied: User is not admin, userType:', userType);
+            alert('Access denied. This page is only for administrators.');
+            // Redirect to appropriate dashboard based on user type
+            if (userType === 'buyer') {
+                window.location.href = 'buyer-home.html';
+            } else if (userType === 'vendor') {
+                window.location.href = 'vendor-dashboard.html';
+            } else if (userType === 'agent') {
+                window.location.href = 'agent-dashboard.html';
+            } else if (userType === 'staff') {
+                window.location.href = 'staff-dispute-dashboard.html';
+            } else {
+                redirectToLogin();
+            }
             return;
         }
     }
@@ -787,7 +807,7 @@ class AdminDashboard {
     }
 
     logout() {
-        localStorage.removeItem('admin-token');
+        localStorage.removeItem('vendplug-admin-token');
         window.location.href = 'admin-login.html';
     }
 
@@ -1272,7 +1292,7 @@ class AdminDashboard {
         try {
             const response = await fetch(`/api/disputes/admin/${disputeId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`
                 }
             });
 
@@ -1484,7 +1504,7 @@ class AdminDashboard {
             // Fetch available staff for assignment
             const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -1564,7 +1584,7 @@ class AdminDashboard {
             const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/assign`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ assignedTo })
@@ -1588,7 +1608,7 @@ class AdminDashboard {
     }
 
     resolveDispute(disputeId) {
-        const decision = prompt('Enter decision (favor_complainant, favor_respondent, partial_refund, full_refund, no_action):');
+        const decision = prompt('Enter decision (refund, no_refund, partial_refund):');
         if (!decision) return;
 
         const reason = prompt('Enter reason for decision:');
@@ -1604,10 +1624,11 @@ class AdminDashboard {
 
     async performResolveDispute(disputeId, decision, reason, refundAmount, notes) {
         try {
-            const response = await fetch(`/api/admin/disputes/${disputeId}/resolve`, {
+            const token = getAuthToken();
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/resolve`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1759,7 +1780,7 @@ class AdminDashboard {
         try {
             const response = await fetch(`/api/disputes/admin/${disputeId}`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`
                 }
             });
 
@@ -2059,12 +2080,9 @@ class AdminDashboard {
                                 <label for="resolutionDecision">Resolution Decision *</label>
                                 <select class="form-control" id="resolutionDecision" required>
                                     <option value="">Select decision</option>
-                                    <option value="favor_complainant">Full Refund (Favor Complainant)</option>
-                                    <option value="favor_respondent">No Refund (Favor Respondent)</option>
+                                    <option value="refund">Full Refund (Favor Complainant)</option>
+                                    <option value="no_refund">No Refund (Favor Respondent)</option>
                                     <option value="partial_refund">Partial Refund</option>
-                                    <option value="full_refund">Full Refund</option>
-                                    <option value="no_refund">No Refund</option>
-                                    <option value="no_action">No Action</option>
                                 </select>
                             </div>
                             <div class="form-group mb-3">
@@ -2108,18 +2126,18 @@ class AdminDashboard {
     }
 
     async performResolveEscalatedDispute(disputeId) {
-        const decision = document.getElementById('resolutionDecision').value;
+        const resolution = document.getElementById('resolutionDecision').value;
         const reason = document.getElementById('resolutionReason').value;
         const refundAmount = document.getElementById('refundAmount').value;
         const notes = document.getElementById('resolutionNotes').value;
 
-        if (!decision || !reason) {
+        if (!resolution || !reason) {
             alert('Please fill in all required fields');
             return;
         }
 
         try {
-            const token = localStorage.getItem('admin-token');
+            const token = getAuthToken();
             console.log('🔑 Admin token:', token ? 'Present' : 'Missing');
             console.log('🔑 Token length:', token ? token.length : 0);
             
@@ -2130,7 +2148,7 @@ class AdminDashboard {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    decision,
+                    decision: resolution, // Map to backend expected field
                     reason,
                     refundAmount: refundAmount ? parseFloat(refundAmount) : 0,
                     notes
@@ -2161,7 +2179,7 @@ class AdminDashboard {
             // Fetch available staff for assignment
             const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 }
             });
@@ -2241,7 +2259,7 @@ class AdminDashboard {
             const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/reassign`, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('admin-token')}`,
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ assignedTo })

@@ -130,6 +130,20 @@ function renderOrderDetails(order) {
 }
 
 async function confirmReceipt(orderId) {
+  // Show warning about dispute eligibility
+  const confirmed = confirm(
+    "⚠️ IMPORTANT: By confirming delivery, you acknowledge that:\n\n" +
+    "• The order has been delivered as expected\n" +
+    "• You will NOT be able to open a dispute after confirmation\n" +
+    "• The vendor/agent will receive payment\n" +
+    "• Only open disputes if you have concerns about the order\n\n" +
+    "Are you sure you want to confirm delivery?"
+  );
+  
+  if (!confirmed) {
+    return;
+  }
+
   try {
     const res = await fetch(`/api/buyer-orders/${orderId}/confirm`, {
       method: "PUT",
@@ -139,10 +153,9 @@ async function confirmReceipt(orderId) {
       }
     });
     
-
     const data = await res.json();
     if (res.ok) {
-      alert("✅ Delivery confirmed!");
+      alert("✅ Delivery confirmed! Payment has been released to the vendor/agent.");
       fetchOrderDetails(orderId); // reload status
     } else {
       alert(`❌ ${data.message || "Failed to confirm"}`);

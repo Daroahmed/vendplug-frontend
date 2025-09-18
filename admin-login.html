@@ -213,6 +213,9 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Clear other user tokens to prevent conflicts
+                    clearOtherUserTokens('admin');
+                    
                     // Store admin token
                     localStorage.setItem('vendplug-admin-token', data.data.token);
                     
@@ -242,7 +245,7 @@
         });
 
         // Check if already logged in
-        if (localStorage.getItem('admin-token')) {
+        if (localStorage.getItem('vendplug-admin-token')) {
             window.location.href = 'admin-dashboard.html';
         }
     </script>
