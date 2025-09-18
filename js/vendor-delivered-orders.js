@@ -24,16 +24,18 @@ async function fetchDeliveredOrders() {
 
     let url = `/api/vendor-orders?`;
     
-    // Set status filter for delivered and fulfilled orders
+    // Set status filter for delivered, fulfilled, and resolved orders
     if (status) {
       if (status === "fulfilled") {
         url += `status=fulfilled&`;
+      } else if (status === "resolved") {
+        url += `status=resolved&`;
       } else {
-        // For "delivered" or empty, fetch both delivered and fulfilled
+        // For "delivered" or empty, fetch delivered, fulfilled, and resolved
         url += `status=delivered&`;
       }
     } else {
-      // Default to delivered and fulfilled orders
+      // Default to delivered, fulfilled, and resolved orders
       url += `status=delivered&`;
     }
     
@@ -51,9 +53,9 @@ async function fetchDeliveredOrders() {
     }
 
     const orders = await res.json();
-    // Filter to only show delivered and fulfilled orders
+    // Filter to show delivered, fulfilled, and resolved orders
     const deliveredOrders = orders.filter(order => 
-      order.status === 'delivered' || order.status === 'fulfilled'
+      order.status === 'delivered' || order.status === 'fulfilled' || order.status === 'resolved'
     );
     
     cachedOrders = deliveredOrders;
@@ -71,6 +73,7 @@ async function fetchDeliveredOrders() {
 function updateStats(orders) {
   const totalDelivered = orders.filter(order => order.status === 'delivered').length;
   const totalFulfilled = orders.filter(order => order.status === 'fulfilled').length;
+  const totalResolved = orders.filter(order => order.status === 'resolved').length;
   const totalRevenue = orders.reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
   document.getElementById('totalDelivered').textContent = totalDelivered;

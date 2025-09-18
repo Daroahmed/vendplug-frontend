@@ -1036,7 +1036,13 @@
             `).join('');
           }
         } else {
-          console.error('❌ Failed to fetch payout queue:', pendingResponse.status, pendingResponse.statusText);
+          console.error('❌ Failed to fetch payout queue:');
+          if (!pendingResponse.ok) {
+            console.error('  - Pending orders:', pendingResponse.status, pendingResponse.statusText);
+          }
+          if (!confirmedResponse.ok) {
+            console.error('  - Confirmed orders:', confirmedResponse.status, confirmedResponse.statusText);
+          }
         }
       } catch (error) {
         console.error('Error loading payout queue:', error);
