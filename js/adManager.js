@@ -49,8 +49,7 @@ class AdManager {
     
     // Don't load ads on admin dashboard pages
     if (currentPage.includes('admin-dashboard') || 
-        currentPage.includes('admin') || 
-        currentPage.includes('staff')) {
+        currentPage.includes('staff-dashboard')) {
       return false;
     }
     
@@ -60,13 +59,28 @@ class AdManager {
   getCurrentPage() {
     // Determine current page from URL
     const path = window.location.pathname;
-    if (path.includes('buyer-home')) return 'buyer-home';
-    if (path.includes('agent-home')) return 'agent-home';
-    if (path.includes('vendor-home')) return 'vendor-home';
-    if (path.includes('shop')) return 'shop';
-    if (path.includes('category')) return 'category';
-    if (path.includes('product')) return 'product';
-    if (path.includes('search')) return 'search';
+    const filename = path.split('/').pop() || '';
+    
+    // Check for specific page types first
+    if (filename.includes('buyer-agent-home')) return 'buyer-agent-home';
+    if (filename.includes('buyer-home')) return 'buyer-home';
+    if (filename.includes('agent-home')) return 'agent-home';
+    if (filename.includes('vendor-home')) return 'vendor-home';
+    if (filename.includes('vendor-dashboard')) return 'vendor-dashboard';
+    if (filename.includes('agent-dashboard')) return 'agent-dashboard';
+    if (filename.includes('vendor-shop')) return 'vendor-shop';
+    if (filename.includes('agent-shop')) return 'agent-shop';
+    if (filename.includes('view-shop')) return 'view-shop';
+    if (filename.includes('view-business')) return 'view-business';
+    if (filename.includes('shop')) return 'shop';
+    if (filename.includes('category')) return 'category';
+    if (filename.includes('product')) return 'product';
+    if (filename.includes('search')) return 'search';
+    
+    // For test pages, try to determine the intended page type
+    if (filename.includes('test-ad-debug')) return 'buyer-home'; // Default to buyer-home for testing
+    if (filename.includes('test-inline-ads')) return 'buyer-home'; // Default to buyer-home for testing
+    
     return 'home';
   }
 
@@ -77,16 +91,28 @@ class AdManager {
       return;
     }
 
+    console.log('🔍 Loading ads for:', {
+      page: this.currentPage,
+      userType: this.currentUserType,
+      url: window.location.href
+    });
+
     try {
       const response = await fetch(`/api/admin-ads/public/ads?userType=${this.currentUserType}&page=${this.currentPage}`);
       const data = await response.json();
       
-      if (data.success) {
+      console.log('📊 Ads API response:', data);
+      
+      if (data.success && data.data?.length) {
         this.ads = data.data;
+        console.log(`✅ Loaded ${this.ads.length} ads:`, this.ads.map(ad => ({ id: ad._id, title: ad.title, type: ad.type, position: ad.position })));
         this.renderAds();
+      } else {
+        console.log('ℹ️ No ads available for this page/user type');
+        this.ads = [];
       }
     } catch (error) {
-      console.error('Error loading ads:', error);
+      console.error('❌ Error loading ads:', error);
     }
   }
 
@@ -98,14 +124,20 @@ class AdManager {
     const adsByType = this.groupAdsByType();
     const adsByPosition = this.groupAdsByPosition();
     
-    // Render ads by type (for backward compatibility)
-    this.renderBannerAds(adsByType.banner);
-    this.renderCarouselAds(adsByType.carousel);
-    this.renderInlineAds(adsByType.inline);
-    this.renderPopupAds(adsByType.popup);
-    
-    // Render ads by position (only for ads that don't have a specific type-based renderer)
+    // Render ads by position (primary method)
     this.renderAdsByPosition(adsByPosition);
+    
+    // For type-based rendering, only render ads that don't have specific positions
+    // This prevents duplicates when ads have both type and position
+    const bannerAdsWithoutPosition = adsByType.banner.filter(ad => 
+      !ad.position || ad.position === 'default' || !['hero', 'top', 'middle', 'bottom', 'sidebar', 'popup'].includes(ad.position)
+    );
+    const carouselAdsWithoutPosition = adsByType.carousel.filter(ad => 
+      !ad.position || ad.position === 'default' || !['hero', 'top', 'middle', 'bottom', 'sidebar', 'popup'].includes(ad.position)
+    );
+    
+    this.renderBannerAds(bannerAdsWithoutPosition);
+    this.renderCarouselAds(carouselAdsWithoutPosition);
   }
 
   clearAllAdContainers() {
@@ -135,6 +167,23 @@ class AdManager {
     };
 
     this.ads.forEach(ad => {
+      if (grouped[ad.type]) {
+        grouped[ad.type].push(ad);
+      }
+    });
+
+    return grouped;
+  }
+
+  groupAdsByTypeFromArray(ads) {
+    const grouped = {
+      banner: [],
+      carousel: [],
+      inline: [],
+      popup: []
+    };
+
+    ads.forEach(ad => {
       if (grouped[ad.type]) {
         grouped[ad.type].push(ad);
       }
@@ -219,7 +268,7 @@ class AdManager {
     if (!inlineAds.length) return;
 
     // Find category sections and product containers
-    const containers = document.querySelectorAll('.category-section, .products-grid, .product-list, .category-scroll, .vendor-grid, .vendor-combined-layout, .agent-grid, .shop-grid');
+    const containers = document.querySelectorAll('.category-section, .products-grid, .product-list, .category-scroll, .vendor-grid, .vendor-combined-layout, .agent-grid, .shop-grid, .products, .product-container, .content-grid');
     
     containers.forEach((container, containerIndex) => {
       // For category sections, insert ads between category groups
@@ -284,35 +333,38 @@ class AdManager {
   }
 
   renderAdsByPosition(adsByPosition) {
-    // Only render position-based ads for types that don't have specific renderers
-    // This prevents double-rendering of banner, carousel, inline, and popup ads
+    // Render ads by their specific positions
+    // This is the primary rendering method for positioned ads
     
     // Hero position - at the very top (for any ad type)
-    if (adsByPosition.hero.length) {
+    if (adsByPosition.hero?.length) {
       this.renderHeroAds(adsByPosition.hero);
     }
     
     // Top position - after header, before main content (for any ad type)
-    if (adsByPosition.top.length) {
+    if (adsByPosition.top?.length) {
       this.renderTopAds(adsByPosition.top);
     }
     
     // Middle position - between content sections (for any ad type)
-    if (adsByPosition.middle.length) {
+    if (adsByPosition.middle?.length) {
       this.renderMiddleAds(adsByPosition.middle);
     }
     
     // Bottom position - at the bottom of main content (for any ad type)
-    if (adsByPosition.bottom.length) {
+    if (adsByPosition.bottom?.length) {
       this.renderBottomAds(adsByPosition.bottom);
     }
     
     // Sidebar position - in sidebar if available (for any ad type)
-    if (adsByPosition.sidebar.length) {
+    if (adsByPosition.sidebar?.length) {
       this.renderSidebarAds(adsByPosition.sidebar);
     }
     
-    // Popup position - handled by renderPopupAds, so skip here to avoid duplicates
+    // Popup position - modal/overlay display (for any ad type)
+    if (adsByPosition.popup?.length) {
+      this.renderPopupAds(adsByPosition.popup);
+    }
   }
 
   renderHeroAds(heroAds) {
@@ -321,12 +373,42 @@ class AdManager {
       container = document.createElement('div');
       container.className = 'ad-hero-container';
       
-      // Insert at the very top of the page
-      const body = document.body;
-      body.insertBefore(container, body.firstChild);
+      // For buyer pages, insert at the very top of the page (true hero position)
+      const currentPage = this.getCurrentPage();
+      if (currentPage.includes('buyer') || currentPage.includes('home')) {
+        // Insert at the very top of body for buyer pages
+        const body = document.body;
+        body.insertBefore(container, body.firstChild);
+      } else {
+        // For other pages, try to insert after header, before main content
+        const header = document.querySelector('header, .header, .navbar, .nav');
+        const main = document.querySelector('main, .main-content, .content');
+        
+        if (header && main) {
+          // Insert between header and main content
+          main.parentNode.insertBefore(container, main);
+        } else if (main) {
+          // Insert at the top of main content
+          main.insertBefore(container, main.firstChild);
+        } else {
+          // Fallback: insert at the top of body
+          const body = document.body;
+          body.insertBefore(container, body.firstChild);
+        }
+      }
     }
     
-    container.innerHTML = heroAds.map(ad => this.createAdHTML(ad)).join('');
+    // Group ads by type for special handling
+    const adsByType = this.groupAdsByTypeFromArray(heroAds);
+    
+    // Render carousel ads as a carousel
+    if (adsByType.carousel?.length) {
+      container.innerHTML = this.createCarouselHTML(adsByType.carousel);
+      this.initCarousel();
+    } else {
+      // Render other ads normally
+      container.innerHTML = heroAds.map(ad => this.createAdHTML(ad)).join('');
+    }
   }
 
   renderTopAds(topAds) {
@@ -342,12 +424,98 @@ class AdManager {
       }
     }
     
-    container.innerHTML = topAds.map(ad => this.createAdHTML(ad)).join('');
+    // Group ads by type for special handling
+    const adsByType = this.groupAdsByTypeFromArray(topAds);
+    
+    // Render carousel ads as a carousel
+    if (adsByType.carousel?.length) {
+      container.innerHTML = this.createCarouselHTML(adsByType.carousel);
+      this.initCarousel();
+    } else {
+      // Render other ads normally
+      container.innerHTML = topAds.map(ad => this.createAdHTML(ad)).join('');
+    }
   }
 
   renderMiddleAds(middleAds) {
-    // Middle ads are handled by inline ads logic
-    this.renderInlineAds(middleAds);
+    // Group ads by type for special handling
+    const adsByType = this.groupAdsByTypeFromArray(middleAds);
+    
+    // Handle carousel ads in middle position
+    if (adsByType.carousel?.length) {
+      let container = document.querySelector('.ad-middle-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'ad-middle-container';
+        
+        // Insert in the middle of main content
+        const main = document.querySelector('main') || document.querySelector('.main-content');
+        if (main) {
+          // Insert after the first half of main content
+          const children = Array.from(main.children);
+          const middleIndex = Math.floor(children.length / 2);
+          if (children[middleIndex]) {
+            main.insertBefore(container, children[middleIndex]);
+          } else {
+            main.appendChild(container);
+          }
+        }
+      }
+      
+      container.innerHTML = this.createCarouselHTML(adsByType.carousel);
+      this.initCarousel();
+    }
+    
+    // Handle inline ads (banner, inline, popup) in middle position
+    const inlineAds = middleAds.filter(ad => ad.type !== 'carousel');
+    if (inlineAds.length > 0) {
+      this.renderInlineAds(inlineAds);
+      
+      // If no containers were found for inline ads, create a middle container
+      const existingContainers = document.querySelectorAll('.category-section, .products-grid, .product-list, .category-scroll, .vendor-grid, .vendor-combined-layout, .agent-grid, .shop-grid, .products, .product-container, .content-grid');
+      if (existingContainers.length === 0) {
+        let middleContainer = document.querySelector('.ad-middle-container');
+        if (!middleContainer) {
+          middleContainer = document.createElement('div');
+          middleContainer.className = 'ad-middle-container';
+          
+          // Insert in the middle of the page
+          const main = document.querySelector('main') || 
+                       document.querySelector('.main-content') || 
+                       document.querySelector('.shop-page') ||
+                       document.querySelector('.content');
+          if (main) {
+            // Insert in the middle of main content
+            const children = Array.from(main.children);
+            const middleIndex = Math.floor(children.length / 2);
+            if (children[middleIndex]) {
+              main.insertBefore(middleContainer, children[middleIndex]);
+            } else {
+              main.appendChild(middleContainer);
+            }
+          } else {
+            // Fallback: insert in the middle of body
+            const body = document.body;
+            const children = Array.from(body.children);
+            const middleIndex = Math.floor(children.length / 2);
+            if (children[middleIndex]) {
+              body.insertBefore(middleContainer, children[middleIndex]);
+            } else {
+              body.appendChild(middleContainer);
+            }
+          }
+        }
+        
+        // Render ads in the middle container
+        const adsByType = this.groupAdsByTypeFromArray(inlineAds);
+        if (adsByType.carousel?.length) {
+          middleContainer.innerHTML = this.createCarouselHTML(adsByType.carousel);
+          this.initCarousel();
+        } else {
+          middleContainer.innerHTML = inlineAds.map(ad => this.createAdHTML(ad)).join('');
+        }
+      }
+    }
   }
 
   renderBottomAds(bottomAds) {
@@ -357,13 +525,29 @@ class AdManager {
       container.className = 'ad-bottom-container';
       
       // Insert at the bottom of main content
-      const main = document.querySelector('main') || document.querySelector('.main-content');
+      const main = document.querySelector('main') || 
+                   document.querySelector('.main-content') || 
+                   document.querySelector('.shop-page') ||
+                   document.querySelector('.content');
       if (main) {
         main.appendChild(container);
+      } else {
+        // Fallback: insert at the bottom of body
+        document.body.appendChild(container);
       }
     }
     
-    container.innerHTML = bottomAds.map(ad => this.createAdHTML(ad)).join('');
+    // Group ads by type for special handling
+    const adsByType = this.groupAdsByTypeFromArray(bottomAds);
+    
+    // Render carousel ads as a carousel
+    if (adsByType.carousel?.length) {
+      container.innerHTML = this.createCarouselHTML(adsByType.carousel);
+      this.initCarousel();
+    } else {
+      // Render other ads normally
+      container.innerHTML = bottomAds.map(ad => this.createAdHTML(ad)).join('');
+    }
   }
 
   renderSidebarAds(sidebarAds) {
@@ -390,7 +574,17 @@ class AdManager {
       }
     }
     
-    container.innerHTML = sidebarAds.map(ad => this.createAdHTML(ad)).join('');
+    // Group ads by type for special handling
+    const adsByType = this.groupAdsByTypeFromArray(sidebarAds);
+    
+    // Render carousel ads as a carousel
+    if (adsByType.carousel?.length) {
+      container.innerHTML = this.createCarouselHTML(adsByType.carousel);
+      this.initCarousel();
+    } else {
+      // Render other ads normally
+      container.innerHTML = sidebarAds.map(ad => this.createAdHTML(ad)).join('');
+    }
   }
 
   renderPopupAds(popupAds) {
@@ -404,6 +598,11 @@ class AdManager {
   }
 
   shouldShowPopup(ad) {
+    // Check if already shown in this session
+    if (ad.popupSettings.showOncePerSession && sessionStorage.getItem(`ad-shown-${ad._id}`)) {
+      return false;
+    }
+
     // Check if popup should be shown based on settings
     if (ad.popupSettings.showOnFirstVisit && !localStorage.getItem('hasVisited')) {
       return true;
@@ -413,11 +612,8 @@ class AdManager {
       return true;
     }
 
-    // Check if already shown in this session
-    if (ad.popupSettings.showOncePerSession && sessionStorage.getItem(`ad-shown-${ad._id}`)) {
-      return false;
-    }
-
+    // If none of the specific conditions are met, show the popup by default
+    // (since it has popup position, it should be displayed)
     return true;
   }
 
@@ -427,33 +623,33 @@ class AdManager {
   }
 
   showPopupAd(ad) {
-    const popup = document.createElement('div');
-    popup.className = 'ad-popup-overlay';
-    popup.innerHTML = `
-      <div class="ad-popup">
-        <button class="ad-popup-close">×</button>
-        <div class="ad-popup-content">
-          ${this.createAdHTML(ad)}
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(popup);
-
-    // Auto close if specified
-    if (ad.popupSettings.autoClose > 0) {
-      setTimeout(() => {
-        this.closePopup(popup);
-      }, ad.popupSettings.autoClose);
-    }
-
-    // Show delay
+    // Add a small delay to make popup more visible
     setTimeout(() => {
-      popup.style.opacity = '1';
-    }, ad.popupSettings.showDelay || 0);
+      const popup = document.createElement('div');
+      popup.className = 'ad-popup-overlay';
+      popup.innerHTML = `
+        <div class="ad-popup">
+          <button class="ad-popup-close">×</button>
+          <div class="ad-popup-content">
+            ${this.createAdHTML(ad)}
+          </div>
+        </div>
+      `;
 
-    // Mark as shown
-    sessionStorage.setItem(`ad-shown-${ad._id}`, 'true');
+      document.body.appendChild(popup);
+      
+      // Mark as shown in session if needed
+      if (ad.popupSettings.showOncePerSession) {
+        sessionStorage.setItem(`ad-shown-${ad._id}`, 'true');
+      }
+
+      // Auto close if specified
+      if (ad.popupSettings.autoClose > 0) {
+        setTimeout(() => {
+          this.closePopup(popup);
+        }, ad.popupSettings.autoClose);
+      }
+    }, ad.popupSettings.showDelay || 1000);
   }
 
   closePopup(popup) {
@@ -475,6 +671,23 @@ class AdManager {
           <h3 class="ad-title">${ad.title}</h3>
           ${ad.description ? `<p class="ad-description">${ad.description}</p>` : ''}
           ${ad.link ? `<a href="${ad.link}" class="ad-link" onclick="${clickHandler}">${ad.linkText}</a>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  createCarouselHTML(carouselAds) {
+    return `
+      <div class="ad-carousel">
+        <div class="ad-carousel-track">
+          ${carouselAds.map(ad => this.createAdHTML(ad)).join('')}
+        </div>
+        <div class="ad-carousel-controls">
+          <button class="ad-carousel-prev">‹</button>
+          <button class="ad-carousel-next">›</button>
+        </div>
+        <div class="ad-carousel-dots">
+          ${carouselAds.map((_, index) => `<button class="ad-carousel-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></button>`).join('')}
         </div>
       </div>
     `;
