@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Ad Creation</title>
+</head>
+<body>
+    <h1>Test Ad Creation</h1>
+    <div id="status"></div>
+    <button onclick="testAdCreation()">Test Create Ad</button>
+    <button onclick="testLoadAds()">Test Load Ads</button>
+    <div id="result"></div>
+
+    <script>
+        async function testAdCreation() {
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // First, let's try to get the admin token from localStorage
+                const adminToken = localStorage.getItem('vendplug-admin-token');
+                console.log('Admin token:', adminToken ? 'Found' : 'Not found');
+                
+                if (!adminToken) {
+                    statusDiv.innerHTML = '❌ No admin token found. Please login as admin first.';
+                    return;
+                }
+
+                const testAd = {
+                    title: "Test Ad",
+                    description: "This is a test ad",
+                    type: "banner",
+                    image: "https://via.placeholder.com/300x200",
+                    link: "https://example.com",
+                    position: "top",
+                    priority: 1,
+                    targetPages: ["home"],
+                    targetUserTypes: ["buyer"],
+                    startDate: new Date(),
+                    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+                    status: "active"
+                };
+
+                statusDiv.innerHTML = '🔄 Creating test ad...';
+                
+                const response = await fetch('/api/admin-ads/ads', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(testAd)
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = '✅ Ad created successfully!';
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                } else {
+                    statusDiv.innerHTML = '❌ Failed to create ad';
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Error: ' + error.message;
+                resultDiv.innerHTML = '<pre>' + error.stack + '</pre>';
+            }
+        }
+
+        async function testLoadAds() {
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const adminToken = localStorage.getItem('vendplug-admin-token');
+                
+                if (!adminToken) {
+                    statusDiv.innerHTML = '❌ No admin token found. Please login as admin first.';
+                    return;
+                }
+
+                statusDiv.innerHTML = '🔄 Loading ads...';
+                
+                const response = await fetch('/api/admin-ads/ads', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${adminToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = '✅ Ads loaded successfully!';
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                } else {
+                    statusDiv.innerHTML = '❌ Failed to load ads';
+                    resultDiv.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Error: ' + error.message;
+                resultDiv.innerHTML = '<pre>' + error.stack + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

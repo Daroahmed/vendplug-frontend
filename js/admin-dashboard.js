@@ -308,7 +308,7 @@ class AdminDashboard {
 
         this.currentSection = section;
 
-        // Load section data
+        // Load section-specific data
         switch (section) {
             case 'users':
                 this.loadUsers();
@@ -330,6 +330,12 @@ class AdminDashboard {
                 break;
             case 'staff-activity':
                 this.loadStaffActivity();
+                break;
+            case 'ad-management':
+                this.loadAds();
+                break;
+            case 'notification-campaigns':
+                this.loadCampaigns();
                 break;
         }
     }
@@ -2282,6 +2288,532 @@ class AdminDashboard {
             console.error('❌ Reassign escalated dispute error:', error);
             this.showError('Failed to reassign escalated dispute');
         }
+    }
+
+    // Ad Management Functions
+    async loadAds() {
+        try {
+            console.log('🔄 Loading ads...');
+            console.log('🔑 Admin token:', this.adminToken ? 'Present' : 'Missing');
+            console.log('🔑 Token length:', this.adminToken ? this.adminToken.length : 0);
+            const response = await fetch('/api/admin-ads/ads', {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            console.log('📡 Response status:', response.status);
+
+            if (!response.ok) {
+                throw new Error('Failed to load ads');
+            }
+
+            const data = await response.json();
+            console.log('📊 Ads data received:', data);
+            console.log('📊 Number of ads:', data.data && data.data.ads ? data.data.ads.length : 0);
+            this.renderAdsTable(data.data && data.data.ads ? data.data.ads : []);
+        } catch (error) {
+            console.error('❌ Error loading ads:', error);
+            document.getElementById('adsTable').innerHTML = '<div class="loading">Error loading ads</div>';
+        }
+    }
+
+    renderAdsTable(ads) {
+        console.log('🎨 Rendering ads table with', ads.length, 'ads');
+        const container = document.getElementById('adsTable');
+        
+        if (ads.length === 0) {
+            console.log('📭 No ads to display');
+            container.innerHTML = '<div class="loading">No ads found</div>';
+            return;
+        }
+
+        const table = `
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Priority</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${ads.map(ad => `
+                            <tr>
+                                <td>${ad.title}</td>
+                                <td><span class="status-badge status-${ad.type}">${ad.type}</span></td>
+                                <td><span class="status-badge status-${ad.status}">${ad.status}</span></td>
+                                <td><span class="status-badge status-${ad.priority}">${ad.priority}</span></td>
+                                <td>${ad.startDate ? new Date(ad.startDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>${ad.endDate ? new Date(ad.endDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editAd('${ad._id}')">Edit</button>
+                                    <button class="btn btn-danger" onclick="deleteAd('${ad._id}')">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        container.innerHTML = table;
+    }
+
+    async loadCampaigns() {
+        try {
+            const response = await fetch('/api/admin-ads/campaigns', {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load campaigns');
+            }
+
+            const data = await response.json();
+            this.renderCampaignsTable(data.data && data.data.campaigns ? data.data.campaigns : []);
+        } catch (error) {
+            console.error('Error loading campaigns:', error);
+            document.getElementById('campaignsTable').innerHTML = '<div class="loading">Error loading campaigns</div>';
+        }
+    }
+
+    renderCampaignsTable(campaigns) {
+        const container = document.getElementById('campaignsTable');
+        
+        if (campaigns.length === 0) {
+            container.innerHTML = '<div class="loading">No campaigns found</div>';
+            return;
+        }
+
+        const table = `
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Status</th>
+                            <th>Target</th>
+                            <th>Priority</th>
+                            <th>Send Date</th>
+                            <th>Expiry Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${campaigns.map(campaign => `
+                            <tr>
+                                <td>${campaign.name}</td>
+                                <td><span class="status-badge status-${campaign.status}">${campaign.status}</span></td>
+                                <td>${campaign.targetAudience}</td>
+                                <td><span class="status-badge status-${campaign.priority}">${campaign.priority}</span></td>
+                                <td>${campaign.sendDate ? new Date(campaign.sendDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>${campaign.expiryDate ? new Date(campaign.expiryDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>
+                                    <button class="btn btn-primary" onclick="editCampaign('${campaign._id}')">Edit</button>
+                                    <button class="btn btn-danger" onclick="deleteCampaign('${campaign._id}')">Delete</button>
+                                    ${campaign.status === 'draft' ? `<button class="btn btn-success" onclick="sendCampaign('${campaign._id}')">Send</button>` : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        container.innerHTML = table;
+    }
+
+    filterAds() {
+        // Implementation for filtering ads
+        console.log('Filtering ads...');
+    }
+
+    filterCampaigns() {
+        // Implementation for filtering campaigns
+        console.log('Filtering campaigns...');
+    }
+}
+
+// Global functions for ad management modals
+function showCreateAdModal() {
+    document.getElementById('createAdModal').style.display = 'block';
+}
+
+function closeCreateAdModal() {
+    document.getElementById('createAdModal').style.display = 'none';
+    document.getElementById('createAdForm').reset();
+    
+    // Reset edit state
+    const modalTitle = document.querySelector('#createAdModal h2');
+    if (modalTitle) {
+        modalTitle.textContent = 'Create New Ad';
+    }
+    const createBtn = document.getElementById('createAdBtn');
+    if (createBtn) {
+        createBtn.textContent = 'Create Ad';
+        createBtn.removeAttribute('data-edit-id');
+    }
+    
+    // Clear image preview
+    const imagePreview = document.getElementById('imagePreview');
+    if (imagePreview) {
+        imagePreview.style.display = 'none';
+        imagePreview.src = '';
+    }
+}
+
+function showCreateCampaignModal() {
+    document.getElementById('createCampaignModal').style.display = 'block';
+}
+
+function closeCreateCampaignModal() {
+    document.getElementById('createCampaignModal').style.display = 'none';
+    document.getElementById('createCampaignForm').reset();
+}
+
+// Image upload functions
+async function handleImageUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+        showImageUploadStatus('File size must be less than 5MB', 'error');
+        return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        showImageUploadStatus('Please select a valid image file (JPEG, PNG, GIF, WebP)', 'error');
+        return;
+    }
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('imageUploadPlaceholder').style.display = 'none';
+        document.getElementById('imagePreview').style.display = 'block';
+        document.getElementById('previewImg').src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    // Upload to Cloudinary
+    showImageUploadStatus('Uploading image...', 'progress');
+    
+    try {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await fetch('/api/admin-ads/upload-image', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`
+            },
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+            document.getElementById('adImageUrl').value = result.image.url;
+            showImageUploadStatus('✅ Image uploaded successfully!', 'success');
+        } else {
+            throw new Error(result.message || 'Upload failed');
+        }
+    } catch (error) {
+        console.error('Image upload error:', error);
+        showImageUploadStatus('❌ Failed to upload image: ' + error.message, 'error');
+        // Reset file input
+        input.value = '';
+        document.getElementById('imageUploadPlaceholder').style.display = 'block';
+        document.getElementById('imagePreview').style.display = 'none';
+    }
+}
+
+function removeImage() {
+    document.getElementById('adImageFile').value = '';
+    document.getElementById('adImageUrl').value = '';
+    document.getElementById('imageUploadPlaceholder').style.display = 'block';
+    document.getElementById('imagePreview').style.display = 'none';
+    document.getElementById('imageUploadStatus').innerHTML = '';
+}
+
+function showImageUploadStatus(message, type) {
+    const statusDiv = document.getElementById('imageUploadStatus');
+    statusDiv.innerHTML = message;
+    statusDiv.className = `upload-${type}`;
+}
+
+// Add drag and drop functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadArea = document.querySelector('.image-upload-area');
+    if (uploadArea) {
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('adImageFile').files = files;
+                handleImageUpload(document.getElementById('adImageFile'));
+            }
+        });
+    }
+});
+
+async function createAd() {
+    // Check if this is an edit operation (moved outside try block)
+    const createBtn = document.getElementById('createAdBtn');
+    const editId = createBtn ? createBtn.getAttribute('data-edit-id') : null;
+    const isEdit = editId && editId !== 'null';
+    
+    try {
+        // Check if image is uploaded
+        const imageUrl = document.getElementById('adImageUrl').value;
+        if (!imageUrl) {
+            alert('Please upload an image for the ad');
+            return;
+        }
+
+        // Get target pages from checkboxes
+        const targetPages = Array.from(document.querySelectorAll('input[name="adTargetPages"]:checked')).map(cb => cb.value);
+        if (targetPages.length === 0) {
+            alert('Please select at least one target page');
+            return;
+        }
+
+        // Get target user types from checkboxes
+        const targetUserTypes = Array.from(document.querySelectorAll('input[name="adTargetUserTypes"]:checked')).map(cb => cb.value);
+        if (targetUserTypes.length === 0) {
+            alert('Please select at least one target user type');
+            return;
+        }
+
+        const formData = {
+            title: document.getElementById('adTitle').value,
+            type: document.getElementById('adType').value,
+            status: document.getElementById('adStatus').value,
+            priority: parseInt(document.getElementById('adPriority').value) || 1,
+            description: document.getElementById('adDescription').value,
+            image: imageUrl,
+            link: document.getElementById('adClickUrl').value,
+            position: document.getElementById('adPosition').value,
+            startDate: document.getElementById('adStartDate').value ? new Date(document.getElementById('adStartDate').value) : null,
+            endDate: document.getElementById('adEndDate').value ? new Date(document.getElementById('adEndDate').value) : null,
+            targetPages: targetPages,
+            targetUserTypes: targetUserTypes
+        };
+
+        const url = isEdit 
+            ? `${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads/${editId}`
+            : `${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads`;
+        
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const token = localStorage.getItem('vendplug-admin-token');
+        console.log('🔑 Create ad token:', token ? 'Present' : 'Missing');
+        console.log('🔑 Token length:', token ? token.length : 0);
+        
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to ${isEdit ? 'update' : 'create'} ad`);
+        }
+
+        alert(`Ad ${isEdit ? 'updated' : 'created'} successfully!`);
+        try {
+            closeCreateAdModal();
+        } catch (closeError) {
+            console.warn('Warning: Error closing modal:', closeError);
+        }
+        adminDashboard.loadAds();
+    } catch (error) {
+        console.error(`Error ${isEdit ? 'updating' : 'creating'} ad:`, error);
+        alert(`Failed to ${isEdit ? 'update' : 'create'} ad`);
+    }
+}
+
+async function createCampaign() {
+    try {
+        const formData = {
+            name: document.getElementById('campaignName').value,
+            status: document.getElementById('campaignStatus').value,
+            priority: document.getElementById('campaignPriority').value,
+            targetAudience: document.getElementById('campaignTarget').value,
+            title: document.getElementById('campaignTitle').value,
+            message: document.getElementById('campaignMessage').value,
+            sendDate: document.getElementById('campaignSendDate').value ? new Date(document.getElementById('campaignSendDate').value) : null,
+            expiryDate: document.getElementById('campaignExpiryDate').value ? new Date(document.getElementById('campaignExpiryDate').value) : null,
+            data: document.getElementById('campaignData').value ? JSON.parse(document.getElementById('campaignData').value) : {}
+        };
+
+        const response = await fetch('/api/admin-ads/campaigns', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to create campaign');
+        }
+
+        alert('Campaign created successfully!');
+        closeCreateCampaignModal();
+        adminDashboard.loadCampaigns();
+    } catch (error) {
+        console.error('Error creating campaign:', error);
+        alert('Failed to create campaign');
+    }
+}
+
+function filterAds() {
+    adminDashboard.loadAds();
+}
+
+function filterCampaigns() {
+    adminDashboard.loadCampaigns();
+}
+
+async function editAd(adId) {
+    try {
+        // Fetch the ad details
+        const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads/${adId}`, {
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to fetch ad details');
+        }
+
+        const result = await response.json();
+        const ad = result.data;
+
+        // Populate the form with existing data
+        document.getElementById('adTitle').value = ad.title;
+        document.getElementById('adDescription').value = ad.description || '';
+        document.getElementById('adType').value = ad.type;
+        document.getElementById('adImageUrl').value = ad.image;
+        document.getElementById('adClickUrl').value = ad.link || '';
+        document.getElementById('adPosition').value = ad.position;
+        document.getElementById('adPriority').value = ad.priority;
+        document.getElementById('adStatus').value = ad.status;
+        document.getElementById('adStartDate').value = new Date(ad.startDate).toISOString().slice(0, 16);
+        document.getElementById('adEndDate').value = new Date(ad.endDate).toISOString().slice(0, 16);
+
+        // Set target pages
+        const targetPagesCheckboxes = document.querySelectorAll('input[name="adTargetPages"]');
+        targetPagesCheckboxes.forEach(checkbox => {
+            checkbox.checked = ad.targetPages.includes(checkbox.value) || ad.targetPages.includes('all');
+        });
+
+        // Set target user types
+        const targetUserTypesCheckboxes = document.querySelectorAll('input[name="adTargetUserTypes"]');
+        targetUserTypesCheckboxes.forEach(checkbox => {
+            checkbox.checked = ad.targetUserTypes.includes(checkbox.value) || ad.targetUserTypes.includes('all');
+        });
+
+        // Show the modal
+        showCreateAdModal();
+        
+        // Change the form title and button
+        const modalTitle = document.querySelector('#createAdModal h2');
+        if (modalTitle) {
+            modalTitle.textContent = 'Edit Ad';
+        }
+        const createBtn = document.getElementById('createAdBtn');
+        if (createBtn) {
+            createBtn.textContent = 'Update Ad';
+            createBtn.setAttribute('data-edit-id', adId);
+        }
+
+    } catch (error) {
+        console.error('❌ Error fetching ad details:', error);
+        alert('Failed to load ad details for editing');
+    }
+}
+
+async function deleteAd(adId) {
+    if (confirm('Are you sure you want to delete this ad?')) {
+        try {
+            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads/${adId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to delete ad');
+            }
+
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Ad deleted successfully');
+                // Reload the ads list
+                adminDashboard.loadAds();
+            } else {
+                throw new Error(result.message || 'Failed to delete ad');
+            }
+
+        } catch (error) {
+            console.error('❌ Error deleting ad:', error);
+            alert('Failed to delete ad: ' + error.message);
+        }
+    }
+}
+
+function editCampaign(campaignId) {
+    // Implementation for editing campaigns
+    console.log('Edit campaign:', campaignId);
+}
+
+function deleteCampaign(campaignId) {
+    if (confirm('Are you sure you want to delete this campaign?')) {
+        // Implementation for deleting campaigns
+        console.log('Delete campaign:', campaignId);
+    }
+}
+
+function sendCampaign(campaignId) {
+    if (confirm('Are you sure you want to send this campaign?')) {
+        // Implementation for sending campaigns
+        console.log('Send campaign:', campaignId);
     }
 }
 

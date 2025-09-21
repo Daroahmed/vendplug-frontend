@@ -5,6 +5,7 @@
   <title>Select State & Category - VendPlug Agents</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/css/ads.css">
   <style>
     :root {
       --primary: #00cc99;
@@ -416,6 +417,8 @@
     </div>
 
   <div class="container">
+    <!-- Ad containers will be inserted here by adManager.js -->
+    <main class="main-content">
     <!-- State Selection -->
     <div class="state-selection">
       <h2 class="section-title">Select Your Location</h2>
@@ -431,6 +434,7 @@
 
     <!-- Category Sections will be dynamically added here -->
     <div id="categorySections"></div>
+    </main>
   </div>
 
   <script>
@@ -705,5 +709,6 @@
     <script src="/js/notifications.js"></script>
     <script src="/js/messageNotifications.js"></script>
     <script src="/js/auth-utils.js"></script>
+    <script src="/js/adManager.js"></script>
 </body>
 </html>
