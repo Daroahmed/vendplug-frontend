@@ -1,4 +1,30 @@
 // Admin Dashboard JavaScript
+
+// Ad Type and Position Validation
+function validateAdTypePosition(adType, adPosition) {
+    const validCombinations = {
+        'banner': ['hero', 'top', 'middle', 'bottom', 'sidebar'],
+        'carousel': ['hero', 'top', 'middle', 'bottom'],
+        'inline': ['middle', 'bottom'],
+        'popup': ['popup']
+    };
+    
+    const validPositions = validCombinations[adType];
+    
+    if (!validPositions) {
+        alert(`Invalid ad type: ${adType}`);
+        return false;
+    }
+    
+    if (!validPositions.includes(adPosition)) {
+        const validPositionsText = validPositions.join(', ');
+        alert(`Invalid position "${adPosition}" for ad type "${adType}".\n\nValid positions for ${adType} ads are: ${validPositionsText}`);
+        return false;
+    }
+    
+    return true;
+}
+
 class AdminDashboard {
     constructor() {
         this.currentSection = 'dashboard';
@@ -42,6 +68,59 @@ class AdminDashboard {
         // Search and filter events
         document.getElementById('userSearch')?.addEventListener('input', this.debounce(() => this.searchUsers(), 500));
         document.getElementById('orderSearch')?.addEventListener('input', this.debounce(() => this.searchOrders(), 500));
+        
+        // Ad type and position synchronization
+        document.getElementById('adType')?.addEventListener('change', this.updatePositionOptions.bind(this));
+    }
+
+    updatePositionOptions() {
+        const adTypeSelect = document.getElementById('adType');
+        const adPositionSelect = document.getElementById('adPosition');
+        
+        if (!adTypeSelect || !adPositionSelect) return;
+        
+        const selectedType = adTypeSelect.value;
+        const validCombinations = {
+            'banner': ['hero', 'top', 'middle', 'bottom', 'sidebar'],
+            'carousel': ['hero', 'top', 'middle', 'bottom'],
+            'inline': ['middle', 'bottom'],
+            'popup': ['popup']
+        };
+        
+        // Clear existing options
+        adPositionSelect.innerHTML = '<option value="">Select Position</option>';
+        
+        // Add valid positions for selected type
+        if (selectedType && validCombinations[selectedType]) {
+            const validPositions = validCombinations[selectedType];
+            validPositions.forEach(position => {
+                const option = document.createElement('option');
+                option.value = position;
+                option.textContent = this.getPositionDisplayName(position);
+                adPositionSelect.appendChild(option);
+            });
+        } else {
+            // If no type selected, show all positions
+            const allPositions = ['hero', 'top', 'middle', 'bottom', 'sidebar', 'popup'];
+            allPositions.forEach(position => {
+                const option = document.createElement('option');
+                option.value = position;
+                option.textContent = this.getPositionDisplayName(position);
+                adPositionSelect.appendChild(option);
+            });
+        }
+    }
+
+    getPositionDisplayName(position) {
+        const displayNames = {
+            'hero': 'Hero Section',
+            'top': 'Top',
+            'middle': 'Middle',
+            'bottom': 'Bottom',
+            'sidebar': 'Sidebar',
+            'popup': 'Popup'
+        };
+        return displayNames[position] || position;
     }
 
     checkAuth() {
@@ -2610,6 +2689,14 @@ async function createAd() {
             return;
         }
 
+        // Validate ad type and position synchronization
+        const adType = document.getElementById('adType').value;
+        const adPosition = document.getElementById('adPosition').value;
+        
+        if (!validateAdTypePosition(adType, adPosition)) {
+            return; // Validation failed, error message already shown
+        }
+
         const formData = {
             title: document.getElementById('adTitle').value,
             type: document.getElementById('adType').value,
@@ -2731,6 +2818,10 @@ async function editAd(adId) {
         document.getElementById('adTitle').value = ad.title;
         document.getElementById('adDescription').value = ad.description || '';
         document.getElementById('adType').value = ad.type;
+        
+        // Update position options based on ad type
+        adminDashboard.updatePositionOptions();
+        
         document.getElementById('adImageUrl').value = ad.image;
         document.getElementById('adClickUrl').value = ad.link || '';
         document.getElementById('adPosition').value = ad.position;

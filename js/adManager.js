@@ -104,7 +104,7 @@ class AdManager {
     this.renderInlineAds(adsByType.inline);
     this.renderPopupAds(adsByType.popup);
     
-    // Render ads by position (new approach)
+    // Render ads by position (only for ads that don't have a specific type-based renderer)
     this.renderAdsByPosition(adsByPosition);
   }
 
@@ -284,30 +284,35 @@ class AdManager {
   }
 
   renderAdsByPosition(adsByPosition) {
-    // Hero position - at the very top
+    // Only render position-based ads for types that don't have specific renderers
+    // This prevents double-rendering of banner, carousel, inline, and popup ads
+    
+    // Hero position - at the very top (for any ad type)
     if (adsByPosition.hero.length) {
       this.renderHeroAds(adsByPosition.hero);
     }
     
-    // Top position - after header, before main content
+    // Top position - after header, before main content (for any ad type)
     if (adsByPosition.top.length) {
       this.renderTopAds(adsByPosition.top);
     }
     
-    // Middle position - between content sections
+    // Middle position - between content sections (for any ad type)
     if (adsByPosition.middle.length) {
       this.renderMiddleAds(adsByPosition.middle);
     }
     
-    // Bottom position - at the bottom of main content
+    // Bottom position - at the bottom of main content (for any ad type)
     if (adsByPosition.bottom.length) {
       this.renderBottomAds(adsByPosition.bottom);
     }
     
-    // Sidebar position - in sidebar if available
+    // Sidebar position - in sidebar if available (for any ad type)
     if (adsByPosition.sidebar.length) {
       this.renderSidebarAds(adsByPosition.sidebar);
     }
+    
+    // Popup position - handled by renderPopupAds, so skip here to avoid duplicates
   }
 
   renderHeroAds(heroAds) {
