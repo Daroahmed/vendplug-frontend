@@ -2655,6 +2655,11 @@ async function createAd() {
             console.warn('Warning: Error closing modal:', closeError);
         }
         adminDashboard.loadAds();
+        
+        // Refresh ads on public pages if adManager exists
+        if (window.adManager && typeof window.adManager.refreshAds === 'function') {
+            window.adManager.refreshAds();
+        }
     } catch (error) {
         console.error(`Error ${isEdit ? 'updating' : 'creating'} ad:`, error);
         alert(`Failed to ${isEdit ? 'update' : 'create'} ad`);
@@ -2787,6 +2792,11 @@ async function deleteAd(adId) {
                 alert('Ad deleted successfully');
                 // Reload the ads list
                 adminDashboard.loadAds();
+                
+                // Refresh ads on public pages if adManager exists
+                if (window.adManager && typeof window.adManager.refreshAds === 'function') {
+                    window.adManager.refreshAds();
+                }
             } else {
                 throw new Error(result.message || 'Failed to delete ad');
             }

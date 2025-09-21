@@ -38,6 +38,25 @@ class AdManager {
     return 'buyer'; // default
   }
 
+  shouldLoadAds() {
+    // Don't load ads on admin or staff pages
+    const currentPage = this.getCurrentPage();
+    const userType = this.getCurrentUserType();
+    
+    if (userType === 'admin' || userType === 'staff') {
+      return false;
+    }
+    
+    // Don't load ads on admin dashboard pages
+    if (currentPage.includes('admin-dashboard') || 
+        currentPage.includes('admin') || 
+        currentPage.includes('staff')) {
+      return false;
+    }
+    
+    return true;
+  }
+
   getCurrentPage() {
     // Determine current page from URL
     const path = window.location.pathname;
@@ -52,6 +71,12 @@ class AdManager {
   }
 
   async loadAds() {
+    // Don't load ads on admin/staff pages
+    if (!this.shouldLoadAds()) {
+      console.log('🚫 Ads disabled for admin/staff pages');
+      return;
+    }
+
     try {
       const response = await fetch(`/api/admin-ads/public/ads?userType=${this.currentUserType}&page=${this.currentPage}`);
       const data = await response.json();
@@ -66,6 +91,9 @@ class AdManager {
   }
 
   renderAds() {
+    // Clear all existing ad containers first to prevent duplicates
+    this.clearAllAdContainers();
+    
     // Group ads by type and position
     const adsByType = this.groupAdsByType();
     const adsByPosition = this.groupAdsByPosition();
@@ -78,6 +106,24 @@ class AdManager {
     
     // Render ads by position (new approach)
     this.renderAdsByPosition(adsByPosition);
+  }
+
+  clearAllAdContainers() {
+    // Remove all existing ad containers to prevent duplicates
+    const adContainers = document.querySelectorAll(`
+      .ad-banner-container,
+      .ad-carousel-container,
+      .ad-hero-container,
+      .ad-top-container,
+      .ad-middle-container,
+      .ad-bottom-container,
+      .ad-sidebar-container,
+      .ad-inline
+    `);
+    
+    adContainers.forEach(container => {
+      container.remove();
+    });
   }
 
   groupAdsByType() {
@@ -173,14 +219,14 @@ class AdManager {
     if (!inlineAds.length) return;
 
     // Find category sections and product containers
-    const containers = document.querySelectorAll('.category-section, .products-grid, .product-list, .category-scroll');
+    const containers = document.querySelectorAll('.category-section, .products-grid, .product-list, .category-scroll, .vendor-grid, .vendor-combined-layout, .agent-grid, .shop-grid');
     
     containers.forEach((container, containerIndex) => {
       // For category sections, insert ads between category groups
       if (container.classList.contains('category-section')) {
         this.insertInlineAdsInCategorySection(container, inlineAds, containerIndex);
       }
-      // For product grids, insert ads between products
+      // For product/vendor grids, insert ads between items
       else {
         this.insertInlineAdsInProductGrid(container, inlineAds, containerIndex);
       }
@@ -188,28 +234,44 @@ class AdManager {
   }
 
   insertInlineAdsInCategorySection(container, inlineAds, containerIndex) {
-    // Insert ads between category groups (every 3-4 categories)
-    const categoryCards = container.querySelectorAll('.category-card');
-    const adInterval = Math.max(3, Math.floor(categoryCards.length / 2)); // At least every 3 categories
-    
-    for (let i = adInterval; i < categoryCards.length; i += adInterval) {
-      const adIndex = (containerIndex * 10 + i) % inlineAds.length;
+    // Insert ads at the end of each main category section (after the category-scroll)
+    // Only show ads on every 2nd or 3rd category section to avoid over-saturation
+    const categoryScroll = container.querySelector('.category-scroll');
+    if (categoryScroll && containerIndex % 2 === 0) { // Every 2nd category section
+      const adIndex = containerIndex % inlineAds.length;
       const ad = inlineAds[adIndex];
       
       const adElement = document.createElement('div');
       adElement.className = 'ad-inline ad-inline-category';
       adElement.innerHTML = this.createAdHTML(ad);
       
-      // Insert after the category card
-      categoryCards[i].parentNode.insertBefore(adElement, categoryCards[i].nextSibling);
+      // Insert after the category-scroll container
+      categoryScroll.parentNode.insertBefore(adElement, categoryScroll.nextSibling);
     }
   }
 
   insertInlineAdsInProductGrid(container, inlineAds, containerIndex) {
-    // Insert ads between products (every 6 products)
-    const products = container.querySelectorAll('.product-card, .order-card, .item-card');
+    // Professional inline ad frequency based on page type
+    const products = container.querySelectorAll('.product-card, .order-card, .item-card, .vendor-card, .shop-card, .agent-card, .business-card');
+    if (products.length < 4) return; // Don't show ads if too few items
     
-    for (let i = 6; i < products.length; i += 6) {
+    // Determine ad frequency based on page type
+    let adInterval;
+    const currentPage = this.getCurrentPage();
+    
+    if (currentPage.includes('shop') || currentPage.includes('business')) {
+      // Shop pages: every 8-10 products (professional e-commerce standard)
+      adInterval = Math.min(10, Math.max(8, Math.floor(products.length / 3)));
+    } else if (currentPage.includes('search')) {
+      // Search results: every 6-8 results
+      adInterval = Math.min(8, Math.max(6, Math.floor(products.length / 2)));
+    } else {
+      // Other pages: every 6-8 items
+      adInterval = Math.min(8, Math.max(6, Math.floor(products.length / 2)));
+    }
+    
+    // Insert ads at calculated intervals
+    for (let i = adInterval; i < products.length; i += adInterval) {
       const adIndex = (containerIndex * 10 + i) % inlineAds.length;
       const ad = inlineAds[adIndex];
       
@@ -507,6 +569,11 @@ class AdManager {
     if (this.carouselInterval) {
       clearInterval(this.carouselInterval);
     }
+  }
+
+  // Method to refresh ads (can be called externally)
+  refreshAds() {
+    this.loadAds();
   }
 }
 
