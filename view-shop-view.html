@@ -136,6 +136,40 @@
       opacity: 0.9;
     }
 
+    /* Button styles for public users */
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
+    .btn-primary:hover {
+      background: #00b894;
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
     /* Account Number Section */
     .account-section {
       background: var(--bg-card);
@@ -360,6 +394,12 @@
       <i class="fas fa-arrow-left"></i>
     </button>
     <div class="header-title">Vendor Shop</div>
+    
+    <!-- Public user actions -->
+    <div id="publicActions" style="display: none;">
+      <a href="buyer-login.html" class="btn btn-outline" style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Sign In</a>
+      <a href="buyer-register.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Sign Up</a>
+    </div>
   </div>
 
   <div class="container">
@@ -447,11 +487,40 @@
       });
     }
 
+    // Check if user is logged in
+    function checkUserStatus() {
+      const buyerToken = localStorage.getItem('vendplug-buyer-token');
+      const publicActions = document.getElementById('publicActions');
+      
+      if (buyerToken) {
+        // User is logged in - hide login buttons
+        publicActions.style.display = 'none';
+      } else {
+        // User is not logged in - show login buttons
+        publicActions.style.display = 'flex';
+      }
+    }
+
     // Add to cart functionality
     document.getElementById('addToCartBtn').addEventListener('click', function() {
-      // This would be implemented with your actual cart logic
+      const buyerToken = localStorage.getItem('vendplug-buyer-token');
+      
+      if (!buyerToken) {
+        // User is not logged in - show login prompt
+        const login = confirm('Please sign in to add items to your cart. Would you like to sign in now?');
+        if (login) {
+          window.location.href = 'buyer-login.html';
+        }
+        return;
+      }
+      
+      // User is logged in - add to cart
       alert('Product added to cart!');
+      // Add your actual cart logic here
     });
+
+    // Initialize user status check
+    document.addEventListener('DOMContentLoaded', checkUserStatus);
         
         // Load reviews
         const reviewsContainer = document.getElementById('reviewsContainer');

@@ -62,6 +62,7 @@ class AdManager {
     const filename = path.split('/').pop() || '';
     
     // Check for specific page types first
+    if (filename.includes('public-buyer-home')) return 'public-buyer-home';
     if (filename.includes('buyer-agent-home')) return 'buyer-agent-home';
     if (filename.includes('buyer-home')) return 'buyer-home';
     if (filename.includes('agent-home')) return 'agent-home';

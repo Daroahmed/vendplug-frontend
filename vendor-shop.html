@@ -111,6 +111,40 @@
       justify-content: center;
     }
 
+    /* Button styles for public users */
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
+    .btn-primary:hover {
+      background: #00b894;
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
     /* Hamburger Menu */
     .menu-overlay {
       position: fixed;
@@ -654,10 +688,19 @@
     </div>
     
     <div class="header-actions">
-      <a href="buyer-vendor-checkout.html" class="cart-icon">
-        <i class="fas fa-shopping-cart"></i>
-        <span class="cart-count" id="cartCount">0</span>
-      </a>
+      <!-- Public user actions -->
+      <div id="publicActions" style="display: none;">
+        <a href="buyer-login.html" class="btn btn-outline" style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Sign In</a>
+        <a href="buyer-register.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Sign Up</a>
+      </div>
+      
+      <!-- Logged in user actions -->
+      <div id="loggedInActions" style="display: none;">
+        <a href="buyer-vendor-checkout.html" class="cart-icon">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -672,34 +715,36 @@
     </div>
 
     <div class="menu-section">
-      <h4>AGENTS</h4>
-      <ul class="menu-links">
-        <li><a href="buyer-agent-cart.html"><i class="fas fa-shopping-cart"></i> Cart</a></li>
-        <li><a href="buyer-agent-orders.html"><i class="fas fa-clipboard-list"></i> Orders</a></li>
-        <li><a href="buyer-agent-payout-history.html"><i class="fas fa-history"></i> Order History</a></li>
-        <li><a href="buyer-list.html"><i class="fas fa-list"></i> Custom List</a></li>
-      </ul>
-    </div>
-
-    <div class="menu-section">
       <h4>VENDORS</h4>
       <ul class="menu-links">
         <li><a href="buyer-vendor-checkout.html"><i class="fas fa-shopping-cart"></i> Cart</a></li>
         <li><a href="buyer-vendor-orders.html"><i class="fas fa-clipboard-list"></i> Orders</a></li>
-        <li><a href="buyer-payout-history.html"><i class="fas fa-history"></i> Order History</a></li>
       </ul>
     </div>
+
+    <div class="menu-section">
+      <h4>AGENTS</h4>
+      <ul class="menu-links">
+        <li><a href="buyer-agent-checkout.html"><i class="fas fa-shopping-cart"></i> Cart</a></li>
+        <li><a href="buyer-agent-orders.html"><i class="fas fa-clipboard-list"></i> Orders</a></li>
+        <li><a href="buyer-list.html"><i class="fas fa-list"></i> Custom List</a></li>
+      </ul>
+    </div>
+
+
 
     <div class="menu-section">
       <ul class="menu-links">
         <li><a href="buyer-wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
         <li><a href="buyer-profile.html"><i class="fas fa-user"></i> Profile</a></li>
-        <li><a href="support.html"><i class="fas fa-headset"></i> Support & Disputes</a></li>
+        <li><a href="create-dispute.html"><i class="fas fa-exclamation-triangle"></i> Create Dispute</a></li>
+        <li><a href="my-disputes.html"><i class="fas fa-clipboard-list"></i> My Disputes</a></li>
+        <li><a href="support.html"><i class="fas fa-headset"></i> Support</a></li>
         <li><a href="buyer-auth.html"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
       </ul>
     </div>
   </div>
-
+  
   <!-- Main Content -->
   <div class="shop-page">
     <!-- Sticky Filters -->
@@ -737,7 +782,7 @@
             <option value="Edo">Edo</option>
             <option value="Ekiti">Ekiti</option>
             <option value="Enugu">Enugu</option>
-            <option value="FCT" selected>FCT</option>
+            <option value="FCT">FCT</option>
             <option value="Gombe">Gombe</option>
             <option value="Imo">Imo</option>
             <option value="Jigawa">Jigawa</option>
@@ -942,13 +987,32 @@
       document.getElementById('cartCount').textContent = totalItems;
     }
 
+    // Check if user is logged in and show appropriate actions
+    function checkUserStatus() {
+      const buyerToken = localStorage.getItem('vendplug-buyer-token');
+      const publicActions = document.getElementById('publicActions');
+      const loggedInActions = document.getElementById('loggedInActions');
+      
+      if (buyerToken) {
+        // User is logged in
+        publicActions.style.display = 'none';
+        loggedInActions.style.display = 'flex';
+      } else {
+        // User is not logged in (public user)
+        publicActions.style.display = 'flex';
+        loggedInActions.style.display = 'none';
+      }
+    }
+
     // Vendor data loading functionality
     document.addEventListener('DOMContentLoaded', () => {
+      // Check if user is logged in
+      checkUserStatus();
       updateCartCount();
       
       // Get state & category from URL first, then localStorage, then default
       const urlParams = new URLSearchParams(window.location.search);
-      let state = urlParams.get("state") || localStorage.getItem("vendplug-buyer-state") || "FCT";
+      let state = urlParams.get("state") || localStorage.getItem("vendplug-buyer-state") || "";
       let category = urlParams.get("category") || localStorage.getItem("vendplug-category") || "";
       
       // Set the filter values
@@ -1110,10 +1174,13 @@
       return `
         <div class="vendor-card" onclick="viewShop('${vendor._id}')">
           <div class="quick-actions">
-            <button class="quick-btn" onclick="event.stopPropagation(); addToFavorites('${vendor._id}')">
+            <button class="quick-btn" onclick="event.stopPropagation(); startChat('${vendor._id}', 'Vendor', '${vendor.businessName || vendor.shopName}')" title="Start Chat">
+              <i class="fas fa-comments"></i>
+            </button>
+            <button class="quick-btn" onclick="event.stopPropagation(); addToFavorites('${vendor._id}')" title="Add to Favorites">
               <i class="fas fa-heart"></i>
             </button>
-            <button class="quick-btn" onclick="event.stopPropagation(); shareVendor('${vendor._id}', '${vendor.businessName || vendor.shopName}', '${vendor.state}', '${vendor.category}')">
+            <button class="quick-btn" onclick="event.stopPropagation(); shareVendor('${vendor._id}', '${vendor.businessName || vendor.shopName}', '${vendor.state}', '${vendor.category}')" title="Share">
               <i class="fas fa-share-alt"></i>
             </button>
           </div>
@@ -1132,6 +1199,46 @@
 
     function viewShop(id) {
       window.location.href = `/view-shop.html?vendor=${id}`;
+    }
+
+    // Start chat with vendor
+    async function startChat(participantId, participantType, participantName) {
+      const buyerToken = localStorage.getItem('vendplug-buyer-token');
+      if (!buyerToken) {
+        const login = confirm('Please sign in to start a chat. Would you like to sign in now?');
+        if (login) {
+          window.location.href = 'buyer-login.html';
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/chats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${buyerToken}`
+          },
+          body: JSON.stringify({
+            participantId: participantId,
+            participantType: participantType
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Chat created/found:', data);
+          // Redirect to chat page
+          window.location.href = 'chat.html';
+        } else {
+          const error = await response.json();
+          console.error('Failed to create chat:', error);
+          alert('Failed to start chat. Please try again.');
+        }
+      } catch (error) {
+        console.error('Error creating chat:', error);
+        alert('Error starting chat. Please try again.');
+      }
     }
     function addToFavorites(id) {
       // Implement favorite functionality

@@ -43,7 +43,7 @@ document.getElementById("buyerLoginForm").addEventListener("submit", async (e) =
         localStorage.setItem("vendplugBuyer", JSON.stringify(buyerData));
       messageEl.textContent = "Login successful!";
       messageEl.style.color = "green";
-      setTimeout(() => (window.location.href = "buyer-home.html"), 1000);
+      setTimeout(() => (window.location.href = "public-buyer-home.html"), 1000);
     } else {
       messageEl.textContent = data.message || "Login failed.";
       messageEl.style.color = "red";

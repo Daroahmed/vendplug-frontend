@@ -199,6 +199,40 @@
       justify-content: center;
     }
 
+    /* Button styles for public users */
+    .btn {
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
+    .btn-primary:hover {
+      background: #00b894;
+      transform: translateY(-2px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
     /* Agent Profile */
     .agent-profile {
       background: var(--bg-card);
@@ -357,13 +391,23 @@
   <div class="header">
     <h1>Agent Business</h1>
     <div class="header-actions">
-      <a href="buyer-home.html" class="home-button">
+      <a href="public-buyer-home.html" class="home-button">
         <i class="fas fa-home"></i>
       </a>
-      <a href="buyer-agent-checkout.html" class="cart-icon">
-        <i class="fas fa-shopping-cart"></i>
-        <span class="cart-count" id="cartCount">0</span>
-      </a>
+      
+      <!-- Public user actions -->
+      <div id="publicActions" style="display: none;">
+        <a href="buyer-login.html" class="btn btn-outline" style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Sign In</a>
+        <a href="buyer-register.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Sign Up</a>
+      </div>
+      
+      <!-- Logged in user actions -->
+      <div id="loggedInActions" style="display: none;">
+        <a href="buyer-agent-checkout.html" class="cart-icon">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="cart-count" id="cartCount">0</span>
+        </a>
+      </div>
     </div>
   </div>
 
@@ -499,8 +543,28 @@
       document.getElementById('cartCount').textContent = totalItems;
     }
 
-    // Initialize cart count
-    document.addEventListener('DOMContentLoaded', updateCartCount);
+    // Check if user is logged in and show appropriate actions
+    function checkUserStatus() {
+      const buyerToken = localStorage.getItem('vendplug-buyer-token');
+      const publicActions = document.getElementById('publicActions');
+      const loggedInActions = document.getElementById('loggedInActions');
+      
+      if (buyerToken) {
+        // User is logged in
+        publicActions.style.display = 'none';
+        loggedInActions.style.display = 'flex';
+      } else {
+        // User is not logged in (public user)
+        publicActions.style.display = 'flex';
+        loggedInActions.style.display = 'none';
+      }
+    }
+
+    // Initialize cart count and user status
+    document.addEventListener('DOMContentLoaded', () => {
+      checkUserStatus();
+      updateCartCount();
+    });
 
     // Global variables for sharing
     let currentAgent = null;
