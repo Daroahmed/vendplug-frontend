@@ -102,7 +102,7 @@
         }
 
         .tickets-header h2 {
-            color: #2c3e50;
+            color: var(--text-light);
             margin: 0;
             font-size: 1.5rem;
         }
@@ -135,9 +135,7 @@
             border-bottom: none;
         }
 
-        .ticket-info {
-            flex: 1;
-        }
+        .ticket-info { flex: 1; }
 
         .ticket-title {
             font-size: 1.1rem;
@@ -198,30 +196,14 @@
         .priority-urgent { background: #fce4ec; color: #c2185b; }
 
         .ticket-date {
-            color: #7f8c8d;
+            color: var(--muted);
             font-size: 0.8rem;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 60px 30px;
-            color: #7f8c8d;
-        }
-
-        .empty-state i {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            color: #bdc3c7;
-        }
-
-        .empty-state h3 {
-            margin-bottom: 10px;
-            color: #5a6c7d;
-        }
-
-        .empty-state p {
-            margin-bottom: 30px;
-        }
+        .empty-state { text-align: center; padding: 60px 30px; color: var(--muted); }
+        .empty-state i { font-size: 4rem; margin-bottom: 20px; color: var(--bg-secondary); }
+        .empty-state h3 { margin-bottom: 10px; color: var(--text-light); }
+        .empty-state p { margin-bottom: 30px; }
 
         .loading {
             text-align: center;
@@ -596,18 +578,84 @@
                 align-items: flex-start;
             }
         }
+        /* Dark theme overrides */
+        :root {
+            --primary: #00cc99;
+            --bg-dark: #121212;
+            --bg-card: #1e1e1e;
+            --bg-secondary: #2c2c2c;
+            --text-light: #fff;
+            --muted: #aaa;
+        }
+
+        body { background: var(--bg-dark); color: var(--text-light); font-family: 'Segoe UI', sans-serif; }
+
+        .navbar { background: var(--bg-card) !important; border-bottom: 1px solid var(--bg-secondary); }
+        .nav-link { color: var(--text-light) !important; }
+        .btn-logout { background: var(--primary); color: #000; border:none; padding:8px 14px; border-radius:6px; cursor:pointer; }
+
+        .support-container { background: transparent !important; }
+        .support-header { background: var(--bg-card) !important; border: 1px solid var(--bg-secondary); }
+        .support-header h1 { color: var(--primary) !important; }
+        .support-header p { color: var(--muted) !important; }
+
+        .btn-create-ticket { background: var(--primary) !important; color: #000 !important; }
+        .filter-select { background: var(--bg-secondary) !important; color: var(--text-light) !important; border: 1px solid var(--bg-secondary) !important; }
+        .filter-select:focus { border-color: var(--primary) !important; }
+
+        .tickets-container { background: var(--bg-card) !important; border: 1px solid var(--bg-secondary) !important; }
+        .tickets-header { background: var(--bg-card) !important; border-bottom: 1px solid var(--bg-secondary) !important; }
+        .tickets-header h2 { color: var(--text-light) !important; }
+        .tickets-count { color: var(--muted) !important; }
+        .ticket-item { border-bottom: 1px solid var(--bg-secondary) !important; }
+        .ticket-item:hover { background: var(--bg-secondary) !important; }
+        .ticket-title { color: var(--text-light) !important; }
+        .ticket-meta, .ticket-description, .ticket-date { color: var(--muted) !important; }
+
+        /* Modals and chat */
+        .modal-content { background: var(--bg-card) !important; color: var(--text-light); border: 1px solid var(--bg-secondary); }
+        .modal-header, .modal-footer { border-color: var(--bg-secondary) !important; }
+        .modal-header h3 { color: var(--text-light) !important; }
+
+        .form-group label { color: var(--text-light) !important; }
+        .form-group input, .form-group select, .form-group textarea {
+            background: var(--bg-secondary) !important;
+            color: var(--text-light) !important;
+            border: 1px solid var(--bg-secondary) !important;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary) !important; }
+
+        .ticket-info-panel { background: var(--bg-card) !important; border-right: 1px solid var(--bg-secondary) !important; }
+        .ticket-info-label { color: var(--muted) !important; }
+        .ticket-info-value { color: var(--text-light) !important; }
+
+        .ticket-header { background: var(--bg-card) !important; border-bottom: 1px solid var(--bg-secondary) !important; }
+        .ticket-title { color: var(--text-light) !important; }
+        .ticket-meta-info { color: var(--muted) !important; }
+
+        .chat-messages { background: var(--bg-card) !important; }
+        .message.sent .message-avatar { background: var(--primary) !important; color: #000 !important; }
+        .message.received .message-avatar { background: var(--bg-secondary) !important; color: var(--text-light) !important; }
+        .message.sent .message-content { background: var(--primary) !important; color: #000 !important; }
+        .message.received .message-content { background: var(--bg-secondary) !important; color: var(--text-light) !important; border: 1px solid var(--bg-secondary) !important; }
+        .message-time { color: var(--muted) !important; }
+
+        .chat-input-container { background: var(--bg-card) !important; border-top: 1px solid var(--bg-secondary) !important; }
+        .chat-input { background: var(--bg-secondary) !important; color: var(--text-light) !important; border: 1px solid var(--bg-secondary) !important; }
+        .chat-input:focus { border-color: var(--primary) !important; }
+        .send-button { background: var(--primary) !important; color: #000 !important; }
+        .send-button:disabled { background: var(--bg-secondary) !important; color: var(--muted) !important; }
+
+        .empty-state { color: var(--muted) !important; }
+        .empty-state i { color: var(--bg-secondary) !important; }
+        .empty-state h3 { color: var(--text-light) !important; }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
+    <!-- Navigation (logo removed) -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="nav-brand">
-                <a href="index.html">
-                    <img src="images/logo.png" alt="Vendplug" class="logo">
-                </a>
-            </div>
-            <div class="nav-menu">
+            <div class="nav-menu" style="margin-left:auto;">
                 <a href="#" class="nav-link" onclick="goBack()">← Back</a>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
