@@ -76,6 +76,24 @@
   justify-content: center;
 }
 
+/* Cart badge */
+.cart-icon { position: relative; }
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -10px;
+  background-color: var(--primary);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: bold;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
     /* Main Container */
     .container {
       padding: 1.5rem;
@@ -242,7 +260,10 @@
     <div class="header-actions" style="margin-left:auto;display:flex;align-items:center;gap:12px;">
       <a href="chat.html" title="Messages" style="color:#fff;"><i class="fas fa-comments"></i></a>
       <!-- Notification icon injected by notifications.js -->
-      <a href="buyer-vendor-checkout.html" title="Cart" style="color:#fff;"><i class="fas fa-shopping-cart"></i></a>
+      <a href="buyer-vendor-checkout.html" title="Cart" class="cart-icon" style="color:#fff;position:relative;">
+        <i class="fas fa-shopping-cart"></i>
+        <span id="cart-badge" class="cart-badge">0</span>
+      </a>
     </div>
   </div>
 

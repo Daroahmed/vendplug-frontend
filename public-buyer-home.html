@@ -502,7 +502,7 @@
         
         <li><a href="my-disputes.html"><i class="fas fa-clipboard-list"></i> My Disputes</a></li>
         <li><a href="support.html"><i class="fas fa-headset"></i> Support</a></li>
-        <li><a href="#" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
+        <li><a href="#" onclick="buyerLogout(event)"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
       </ul>
     </div>
   </div>
@@ -550,8 +550,27 @@
   <script src="/js/auth-utils.js"></script>
   <script src="/js/notifications.js"></script>
   <script src="/js/messageNotifications.js"></script>
+  <script src="/js/cart-badge.js"></script>
   
   <script>
+    // Unified buyer logout clears tokens and relevant storage, then redirects
+    function buyerLogout(e){
+      if (e && e.preventDefault) e.preventDefault();
+      try {
+        // Clear buyer auth and any legacy keys
+        localStorage.removeItem('vendplug-buyer-token');
+        localStorage.removeItem('vendplugBuyer');
+        // Clear carts for both vendor and agent contexts (defensive)
+        localStorage.removeItem('cart');
+        localStorage.removeItem('vendorCart');
+        localStorage.removeItem('agentCart');
+        // Optional other session keys
+        localStorage.removeItem('vendplug-category');
+        localStorage.removeItem('vendplug-buyer-state');
+      } catch(_) {}
+      // Redirect to auth selection to avoid auto-login loops
+      window.location.href = 'auth-selection.html';
+    }
     // Grouped categories - exact match with buyer-home.html
     const groupedCategories = [
       {
@@ -809,11 +828,8 @@
     }
 
     // Logout function
-    function logout() {
-      localStorage.removeItem('vendplug-buyer-token');
-      localStorage.removeItem('cart');
-      window.location.href = 'public-buyer-home.html';
-    }
+    // Deprecated: kept for safety if referenced elsewhere
+    function logout(){ buyerLogout(); }
 
     // Hamburger menu functionality
     const menuToggle = document.getElementById('menuToggle');

@@ -556,6 +556,21 @@
       }
     }
 
+    // Reusable buyer logout
+    function buyerLogout(e){
+      if (e && e.preventDefault) e.preventDefault();
+      try {
+        localStorage.removeItem('vendplug-buyer-token');
+        localStorage.removeItem('vendplugBuyer');
+        localStorage.removeItem('cart');
+        localStorage.removeItem('vendorCart');
+        localStorage.removeItem('agentCart');
+        localStorage.removeItem('vendplug-category');
+        localStorage.removeItem('vendplug-buyer-state');
+      } catch(_) {}
+      window.location.href = 'auth-selection.html';
+    }
+
     // Initialize cart count and user status
     document.addEventListener('DOMContentLoaded', () => {
       checkUserStatus();
@@ -797,7 +812,8 @@
       setTimeout(showMessageButtonIfBuyer, 1000); // Wait for vendor data to load
     });
   </script>
-    <script src="/js/auth-utils.js"></script>
-    <script src="/js/adManager.js"></script>
+  <script src="/js/auth-utils.js"></script>
+  <script src="/js/adManager.js"></script>
+  <script src="/js/cart-badge.js"></script>
 </body>
 </html>

@@ -740,7 +740,7 @@
        
        <li><a href="my-disputes.html"><i class="fas fa-clipboard-list"></i> My Disputes</a></li>
        <li><a href="support.html"><i class="fas fa-headset"></i> Support</a></li>
-       <li><a href="buyer-auth.html"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
+       <li><a href="#" onclick="buyerLogout(event)"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
      </ul>
    </div>
  </div>
@@ -1407,5 +1407,21 @@
   </script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/adManager.js"></script>
+    <script src="/js/cart-badge.js"></script>
+    <script>
+      function buyerLogout(e){
+        if (e && e.preventDefault) e.preventDefault();
+        try {
+          localStorage.removeItem('vendplug-buyer-token');
+          localStorage.removeItem('vendplugBuyer');
+          localStorage.removeItem('cart');
+          localStorage.removeItem('vendorCart');
+          localStorage.removeItem('agentCart');
+          localStorage.removeItem('vendplug-category');
+          localStorage.removeItem('vendplug-buyer-state');
+        } catch(_) {}
+        window.location.href = 'auth-selection.html';
+      }
+    </script>
 </body>
 </html>

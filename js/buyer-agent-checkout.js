@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
       walletBalance = wallet.balance || 0;
 
       walletEl.textContent = `Wallet: ₦${walletBalance.toLocaleString()}`;
+      updateCartBadge(cart);
       displayCart();
     } catch (err) {
       console.error(err);
@@ -73,6 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!cart.length) {
       cartContainer.innerHTML = '<p>Your cart is empty.</p>';
       totalEl.textContent = 'Total: ₦0';
+      updateCartBadge(cart);
       return;
     }
   
@@ -99,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   
     totalEl.textContent = `Total: ₦${total.toLocaleString()}`;
+    updateCartBadge(cart);
   }
   
 
@@ -159,6 +162,27 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Failed to update cart. Please try again.');
     }
   });
+
+  // =========================
+  // CART BADGE UI
+  // =========================
+  function updateCartBadge(items) {
+    try {
+      const badge = document.getElementById('cart-badge');
+      if (!badge) return;
+
+      const totalItems = (items || []).reduce((sum, i) => sum + (i.quantity || 1), 0);
+      if (totalItems > 0) {
+        badge.textContent = totalItems;
+        badge.style.display = 'flex';
+      } else {
+        badge.textContent = '0';
+        badge.style.display = 'none';
+      }
+    } catch (err) {
+      console.warn('Cart badge update failed:', err);
+    }
+  }
 
   // =========================
   // CHECKOUT
