@@ -482,10 +482,10 @@
           ? `${BACKEND}/api/agent-products/update/${id}`
           : `${BACKEND}/api/agent-products`;
 
+        const submitBtn = addProductForm.querySelector('.submit-btn');
+        const originalHTML = submitBtn.innerHTML;
         try {
           // Show loading state
-          const submitBtn = addProductForm.querySelector('.submit-btn');
-          const originalText = submitBtn.innerHTML;
           submitBtn.innerHTML = '<div class="spinner spinner-sm"></div> Processing...';
           submitBtn.disabled = true;
 
@@ -508,8 +508,7 @@
           alert('❌ ' + err.message);
         } finally {
           // Restore button state
-          const submitBtn = addProductForm.querySelector('.submit-btn');
-          submitBtn.innerHTML = originalText;
+          submitBtn.innerHTML = originalHTML;
           submitBtn.disabled = false;
         }
       }
@@ -549,7 +548,12 @@
                 <p class="product-description">${product.description || ''}</p>
                 <div class="product-meta">
                   <span>Category: ${product.category}</span>
-                  <span>Stock: ${product.stock ?? 'Not specified'}</span>
+                  <span>Stock: ${(() => {
+                    const stock = Number(product.stock ?? 0);
+                    const reserved = Number(product.reserved ?? 0);
+                    const available = Math.max(0, stock - reserved);
+                    return available <= 0 ? 'Out of Stock' : available;
+                  })()}</span>
                 </div>
                 <div class="product-actions">
                   <button class="action-btn edit-btn" data-id="${product._id}">

@@ -86,15 +86,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const name = product?.name || 'Unnamed Product';
       const agentName = agent?.shopName || agent?.fullName || 'Unknown Agent'; // 👈 FIXED
       const subtotal = price * qty;
+      const stock = Number(product?.stock ?? NaN);
+      const reserved = Number(product?.reserved ?? 0);
+      const hasFiniteStock = Number.isFinite(stock);
+      const available = hasFiniteStock ? Math.max(0, stock - (Number.isFinite(reserved) ? reserved : 0)) : Infinity;
+      const reachedMax = hasFiniteStock && qty >= available;
+      const showHint = hasFiniteStock && (available <= 5 || reachedMax);
+      const hintText = hasFiniteStock ? (available <= 0 ? 'Out of Stock' : `Only ${available} available`) : '';
       total += subtotal;
   
       const div = document.createElement('div');
       div.className = 'cart-item';
       div.innerHTML = `
-        <span>${name} (${agentName}) x ${qty}</span>
-        <span>₦${subtotal.toLocaleString()}</span>
+        <div class="item-info">
+          <div class="item-name">${name} (${agentName}) x ${qty}</div>
+          ${showHint ? `<div class="item-price" style=\"color: var(--muted);\">${hintText}</div>` : ''}
+        </div>
+        <span class="item-total">₦${subtotal.toLocaleString()}</span>
         <button class="remove-btn" data-id="${product?._id}">❌</button>
-        <button class="inc-btn" data-id="${product?._id}">+</button>
+        <button class="inc-btn" data-id="${product?._id}" ${reachedMax ? 'disabled' : ''}>+</button>
         <button class="dec-btn" data-id="${product?._id}">-</button>
       `;
       cartContainer.appendChild(div);
@@ -122,6 +132,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (e.target.classList.contains('inc-btn')) {
         const item = cart.find((i) => i.product?._id === id);
+        const stock = Number(item?.product?.stock ?? NaN);
+        const reserved = Number(item?.product?.reserved ?? 0);
+        const hasFiniteStock = Number.isFinite(stock);
+        const available = hasFiniteStock ? Math.max(0, stock - (Number.isFinite(reserved) ? reserved : 0)) : Infinity;
+        const nextQty = (item.quantity || 1) + 1;
+        if (hasFiniteStock && nextQty > available) {
+          alert(`Only ${available} available`);
+          return;
+        }
         await fetch(`${baseURL}/api/agent-cart`, {
           method: 'PUT',
           headers: {

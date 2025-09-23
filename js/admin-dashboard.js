@@ -2479,7 +2479,7 @@ class AdminDashboard {
                 <table>
                     <thead>
                         <tr>
-                            <th>Name</th>
+                            <th>Title</th>
                             <th>Status</th>
                             <th>Target</th>
                             <th>Priority</th>
@@ -2491,16 +2491,16 @@ class AdminDashboard {
                     <tbody>
                         ${campaigns.map(campaign => `
                             <tr>
-                                <td>${campaign.name}</td>
+                                <td>${campaign.title || '-'}</td>
                                 <td><span class="status-badge status-${campaign.status}">${campaign.status}</span></td>
-                                <td>${campaign.targetAudience}</td>
+                                <td>${Array.isArray(campaign.targetUserTypes) && campaign.targetUserTypes.length ? campaign.targetUserTypes.join(', ') : (campaign.targetUserType || 'all')}</td>
                                 <td><span class="status-badge status-${campaign.priority}">${campaign.priority}</span></td>
-                                <td>${campaign.sendDate ? new Date(campaign.sendDate).toLocaleDateString() : 'N/A'}</td>
-                                <td>${campaign.expiryDate ? new Date(campaign.expiryDate).toLocaleDateString() : 'N/A'}</td>
+                                <td>${campaign.scheduledFor ? new Date(campaign.scheduledFor).toLocaleString() : 'N/A'}</td>
+                                <td>${campaign.expiresAt ? new Date(campaign.expiresAt).toLocaleString() : 'N/A'}</td>
                                 <td>
                                     <button class="btn btn-primary" onclick="editCampaign('${campaign._id}')">Edit</button>
                                     <button class="btn btn-danger" onclick="deleteCampaign('${campaign._id}')">Delete</button>
-                                    ${campaign.status === 'draft' ? `<button class="btn btn-success" onclick="sendCampaign('${campaign._id}')">Send</button>` : ''}
+                                    ${['draft','scheduled'].includes(campaign.status) ? `<button class="btn btn-success" onclick="sendCampaign('${campaign._id}')">Send</button>` : ''}
                                 </td>
                             </tr>
                         `).join('')}
@@ -2755,38 +2755,151 @@ async function createAd() {
 
 async function createCampaign() {
     try {
-        const formData = {
-            name: document.getElementById('campaignName').value,
-            status: document.getElementById('campaignStatus').value,
-            priority: document.getElementById('campaignPriority').value,
-            targetAudience: document.getElementById('campaignTarget').value,
-            title: document.getElementById('campaignTitle').value,
-            message: document.getElementById('campaignMessage').value,
-            sendDate: document.getElementById('campaignSendDate').value ? new Date(document.getElementById('campaignSendDate').value) : null,
-            expiryDate: document.getElementById('campaignExpiryDate').value ? new Date(document.getElementById('campaignExpiryDate').value) : null,
-            data: document.getElementById('campaignData').value ? JSON.parse(document.getElementById('campaignData').value) : {}
+        const getVal = (id) => {
+            const el = document.getElementById(id);
+            return el ? el.value : '';
         };
 
-        const response = await fetch('/api/admin-ads/campaigns', {
-            method: 'POST',
+        const title = getVal('campaignTitle');
+        const message = getVal('campaignMessage');
+        if (!title || !message) {
+            alert('Please enter title and message');
+            return;
+        }
+
+        // Map priority to model enum
+        const rawPriority = (getVal('campaignPriority') || 'normal').toLowerCase();
+        const priorityMap = { low: 'low', normal: 'normal', medium: 'normal', high: 'high', urgent: 'urgent' };
+        const priority = priorityMap[rawPriority] || 'normal';
+
+        // Targets (comma or single). Model expects array of ['buyer','agent','vendor','staff','admin','all']
+        const rawTarget = getVal('campaignTarget') || 'all';
+        const targetUserTypes = rawTarget
+            .split(',')
+            .map(s => s.trim().toLowerCase())
+            .filter(Boolean);
+
+        // Type and delivery method with safe defaults matching enums
+        const type = (getVal('campaignType') || 'announcement').toLowerCase();
+        const deliveryMethod = (getVal('campaignDelivery') || 'in_app').toLowerCase();
+
+        // Scheduling
+        const sendDateStr = getVal('campaignSendDate');
+        const expiryDateStr = getVal('campaignExpiryDate');
+        const scheduledFor = sendDateStr ? new Date(sendDateStr) : new Date();
+        const expiresAt = expiryDateStr ? new Date(expiryDateStr) : new Date(scheduledFor.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+        // Optional link/image/linkText
+        const image = getVal('campaignImageUrl') || '';
+        const link = getVal('campaignLinkUrl') || '';
+        const linkText = getVal('campaignLinkText') || 'Learn More';
+
+        // Optional settings JSON
+        let settings = undefined;
+        const dataStr = getVal('campaignData');
+        if (dataStr) {
+            try {
+                const parsed = JSON.parse(dataStr);
+                // Put user JSON under settings to align with schema
+                settings = parsed;
+            } catch (_) {
+                alert('Additional data must be valid JSON');
+                return;
+            }
+        }
+
+        const payload = {
+            title,
+            message,
+            type,
+            deliveryMethod,
+            priority,
+            scheduledFor,
+            expiresAt,
+            targetUserTypes: targetUserTypes.length ? targetUserTypes : ['all'],
+            image,
+            link,
+            linkText,
+            status: 'scheduled'
+        };
+        if (settings) payload.settings = settings;
+
+        // Determine create vs update
+        const form = document.getElementById('createCampaignForm');
+        const editId = form ? form.getAttribute('data-edit-id') : null;
+        const isEdit = !!editId;
+
+        const url = isEdit ? `/api/admin-ads/campaigns/${editId}` : '/api/admin-ads/campaigns';
+        const method = isEdit ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method,
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
-            throw new Error('Failed to create campaign');
+            const err = await response.json().catch(() => ({}));
+            throw new Error(err.message || 'Failed to create campaign');
         }
 
-        alert('Campaign created successfully!');
-        closeCreateCampaignModal();
-        adminDashboard.loadCampaigns();
+        alert(isEdit ? 'Campaign updated successfully!' : 'Campaign created successfully!');
+        // Reset edit state
+        if (form) form.removeAttribute('data-edit-id');
+        const btn = document.getElementById('createCampaignBtn');
+        if (btn) btn.textContent = 'Create Campaign';
+        closeCreateCampaignModal && closeCreateCampaignModal();
+        adminDashboard && adminDashboard.loadCampaigns && adminDashboard.loadCampaigns();
     } catch (error) {
-        console.error('Error creating campaign:', error);
-        alert('Failed to create campaign');
+        console.error('Error saving campaign:', error);
+        alert(error.message || 'Failed to save campaign');
     }
+}
+
+// UI helpers for quick scheduling presets
+function setCampaignSendNow(checked) {
+    const sendEl = document.getElementById('campaignSendDate');
+    if (!sendEl) return;
+    if (checked) {
+        const now = new Date();
+        sendEl.value = formatLocalDatetime(now);
+    }
+}
+
+function setCampaignExpiry(days) {
+    const sendEl = document.getElementById('campaignSendDate');
+    const expiryEl = document.getElementById('campaignExpiryDate');
+    if (!expiryEl) return;
+    const base = sendEl && sendEl.value ? new Date(sendEl.value) : new Date();
+    const expires = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
+    expiryEl.value = formatLocalDatetime(expires);
+}
+
+function formatLocalDatetime(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    const mm = pad(d.getMonth() + 1);
+    const dd = pad(d.getDate());
+    const hh = pad(d.getHours());
+    const mi = pad(d.getMinutes());
+    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+}
+
+function setCampaignDataTemplate(kind) {
+    const el = document.getElementById('campaignData');
+    if (!el) return;
+    let tpl = {};
+    if (kind === 'popup') {
+        tpl = { popup: { showDelay: 2000, autoClose: 0, closeable: true, showOncePerUser: true } };
+    } else if (kind === 'email') {
+        tpl = { email: { subject: 'Announcement', template: 'basic', includeUnsubscribe: true } };
+    } else if (kind === 'sms') {
+        tpl = { sms: { provider: 'twilio' } };
+    }
+    el.value = JSON.stringify(tpl, null, 2);
 }
 
 function filterAds() {
@@ -2900,22 +3013,87 @@ async function deleteAd(adId) {
 }
 
 function editCampaign(campaignId) {
-    // Implementation for editing campaigns
-    console.log('Edit campaign:', campaignId);
+    fetch(`/api/admin-ads/campaigns/${campaignId}`, {
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(result => {
+        if (!result.success) throw new Error(result.message || 'Failed to load campaign');
+        const c = result.data;
+        // Open modal and populate fields
+        showCreateCampaignModal();
+        const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v ?? ''; };
+        setVal('campaignTitle', c.title);
+        setVal('campaignMessage', c.message);
+        setVal('campaignType', c.type || 'announcement');
+        setVal('campaignDelivery', c.deliveryMethod || 'in_app');
+        setVal('campaignPriority', c.priority || 'normal');
+        setVal('campaignImageUrl', c.image || '');
+        setVal('campaignLinkUrl', c.link || '');
+        setVal('campaignLinkText', c.linkText || 'Learn More');
+        const sendEl = document.getElementById('campaignSendDate');
+        if (sendEl && c.scheduledFor) sendEl.value = formatLocalDatetime(new Date(c.scheduledFor));
+        const expEl = document.getElementById('campaignExpiryDate');
+        if (expEl && c.expiresAt) expEl.value = formatLocalDatetime(new Date(c.expiresAt));
+        const dataEl = document.getElementById('campaignData');
+        if (dataEl && c.settings) dataEl.value = JSON.stringify(c.settings, null, 2);
+
+        // Store edit id for update
+        const form = document.getElementById('createCampaignForm');
+        if (form) form.setAttribute('data-edit-id', c._id);
+        const createBtn = document.getElementById('createCampaignBtn');
+        if (createBtn) createBtn.textContent = 'Update Campaign';
+    })
+    .catch(err => {
+        console.error('Error loading campaign:', err);
+        alert(err.message || 'Failed to load campaign');
+    });
 }
 
 function deleteCampaign(campaignId) {
     if (confirm('Are you sure you want to delete this campaign?')) {
-        // Implementation for deleting campaigns
-        console.log('Delete campaign:', campaignId);
+        fetch(`/api/admin-ads/campaigns/${campaignId}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.success) throw new Error(data.message || 'Failed to delete campaign');
+            alert(data.message || 'Campaign deleted');
+            adminDashboard && adminDashboard.loadCampaigns && adminDashboard.loadCampaigns();
+        })
+        .catch(err => {
+            console.error('Error deleting campaign:', err);
+            alert(err.message || 'Failed to delete campaign');
+        });
     }
 }
 
 function sendCampaign(campaignId) {
-    if (confirm('Are you sure you want to send this campaign?')) {
-        // Implementation for sending campaigns
-        console.log('Send campaign:', campaignId);
-    }
+    if (!confirm('Are you sure you want to send this campaign?')) return;
+    fetch(`/api/admin-ads/campaigns/${campaignId}/send`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Failed to send campaign');
+        alert(data.message || 'Campaign sent');
+        adminDashboard && adminDashboard.loadCampaigns && adminDashboard.loadCampaigns();
+    })
+    .catch(err => {
+        console.error('Error sending campaign:', err);
+        alert(err.message || 'Failed to send campaign');
+    });
 }
 
 // Initialize admin dashboard when DOM is loaded

@@ -33,7 +33,23 @@ function loadProductDetails(product) {
   document.getElementById('productImage').src = product.image || '';
   document.getElementById('productName').textContent = product.name;
   document.getElementById('productPrice').textContent = `₦${product.price}`;
-  document.getElementById('soldCount').textContent = `${product.sold || 0} sold`;
+  const stock = Number(product.stock || 0);
+  const reserved = Number(product.reserved || 0);
+  const available = Math.max(0, stock - reserved);
+  const soldEl = document.getElementById('soldCount');
+  if (available <= 0) {
+    soldEl.textContent = 'Out of Stock';
+  } else {
+    const hint = available <= 5 ? `<span style="margin-left:8px;color: var(--muted);font-size:0.9rem;">Only ${available} available</span>` : '';
+    soldEl.innerHTML = `Stock: ${available} ${hint}`;
+  }
+  const addBtn = document.getElementById('addToCartBtn');
+  if (available <= 0) {
+    addBtn.disabled = true;
+    addBtn.style.opacity = '0.6';
+    addBtn.style.cursor = 'not-allowed';
+    addBtn.innerHTML = '<i class="fas fa-ban"></i> Out of Stock';
+  }
   document.getElementById('productDescription').textContent = product.description;
   document.getElementById('accountNumber').textContent = product.vendor?.virtualAccount || '';
 }

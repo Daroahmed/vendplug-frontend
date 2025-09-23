@@ -234,12 +234,16 @@
 
     /* Agent Profile */
     .agent-profile {
-      background: var(--bg-card);
-      padding: 1.5rem;
+      background: rgba(30, 30, 30, 0.6);
+      padding: 1rem;
       position: sticky;
       top: 68px;
       z-index: 90;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
 
     .agent-details {
@@ -249,8 +253,8 @@
     }
 
     .agent-image {
-      width: 80px;
-      height: 80px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       object-fit: cover;
       border: 2px solid var(--primary);
@@ -258,13 +262,14 @@
 
     .agent-info h2 {
       color: var(--primary);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.4rem;
+      font-size: 1.25rem;
     }
 
     .agent-info p {
       color: var(--muted);
-      margin-bottom: 0.3rem;
-      font-size: 0.9rem;
+      margin-bottom: 0.25rem;
+      font-size: 0.85rem;
     }
 
     .whatsapp-link {
@@ -479,13 +484,9 @@
           <div class="agent-details">
             <div class="agent-info">
               <h2>${agent.fullName}</h2>
-              <p><strong>Phone:</strong> <a class="whatsapp-link" href="https://wa.me/${agent.phoneNumber}" target="_blank">${agent.phoneNumber}</a></p>
+              <p><strong>Phone:</strong> <span>${agent.phoneNumber || 'Not provided'}</span></p>
               <p><strong>Address:</strong> ${agent.businessAddress || 'Not provided'}</p>
               <p><strong>State:</strong> ${agent.state || 'Not specified'}</p>
-              <p><strong>Account Number:</strong> 
-                <span id="agentAccount">${agent.virtualAccount || 'Not set'}</span>
-                <button class="copy-btn" onclick="copyAccount()">Copy</button>
-              </p>
               <p><strong>Total Transactions:</strong> ${agent.totalTransactions || 0}</p>
             </div>
           </div>
@@ -510,6 +511,9 @@
             <div class="product-info">
               <h4>${product.name}</h4>
               <p>₦${product.price.toLocaleString()}</p>
+              <p style="margin-top:6px;color:${(() => { const a=Math.max(0, Number(product.stock||0)-Number(product.reserved||0)); return a<=0?'#ff7675':'var(--muted)'; })()}">
+                ${(() => { const a=Math.max(0, Number(product.stock||0)-Number(product.reserved||0)); if(a<=0) return 'Out of Stock'; const hint = a<=5?` <span style=\"margin-left:6px;\">Only ${a} available</span>`:''; return `Stock: ${a}${hint}`; })()}
+              </p>
             </div>
           </div>
         `).join('');
@@ -729,13 +733,9 @@
           <div class="agent-details">
             <div class="agent-info">
               <h2>${agent.fullName}</h2>
-              <p><strong>Phone:</strong> <a class="whatsapp-link" href="https://wa.me/${agent.phoneNumber}" target="_blank">${agent.phoneNumber}</a></p>
+              <p><strong>Phone:</strong> <span>${agent.phoneNumber || 'Not provided'}</span></p>
               <p><strong>Address:</strong> ${agent.businessAddress || 'Not provided'}</p>
               <p><strong>State:</strong> ${agent.state || 'Not specified'}</p>
-              <p><strong>Account Number:</strong> 
-                <span id="agentAccount">${agent.virtualAccount || 'Not set'}</span>
-                <button class="copy-btn" onclick="copyAccount()">Copy</button>
-              </p>
               <p><strong>Total Transactions:</strong> ${agent.totalTransactions || 0}</p>
               <div style="margin-top: 15px;" id="messageButtonContainer">
                 <!-- Message button will be added here by JavaScript if user is a buyer -->
@@ -763,6 +763,9 @@
             <div class="product-info">
               <h4>${product.name}</h4>
               <p>₦${product.price.toLocaleString()}</p>
+              <p style="margin-top:6px;color:${(() => { const a=Math.max(0, Number(product.stock||0)-Number(product.reserved||0)); return a<=0?'#ff7675':'var(--muted)'; })()}">
+                ${(() => { const a=Math.max(0, Number(product.stock||0)-Number(product.reserved||0)); if(a<=0) return 'Out of Stock'; const hint = a<=5?` <span style=\"margin-left:6px;\">Only ${a} available</span>`:''; return `Stock: ${a}${hint}`; })()}
+              </p>
             </div>
           </div>
         `).join('');
