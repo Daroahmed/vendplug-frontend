@@ -6,8 +6,7 @@
   <title>Vendor Shop - VendPlug</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/ads.css">
-  <!-- QR Code Library -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  
   <style>
     :root {
       --primary: #00cc99;
@@ -439,10 +438,7 @@
     </div>
     <div class="copy-success" id="copySuccess">Link copied to clipboard!</div>
     
-    <div class="qr-section">
-      <h4>QR Code for Easy Sharing</h4>
-      <img id="qrCode" class="qr-code" alt="Shop QR Code">
-    </div>
+    
   </section>
 
   <!-- Loading Spinner -->
@@ -573,28 +569,15 @@
     // Initialize sharing functionality
     function initializeSharing(vendor) {
       currentVendor = vendor;
-      shopUrl = `${window.location.origin}/view-shop.html?vendor=${vendor._id}`;
+      const SHARE_BASE = window.SHARE_BASE_URL || (window.location.hostname === 'localhost'
+        ? (window.PUBLIC_BASE_URL || window.DEPLOY_BASE_URL || 'https://your-domain.com')
+        : window.location.origin);
+      shopUrl = `${SHARE_BASE}/view-shop.html?vendor=${vendor._id}`;
       
-      // Generate QR code
-      generateQRCode(shopUrl);
+      
     }
 
-    // Generate QR code
-    function generateQRCode(url) {
-      const qrCodeEl = document.getElementById('qrCode');
-      if (qrCodeEl && window.QRCode) {
-        QRCode.toCanvas(qrCodeEl, url, {
-          width: 200,
-          margin: 2,
-          color: {
-            dark: '#00cc99',
-            light: '#ffffff'
-          }
-        }, function (error) {
-          if (error) console.error('QR Code generation error:', error);
-        });
-      }
-    }
+    
 
     // Share to WhatsApp
     function shareToWhatsApp() {
@@ -675,38 +658,42 @@
       }
     }
 
-    // Start chat function
-    function startChat(userType, userId, userName) {
-      console.log('Starting chat with:', { userType, userId, userName });
-      
-      // Check if user is logged in
-      const currentUser = JSON.parse(localStorage.getItem('vendplugBuyer'));
-      console.log('Current user:', currentUser);
-      
-      if (!currentUser) {
-        alert('Please log in to start a conversation');
-        window.location.href = 'buyer-auth.html';
+    // Start chat with vendor (same flow as vendor cards)
+    async function startChat(participantId, participantType, participantName) {
+      const buyerToken = localStorage.getItem('vendplug-buyer-token');
+      if (!buyerToken) {
+        const login = confirm('Please sign in to start a chat. Would you like to sign in now?');
+        if (login) {
+          window.location.href = 'buyer-login.html';
+        }
         return;
       }
 
-      // Open chat interface
-      openChatInterface(userType, userId, userName);
-    }
-
-    // Open chat interface (placeholder - will be implemented with floating widget)
-    function openChatInterface(userType, userId, userName) {
       try {
-        // For now, redirect to chat page with parameters
-        const chatUrl = `chat.html?type=direct&${userType}=${userId}&name=${encodeURIComponent(userName)}`;
-        console.log('Opening chat URL:', chatUrl);
-        
-        // Always redirect in the same window to avoid multiple tabs
-        window.location.href = chatUrl;
+        const response = await fetch('/api/chats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${buyerToken}`
+          },
+          body: JSON.stringify({
+            participantId: participantId,
+            participantType: participantType
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('Chat created/found:', data);
+          window.location.href = 'chat.html';
+        } else {
+          const error = await response.json();
+          console.error('Failed to create chat:', error);
+          alert('Failed to start chat. Please try again.');
+        }
       } catch (error) {
-        console.error('Error opening chat:', error);
-        // Fallback: redirect in same window
-        const chatUrl = `chat.html?type=direct&${userType}=${userId}&name=${encodeURIComponent(userName)}`;
-        window.location.href = chatUrl;
+        console.error('Error creating chat:', error);
+        alert('Error starting chat. Please try again.');
       }
     }
 
@@ -796,7 +783,7 @@
         if (messageButtonContainer) {
           const vendorId = new URLSearchParams(window.location.search).get('vendor');
           messageButtonContainer.innerHTML = `
-            <button class="message-btn" onclick="startChat('vendor', '${vendorId}', 'Vendor')">
+            <button class="message-btn" onclick="startChat('${vendorId}', 'Vendor', 'Vendor')">
               <i class="fas fa-comments"></i>
               Message Vendor
             </button>

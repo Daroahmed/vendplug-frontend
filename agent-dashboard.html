@@ -693,16 +693,6 @@
 
     <h2 class="section-title">Dispute Management</h2>
     <div class="grid">
-      <a href="create-dispute.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h3>Create Dispute</h3>
-          <p>Report an issue with an order</p>
-        </div>
-      </a>
-
       <a href="my-disputes.html">
         <div class="card">
           <div class="card-icon">
@@ -856,6 +846,9 @@
     // Global variables for sharing
     let agentData = null;
     let businessUrl = '';
+    const SHARE_BASE = window.SHARE_BASE_URL || (window.location.hostname === 'localhost'
+      ? (window.PUBLIC_BASE_URL || window.DEPLOY_BASE_URL || 'https://your-domain.com')
+      : window.location.origin);
 
     // This would be replaced with your actual data loading logic
     document.addEventListener('DOMContentLoaded', function() {
@@ -906,7 +899,7 @@
           agentData = await response.json();
           console.log('✅ Agent data loaded:', agentData);
           
-          businessUrl = `${window.location.origin}/view-business.html?agent=${agentData._id}`;
+          businessUrl = `${SHARE_BASE}/view-business.html?agent=${agentData._id}`;
           console.log('✅ Business URL generated:', businessUrl);
           
           // Update business link display
@@ -920,7 +913,7 @@
       } catch (error) {
         console.error('Error loading agent data:', error);
         // Fallback: use placeholder data
-        businessUrl = `${window.location.origin}/view-business.html?agent=your-agent-id`;
+        businessUrl = `${SHARE_BASE}/view-business.html?agent=your-agent-id`;
         document.getElementById('businessLinkDisplay').textContent = businessUrl;
         generateQRCode(businessUrl);
       }

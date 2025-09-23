@@ -693,16 +693,6 @@
 
     <h2 class="section-title">Dispute Management</h2>
     <div class="grid">
-      <a href="create-dispute.html">
-        <div class="card">
-          <div class="card-icon">
-            <i class="fas fa-exclamation-triangle"></i>
-          </div>
-          <h3>Create Dispute</h3>
-          <p>Report an issue with an order</p>
-        </div>
-      </a>
-
       <a href="my-disputes.html">
         <div class="card">
           <div class="card-icon">
@@ -857,6 +847,9 @@
     // Global variables for sharing
     let vendorData = null;
     let shopUrl = '';
+    const SHARE_BASE = window.SHARE_BASE_URL || (window.location.hostname === 'localhost'
+      ? (window.PUBLIC_BASE_URL || window.DEPLOY_BASE_URL || 'https://your-domain.com')
+      : window.location.origin);
 
     // This would be replaced with your actual data loading logic
     document.addEventListener('DOMContentLoaded', function() {
@@ -907,7 +900,7 @@
           vendorData = await response.json();
           console.log('✅ Vendor data loaded:', vendorData);
           
-          shopUrl = `${window.location.origin}/view-shop.html?vendor=${vendorData._id}`;
+          shopUrl = `${SHARE_BASE}/view-shop.html?vendor=${vendorData._id}`;
           console.log('✅ Shop URL generated:', shopUrl);
           
           // Update shop link display
@@ -921,7 +914,7 @@
       } catch (error) {
         console.error('Error loading vendor data:', error);
         // Fallback: use placeholder data
-        shopUrl = `${window.location.origin}/view-shop.html?vendor=your-vendor-id`;
+        shopUrl = `${SHARE_BASE}/view-shop.html?vendor=your-vendor-id`;
         document.getElementById('shopLinkDisplay').textContent = shopUrl;
         generateQRCode(shopUrl);
       }

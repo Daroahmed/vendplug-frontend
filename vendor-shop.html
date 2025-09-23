@@ -737,7 +737,7 @@
       <ul class="menu-links">
         <li><a href="buyer-wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
         <li><a href="buyer-profile.html"><i class="fas fa-user"></i> Profile</a></li>
-        <li><a href="create-dispute.html"><i class="fas fa-exclamation-triangle"></i> Create Dispute</a></li>
+        
         <li><a href="my-disputes.html"><i class="fas fa-clipboard-list"></i> My Disputes</a></li>
         <li><a href="support.html"><i class="fas fa-headset"></i> Support</a></li>
         <li><a href="buyer-auth.html"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
@@ -1036,6 +1036,10 @@
     const API_BASE = window.location.hostname === "localhost" 
       ? `${window.BACKEND_URL || "http://localhost:5000"}/api` 
       : "/api";
+    // Share base URL (use deployed URL when on localhost)
+    const SHARE_BASE = window.SHARE_BASE_URL || (window.location.hostname === 'localhost' 
+      ? (window.PUBLIC_BASE_URL || window.DEPLOY_BASE_URL || 'https://your-domain.com') 
+      : window.location.origin);
 
     // Event listeners for filters
     let debounceTimeout;
@@ -1247,42 +1251,15 @@
     }
 
     function shareVendor(id, shopName, state, category) {
-      const shopUrl = `${window.location.origin}/view-shop.html?vendor=${id}`;
-      
-      // Create share options
-      const shareOptions = [
-        {
-          name: 'WhatsApp',
-          icon: 'fab fa-whatsapp',
-          color: '#25D366',
-          action: () => shareToWhatsApp(shopName, state, category, shopUrl)
-        },
-        {
-          name: 'Facebook',
-          icon: 'fab fa-facebook',
-          color: '#1877F2',
-          action: () => shareToFacebook(shopUrl)
-        },
-        {
-          name: 'Twitter',
-          icon: 'fab fa-twitter',
-          color: '#1DA1F2',
-          action: () => shareToTwitter(shopName, shopUrl)
-        },
-        {
-          name: 'Copy Link',
-          icon: 'fas fa-copy',
-          color: '#00cc99',
-          action: () => copyShopLink(shopUrl)
-        }
-      ];
-
+      const shopUrl = `${SHARE_BASE}/view-shop.html?vendor=${id}`;
+      // Store context globally for handlers
+      window.currentShare = { shopName, state, category, shopUrl };
       // Create and show share modal
-      showShareModal(shareOptions, shopName);
+      showShareModal(shopName);
     }
 
     // Show share modal
-    function showShareModal(shareOptions, shopName) {
+    function showShareModal(shopName) {
       // Remove existing modal if any
       const existingModal = document.querySelector('.share-modal');
       if (existingModal) existingModal.remove();
@@ -1298,12 +1275,22 @@
             </button>
           </div>
           <div class="share-options">
-            ${shareOptions.map(option => `
-              <button class="share-option" onclick="this.closest('.share-modal').remove(); ${option.action.toString().replace('function () {', '').replace('}', '')}">
-                <i class="${option.icon}" style="color: ${option.color}"></i>
-                <span>${option.name}</span>
+              <button class="share-option" onclick="this.closest('.share-modal').remove(); handleShare('whatsapp')">
+                <i class="fab fa-whatsapp" style="color: #25D366"></i>
+                <span>WhatsApp</span>
               </button>
-            `).join('')}
+              <button class="share-option" onclick="this.closest('.share-modal').remove(); handleShare('facebook')">
+                <i class="fab fa-facebook" style="color: #1877F2"></i>
+                <span>Facebook</span>
+              </button>
+              <button class="share-option" onclick="this.closest('.share-modal').remove(); handleShare('twitter')">
+                <i class="fab fa-twitter" style="color: #1DA1F2"></i>
+                <span>Twitter</span>
+              </button>
+              <button class="share-option" onclick="this.closest('.share-modal').remove(); handleShare('copy')">
+                <i class="fas fa-copy" style="color: #00cc99"></i>
+                <span>Copy Link</span>
+              </button>
           </div>
         </div>
       `;
@@ -1314,6 +1301,24 @@
       modal.addEventListener('click', (e) => {
         if (e.target === modal) modal.remove();
       });
+    }
+
+    // Handle share actions using stored context
+    function handleShare(platform) {
+      const ctx = window.currentShare || {};
+      if (!ctx.shopUrl) return;
+      switch (platform) {
+        case 'whatsapp':
+          return shareToWhatsApp(ctx.shopName, ctx.state, ctx.category, ctx.shopUrl);
+        case 'facebook':
+          return shareToFacebook(ctx.shopUrl);
+        case 'twitter':
+          return shareToTwitter(ctx.shopName, ctx.shopUrl);
+        case 'copy':
+          return copyShopLink(ctx.shopUrl);
+        default:
+          break;
+      }
     }
 
     // Share to WhatsApp
