@@ -58,6 +58,24 @@
       color: var(--primary);
     }
 
+    /* Notification badge style to match dark theme */
+    .notification-icon { position: relative; }
+    .notification-badge {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background-color: var(--primary);
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: bold;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
     /* Main Container */
     .container {
       padding: 1.5rem;
@@ -354,12 +372,17 @@
   </style>
 </head>
 <body>
-  <!-- Header with Back Button -->
+  <!-- Header with Back + quick actions -->
   <div class="header">
-    <button class="back-button" onclick="window.location.href='view-business.html'">
+    <button class="back-button" onclick="window.location.href='agent-shop.html'">
       <i class="fas fa-arrow-left"></i>
     </button>
-    <div class="header-title">Agent Business</div>
+    <div class="header-title" style="flex:1;color:#00cc99;">Agent Product</div>
+    <div class="header-actions" style="margin-left:auto;display:flex;align-items:center;gap:12px;">
+      <a href="chat.html" title="Messages" style="color:#fff;"><i class="fas fa-comments"></i></a>
+      <!-- Notification icon injected by notifications.js -->
+      <a href="buyer-agent-checkout.html" title="Cart" style="color:#fff;"><i class="fas fa-shopping-cart"></i></a>
+    </div>
   </div>
 
   <div class="container">
@@ -380,6 +403,9 @@
       <button id="addToCartBtn" class="add-to-cart-btn">
         <i class="fas fa-shopping-cart"></i> Add to Cart
       </button>
+      <div style="margin-top:10px;text-align:right;">
+        <a href="buyer-agent-checkout.html" class="btn btn-outline">Go to Cart</a>
+      </div>
     </div>
 
     <!-- Account Number Section -->
@@ -433,7 +459,7 @@
   <script>
     // Back button functionality
     document.querySelector('.back-button').addEventListener('click', function() {
-      window.location.href = 'view-business.html';
+      window.location.href = 'agent-shop.html';
     });
 
     // Copy account number function
@@ -458,6 +484,8 @@
 
   <script src="js/config.js"></script>
   <script src="/js/auth-utils.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/js/notifications.js"></script>
   <script src="js/view-business-view.js"></script>
 </body>
 </html>

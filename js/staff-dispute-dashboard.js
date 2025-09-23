@@ -314,8 +314,12 @@ class StaffDisputeDashboard {
     async loadMyDisputes() {
         try {
             const statusFilter = document.getElementById('statusFilter').value;
-            const url = `${this.apiBaseUrl}/disputes/my${statusFilter ? `?status=${statusFilter}` : ''}&t=${Date.now()}`;
-            
+            // Build query params safely so we don't end up with .../my&t= when status is empty
+            const params = new URLSearchParams();
+            if (statusFilter) params.append('status', statusFilter);
+            params.append('t', Date.now());
+            const url = `${this.apiBaseUrl}/disputes/my${params.toString() ? `?${params.toString()}` : ''}`;
+
             const response = await fetch(url, {
                 headers: {
                     'Authorization': `Bearer ${getAuthToken()}`,
@@ -328,10 +332,11 @@ class StaffDisputeDashboard {
             }
 
             const data = await response.json();
-            this.renderMyDisputes(data.data.disputes);
+            const disputes = (data && data.data && Array.isArray(data.data.disputes)) ? data.data.disputes : [];
+            this.renderMyDisputes(disputes);
             
             // Update dispute count
-            document.getElementById('disputeCount').textContent = data.data.disputes.length;
+            document.getElementById('disputeCount').textContent = disputes.length;
 
         } catch (error) {
             console.error('Error loading my disputes:', error);
@@ -345,7 +350,7 @@ class StaffDisputeDashboard {
         
         console.log('🔍 Rendering disputes:', disputes);
         
-        if (disputes.length === 0) {
+        if (!disputes || disputes.length === 0) {
             container.innerHTML = '<div class="text-center text-muted">No disputes found</div>';
             return;
         }
@@ -414,7 +419,10 @@ class StaffDisputeDashboard {
     async loadAvailableDisputes() {
         try {
             const categoryFilter = document.getElementById('categoryFilter').value;
-            const url = `${this.apiBaseUrl}/disputes/available${categoryFilter ? `?category=${categoryFilter}` : ''}`;
+            // Build query params safely
+            const params = new URLSearchParams();
+            if (categoryFilter) params.append('category', categoryFilter);
+            const url = `${this.apiBaseUrl}/disputes/available${params.toString() ? `?${params.toString()}` : ''}`;
             
             const response = await fetch(url, {
                 headers: {
@@ -428,7 +436,8 @@ class StaffDisputeDashboard {
             }
 
             const data = await response.json();
-            this.renderAvailableDisputes(data.data.disputes);
+            const disputes = (data && data.data && Array.isArray(data.data.disputes)) ? data.data.disputes : [];
+            this.renderAvailableDisputes(disputes);
 
         } catch (error) {
             console.error('Error loading available disputes:', error);
@@ -440,7 +449,7 @@ class StaffDisputeDashboard {
     renderAvailableDisputes(disputes) {
         const container = document.getElementById('availableDisputesList');
         
-        if (disputes.length === 0) {
+        if (!disputes || disputes.length === 0) {
             container.innerHTML = '<div class="text-center text-muted">No available disputes</div>';
             return;
         }
@@ -646,6 +655,7 @@ class StaffDisputeDashboard {
 
     async viewSupportTicket(ticketId) {
         try {
+            // Use staff ticket details endpoint
             const response = await fetch(`/api/support/staff/tickets/${ticketId}`, {
                 headers: {
                     'Authorization': `Bearer ${getAuthToken()}`,
@@ -903,13 +913,14 @@ class StaffDisputeDashboard {
         if (!confirm('Are you sure you want to assign this support ticket to yourself?')) return;
 
         try {
+            // Backend expects /api/staff/support/... and payload { staffId }
             const response = await fetch(`/api/support/staff/tickets/${ticketId}/assign`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${getAuthToken()}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ assignedTo: this.currentStaff._id })
+                body: JSON.stringify({ staffId: this.currentStaff._id })
             });
 
             if (!response.ok) {

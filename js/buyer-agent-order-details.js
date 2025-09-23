@@ -1,6 +1,7 @@
 console.log("📦 buyer-order-details.js loaded");
 
-const BACKEND = window.BACKEND_URL || "";
+// Avoid global name collisions
+const API_BASE = window.BACKEND_URL || "";
 const token = getAuthToken();
 const buyer = getCurrentUser();
 const detailsDiv = document.getElementById("orderDetails");
@@ -40,7 +41,7 @@ if (!orderId) {
 
 async function fetchOrderDetails(id) {
   try {
-    const res = await fetch(`${BACKEND}/api/buyer-orders/${id}`, {
+    const res = await fetch(`${API_BASE}/api/buyer-orders/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 

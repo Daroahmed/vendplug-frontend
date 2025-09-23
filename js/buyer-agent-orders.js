@@ -1,6 +1,7 @@
 console.log("📦 buyer-agent-orders.js loaded");
 
-const BACKEND = window.BACKEND_URL || "";
+// Avoid colliding with other globals (e.g., notifications.js)
+const API_BASE = window.BACKEND_URL || "";
 const container = document.getElementById("agentOrdersContainer");
 const token = getAuthToken();
 
@@ -14,7 +15,7 @@ if (!token) {
 async function fetchOrders() {
   try {
     // ✅ Correct endpoint
-    const res = await fetch(`${BACKEND}/api/buyer-orders`, {
+    const res = await fetch(`${API_BASE}/api/buyer-orders`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
