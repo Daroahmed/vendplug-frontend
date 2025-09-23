@@ -492,6 +492,12 @@
             .header-title {
                 font-size: 1rem;
             }
+
+            /* Master-detail behavior on mobile */
+            .chat-container.mobile-show-list .chat-main { display: none; }
+            .chat-container.mobile-show-list .chat-sidebar { transform: translateX(0); }
+            .chat-container.mobile-show-chat .chat-main { display: flex; }
+            .chat-container.mobile-show-chat .chat-sidebar { transform: translateX(-100%); }
         }
 
         /* Animations */
@@ -556,7 +562,7 @@
     </div>
 
     <!-- Main Container -->
-    <div class="chat-container">
+    <div class="chat-container" id="chatContainer">
         <!-- Sidebar -->
         <div class="chat-sidebar" id="chatSidebar">
             <div class="sidebar-header">
@@ -632,6 +638,8 @@
             initializeChat();
             setupEventListeners();
             loadChats();
+            // Initialize mobile layout default
+            handleMobileResize();
         });
 
         // Initialize chat functionality
@@ -945,6 +953,15 @@
                 console.log('Input container computed style:', window.getComputedStyle(inputContainer).display);
             } else {
                 console.error('Message input container not found!');
+            }
+
+            // On mobile, switch to chat detail view
+            if (window.innerWidth <= 768) {
+                const container = document.getElementById('chatContainer');
+                if (container) {
+                    container.classList.remove('mobile-show-list');
+                    container.classList.add('mobile-show-chat');
+                }
             }
 
             // Load messages for this chat
@@ -1356,7 +1373,21 @@
 
         function toggleSidebar() {
             const sidebar = document.getElementById('chatSidebar');
-            sidebar.classList.toggle('mobile-open');
+            const container = document.getElementById('chatContainer');
+            if (window.innerWidth <= 768) {
+                // Toggle between list and chat views on mobile
+                if (container.classList.contains('mobile-show-chat')) {
+                    container.classList.remove('mobile-show-chat');
+                    container.classList.add('mobile-show-list');
+                    sidebar.classList.add('mobile-open');
+                } else {
+                    container.classList.remove('mobile-show-list');
+                    container.classList.add('mobile-show-chat');
+                    sidebar.classList.remove('mobile-open');
+                }
+            } else {
+                sidebar.classList.toggle('mobile-open');
+            }
         }
 
         function refreshChats() {
@@ -1364,6 +1395,13 @@
         }
 
         function goBack() {
+            const container = document.getElementById('chatContainer');
+            if (window.innerWidth <= 768 && container && container.classList.contains('mobile-show-chat')) {
+                // In mobile chat view, go back to list instead of navigating away
+                container.classList.remove('mobile-show-chat');
+                container.classList.add('mobile-show-list');
+                return;
+            }
             window.history.back();
         }
 
@@ -1593,9 +1631,19 @@
 
         // Mobile responsive handling
         function handleMobileResize() {
+            const sidebar = document.getElementById('chatSidebar');
+            const container = document.getElementById('chatContainer');
             if (window.innerWidth <= 768) {
-                const sidebar = document.getElementById('chatSidebar');
                 sidebar.classList.remove('mobile-open');
+                // Default to list view if no chat is selected
+                if (!currentChatId) {
+                    container.classList.add('mobile-show-list');
+                    container.classList.remove('mobile-show-chat');
+                }
+            } else {
+                // Clear mobile-only classes on desktop
+                container.classList.remove('mobile-show-list');
+                container.classList.remove('mobile-show-chat');
             }
         }
 
