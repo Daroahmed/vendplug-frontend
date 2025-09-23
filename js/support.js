@@ -417,20 +417,27 @@ class SupportManager {
     }
 
     getSenderName(message) {
-        // Convert userType to match senderType format (capitalize first letter)
-        const currentUserType = this.userType ? 
-            this.userType.charAt(0).toUpperCase() + this.userType.slice(1) : 
-            null;
-            
+        // Normalize current user type for comparison
+        const currentUserType = this.userType
+            ? this.userType.charAt(0).toUpperCase() + this.userType.slice(1)
+            : null;
+
+        // If it's the current user's message
         if (message.senderType === currentUserType) {
             return this.currentUser.fullName || this.currentUser.email || 'You';
         }
-        
-        // For staff messages, we might not have the full name
-        if (message.senderType === 'Staff') {
-            return 'Support Staff';
+
+        // Prefer populated sender name when available (backend populates fullName)
+        if (message.sender && (message.sender.fullName || message.sender.email)) {
+            return message.sender.fullName || message.sender.email;
         }
-        
+
+        // Fallbacks by role
+        if (message.senderType === 'Staff') return 'Support Staff';
+        if (message.senderType === 'Buyer') return 'Buyer';
+        if (message.senderType === 'Vendor') return 'Vendor';
+        if (message.senderType === 'Agent') return 'Agent';
+
         return 'Support';
     }
 

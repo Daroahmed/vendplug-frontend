@@ -851,18 +851,31 @@
                 chatItem.dataset.chatId = chat._id;
                 
                 // Get the other participant's name (not the current user)
-                const otherParticipant = chat.participants?.find(p => p.user._id !== currentUserId);
-                const chatName = otherParticipant ? otherParticipant.user.fullName : 'Unknown User';
-                const avatar = chatName.split(' ').map(n => n[0]).join('').toUpperCase();
-                
-                // Check if this is a support chat
-                const isSupportChat = otherParticipant && (
-                    otherParticipant.user.role === 'staff' || 
-                    otherParticipant.user.role === 'admin' ||
-                    otherParticipant.user.email?.includes('support') ||
-                    otherParticipant.userType === 'staff' ||
-                    otherParticipant.userType === 'admin'
+                const otherParticipant = chat.participants?.find(p => {
+                    const uid = (p.user && (p.user._id || p.user.id)) || p.user;
+                    return uid !== currentUserId;
+                });
+                // Robust support detection: use chatType/supportTicket flags, then participant roles
+                const isSupportChat = (
+                    chat.chatType === 'support' ||
+                    !!chat.supportTicket ||
+                    (otherParticipant && (
+                        otherParticipant.user?.role === 'staff' ||
+                        otherParticipant.user?.role === 'admin' ||
+                        otherParticipant.user?.email?.includes('support') ||
+                        otherParticipant.userType === 'staff' ||
+                        otherParticipant.userType === 'admin'
+                    ))
                 );
+
+                // Prefer showing Support Staff name for support chats when name is unknown/missing
+                const rawName = otherParticipant ? (
+                    (otherParticipant.user && (otherParticipant.user.fullName || otherParticipant.user.name || otherParticipant.user.shopName || otherParticipant.user.username)) || ''
+                ) : '';
+                const displayName = isSupportChat
+                    ? 'Support Staff'
+                    : (rawName && rawName.trim() ? rawName.trim() : 'Unknown User');
+                const avatar = displayName.split(' ').map(n => n[0]).join('').toUpperCase();
                 
                 if (isSupportChat) {
                     chatItem.classList.add('support-chat');
@@ -875,7 +888,7 @@
                 chatItem.innerHTML = `
                     <div class="chat-avatar">${avatar}</div>
                     <div class="chat-info">
-                        <div class="chat-name">${chatName}</div>
+                        <div class="chat-name">${displayName}</div>
                         <div class="chat-preview">${lastMessage}</div>
                     </div>
                     <div class="chat-meta">
