@@ -3,6 +3,7 @@ const CACHE_NAME = 'vendplug-app-shell-v1';
 const APP_SHELL = [
   '/',
   '/public-buyer-home.html',
+  '/offline.html',
   '/css/ads.css',
   '/js/auth-utils.js',
   '/js/cart-badge.js'
@@ -16,9 +17,13 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k))))
-  );
+  event.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => k !== CACHE_NAME && caches.delete(k)));
+    // Notify pages that precache is ready
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clients.forEach((client) => client.postMessage({ type: 'PRECACHE_READY' }));
+  })());
   self.clients.claim();
 });
 
@@ -41,7 +46,7 @@ self.addEventListener('fetch', (event) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((c) => c.put(req, copy));
         return res;
-      }).catch(() => caches.match(req).then((r) => r || caches.match('/public-buyer-home.html')))
+      }).catch(() => caches.match(req).then((r) => r || caches.match('/offline.html')))
     );
     return;
   }
@@ -53,7 +58,7 @@ self.addEventListener('fetch', (event) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((c) => c.put(req, copy));
         return res;
-      }))
+      }).catch(() => caches.match('/offline.html')))
     );
     return;
   }

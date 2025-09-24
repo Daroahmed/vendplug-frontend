@@ -226,3 +226,37 @@ function urlBase64ToUint8Array(base64String) {
   for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
   return outputArray;
 }
+
+// Tiny toast helper for user feedback
+;(function(){
+  try {
+    if (!document.getElementById('vp-toast-container')) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .vp-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:99999;display:flex;gap:8px;align-items:center;background:#1e1e1e;color:#fff;border:1px solid rgba(255,255,255,.1);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transition:opacity .25s ease}
+        .vp-toast.show{opacity:1}
+      `;
+      document.head.appendChild(style);
+      const c = document.createElement('div');
+      c.id = 'vp-toast-container';
+      document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(c));
+    }
+  } catch(_){}
+  window.showToast = function(message, timeout=3000){
+    const c = document.getElementById('vp-toast-container');
+    if (!c) return;
+    const t = document.createElement('div');
+    t.className = 'vp-toast';
+    t.textContent = message;
+    c.appendChild(t);
+    requestAnimationFrame(()=>t.classList.add('show'));
+    setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 250); }, timeout);
+  };
+})();
+
+// Ensure push CTA loads on most pages
+;(function(){
+  document.addEventListener('DOMContentLoaded', ()=>{
+    try{ const s=document.createElement('script'); s.src='/js/push-cta.js'; document.body.appendChild(s);}catch(_){}
+  });
+})();
