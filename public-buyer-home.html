@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>VendPlug - Discover Amazing Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="/manifest.webmanifest">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/css/ads.css">
   <style>
@@ -545,6 +546,7 @@
 
   <!-- Ad Manager -->
   <script src="/js/adManager.js"></script>
+  <script src="/js/pwa-register.js"></script>
   
   <!-- Notification and Message Scripts -->
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -553,6 +555,13 @@
   <script src="/js/notifications.js"></script>
   <script src="/js/messageNotifications.js"></script>
   <script src="/js/cart-badge.js"></script>
+  <script>
+    // Try enabling push after the user interacts or when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      // Delay a bit to avoid permission prompt on first paint
+      setTimeout(() => { window.enablePushIfPossible && window.enablePushIfPossible(); }, 1500);
+    });
+  </script>
   
   <script>
     // Unified buyer logout clears tokens and relevant storage, then redirects
