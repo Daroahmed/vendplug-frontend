@@ -258,5 +258,6 @@ function urlBase64ToUint8Array(base64String) {
 ;(function(){
   document.addEventListener('DOMContentLoaded', ()=>{
     try{ const s=document.createElement('script'); s.src='/js/push-cta.js'; document.body.appendChild(s);}catch(_){}
+    try{ const s2=document.createElement('script'); s2.src='/js/back-button.js'; document.body.appendChild(s2);}catch(_){}
   });
 })();
