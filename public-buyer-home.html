@@ -525,9 +525,7 @@
     <!-- State Selection -->
     <div class="state-selection">
       <h2 class="section-title">Select Your Location</h2>
-      <select id="stateSelect" class="state-select">
-        <option value="">-- Choose State --</option>
-      </select>
+      <select id="stateSelect" class="state-select"></select>
     </div>
 
     <!-- Loading Spinner -->
@@ -536,6 +534,10 @@
     </div>
 
     <!-- Category Sections will be dynamically added here -->
+    <div id="activeCategoriesSection" class="category-group" style="display:none;">
+      <h3 class="group-title">Active Categories Near You</h3>
+      <div id="activeCategoriesGrid" class="categories-grid"></div>
+    </div>
     <div id="categorySections"></div>
     </main>
   </div>
@@ -753,11 +755,11 @@
     function loadStates() {
       const stateSelect = document.getElementById('stateSelect');
       
-      // Add "All States" as default option
+      // Add "All States" as default option (persisted)
+      const persisted = localStorage.getItem('vendplug-buyer-state') || '';
       const allStatesOption = document.createElement('option');
       allStatesOption.value = '';
       allStatesOption.textContent = 'All States';
-      allStatesOption.selected = true;
       stateSelect.appendChild(allStatesOption);
       
       nigerianStates.forEach(state => {
@@ -766,6 +768,9 @@
         option.textContent = state;
         stateSelect.appendChild(option);
       });
+
+      // Apply persisted selection
+      stateSelect.value = persisted;
     }
 
     // Load categories
@@ -775,6 +780,9 @@
       
       // Hide loading spinner
       loadingSpinner.style.display = 'none';
+      
+      // Render Active Categories first (vendor mode by default)
+      renderActiveCategories();
       
       // Create category groups
       groupedCategories.forEach(group => {
@@ -798,6 +806,57 @@
         
         categorySections.appendChild(groupDiv);
       });
+    }
+
+    async function renderActiveCategories() {
+      try {
+        const state = document.getElementById('stateSelect').value || '';
+        const grid = document.getElementById('activeCategoriesGrid');
+        const wrapper = document.getElementById('activeCategoriesSection');
+        grid.innerHTML = '';
+
+        // Prepare category list
+        const allCards = groupedCategories.flatMap(g => g.categories);
+        const uniqueNames = Array.from(new Set(allCards.map(c => c.name)));
+
+        // Choose endpoint based on current mode
+        const base = currentMode === 'agent' ? '/api/agents/shop-agents' : '/api/vendors/shop-vendors';
+
+        // Probe each category for availability (in parallel)
+        const checks = await Promise.all(uniqueNames.map(async (name) => {
+          const url = `${base}?category=${encodeURIComponent(name)}${state ? `&state=${encodeURIComponent(state)}` : ''}`;
+          try {
+            const res = await fetch(url);
+            const data = await res.json().catch(() => ([]));
+            const count = Array.isArray(data) ? data.length : Array.isArray(data?.vendors) ? data.vendors.length : Array.isArray(data?.agents) ? data.agents.length : 0;
+            return { name, count };
+          } catch (_) {
+            return { name, count: 0 };
+          }
+        }));
+
+        const activeNames = checks.filter(c => c.count > 0).map(c => c.name);
+        const activeCards = allCards.filter(c => activeNames.includes(c.name));
+
+        if (activeCards.length === 0) {
+          wrapper.style.display = 'none';
+          return;
+        }
+
+        wrapper.style.display = '';
+        grid.innerHTML = activeCards.slice(0, 12).map(category => `
+          <div class="category-card" onclick="selectCategory('${category.name}')">
+            <img src="${category.image}" alt="${category.name}" class="category-image" onerror="this.src='https://via.placeholder.com/300x150?text=${encodeURIComponent(category.name)}'">
+            <div class="category-info">
+              <h4 class="category-name">${category.name}</h4>
+              <p class="category-description">${currentMode === 'agent' ? 'Agents' : 'Vendors'} available</p>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.warn('Active categories load failed:', e.message);
+        document.getElementById('activeCategoriesSection').style.display = 'none';
+      }
     }
 
     // Global variable to track current mode
@@ -858,6 +917,7 @@
       currentMode = 'vendor';
       document.getElementById('vendorToggle').classList.add('active');
       document.getElementById('agentToggle').classList.remove('active');
+      renderActiveCategories();
     }
 
     // Switch to agent mode
@@ -865,11 +925,12 @@
       currentMode = 'agent';
       document.getElementById('agentToggle').classList.add('active');
       document.getElementById('vendorToggle').classList.remove('active');
+      renderActiveCategories();
     }
 
     // Select category (navigate to appropriate shop based on mode)
     function selectCategory(categoryName) {
-      const selectedState = stateSelect.value;
+      const selectedState = document.getElementById('stateSelect').value; // always read current UI value
       const query = new URLSearchParams({
         category: categoryName
       });
@@ -881,6 +942,25 @@
       const shopPage = currentMode === 'vendor' ? 'vendor-shop.html' : 'agent-shop.html';
       window.location.href = `/${shopPage}?${query.toString()}`;
     }
+
+    // Re-render active categories when state changes
+    document.getElementById('stateSelect').addEventListener('change', (e) => {
+      const val = e.target.value;
+      // Persist selection so other pages (shop views) can use it
+      localStorage.setItem('vendplug-buyer-state', val);
+      // Update URL query (remove state when All States)
+      try {
+        const url = new URL(window.location.href);
+        if (val) {
+          url.searchParams.set('state', val);
+        } else {
+          url.searchParams.delete('state');
+        }
+        const qs = url.searchParams.toString();
+        history.replaceState(null, '', url.pathname + (qs ? ('?' + qs) : '') + window.location.hash);
+      } catch (_) {}
+      renderActiveCategories();
+    });
   </script>
 </body>
 </html>

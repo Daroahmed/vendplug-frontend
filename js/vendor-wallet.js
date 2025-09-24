@@ -69,19 +69,40 @@ document.addEventListener('DOMContentLoaded', () => {
         const otherAccount = isSender ? txn.to : txn.from;
         const direction = isSender ? 'Sent to' : 'Received from';
 
-        if (!nameCache[otherAccount]) {
-          try {
-            const lookupRes = await fetch(`${window.BACKEND_URL}/api/wallet/lookup/${otherAccount}`);
-            const lookupData = await lookupRes.json();
-            nameCache[otherAccount] =
-              lookupData.user?.fullName ||
-              lookupData.user?.name ||
-              lookupData.user?.businessName ||
-              'Unknown';
-          } catch {
-            nameCache[otherAccount] = 'Unknown';
+        let displayName = '';
+        if (!isSender && txn.initiatorName && txn.initiatorName !== 'Unknown') {
+          displayName = txn.initiatorName;
+        } else {
+          const acctLower = (otherAccount || '').toString().toLowerCase();
+          const knownMap = { escrow: 'Escrow', paystack: 'Paystack', system: 'System', platform: 'VendPlug', vendplug: 'VendPlug' };
+          if (knownMap[acctLower]) displayName = knownMap[acctLower];
+
+          if (!displayName && typeof txn.ref === 'string') {
+            const refUpper = txn.ref.toUpperCase();
+            if (refUpper.includes('PAYSTACK')) displayName = 'Paystack';
+            if (refUpper.includes('VENDPLUG')) displayName = 'VendPlug';
+          }
+
+          if (!displayName && txn.initiatorType) displayName = txn.initiatorType;
+
+          if (!displayName) {
+            if (!nameCache[otherAccount]) {
+              try {
+                const lookupRes = await fetch(`${window.BACKEND_URL}/api/wallet/lookup/${otherAccount}`);
+                const lookupData = await lookupRes.json();
+                nameCache[otherAccount] =
+                  lookupData.user?.fullName ||
+                  lookupData.user?.name ||
+                  lookupData.user?.businessName ||
+                  '';
+              } catch {
+                nameCache[otherAccount] = '';
+              }
+            }
+            displayName = nameCache[otherAccount] || '';
           }
         }
+        if (!displayName) displayName = 'Unknown';
 
         const card = document.createElement('div');
         card.className = 'transaction-card';
@@ -94,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ₦${txn.amount.toLocaleString()}
             </div>
           </div>
-          <div class="transaction-direction">${direction}: ${nameCache[otherAccount]} (${otherAccount})</div>
+          <div class="transaction-direction">${direction}: ${displayName} (${otherAccount})</div>
           <div class="transaction-meta">
             Ref: ${txn.ref}<br />
             Status: ${txn.status}<br />
@@ -110,64 +131,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function resolveUser() {
-    const acct = document.getElementById('recipientAccount').value.trim();
-    const display = document.getElementById('userNameResolved');
-    resolvedNameEl.value = '';
-    display.textContent = '🔍 Resolving...';
-
-    if (!acct) {
-      display.textContent = '';
-      return;
-    }
-
-    try {
-      const res = await fetch(`${window.BACKEND_URL}/api/wallet/lookup/${acct}`);
-      const data = await res.json();
-
-      const name =
-        data.user?.fullName || data.user?.name || data.user?.businessName;
-
-      if (name && data.role) {
-        display.textContent = `✅ Recipient: ${name} (${data.role})`;
-        resolvedNameEl.value = name;
-      } else {
-        display.textContent = '❌ User not found';
-      }
-    } catch {
-      display.textContent = '⚠️ Error resolving account number';
-    }
-  }
-
-  async function handleTransfer() {
-    const acct = document.getElementById('recipientAccount').value.trim();
-    const amount = Number(document.getElementById('transferAmount').value);
-    if (!acct || amount <= 0) return alert('Enter valid account and amount');
-
-    try {
-      const res = await fetch(`${window.BACKEND_URL}/api/wallet/transfer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          fromAccountNumber: accountNumberEl.textContent.trim(),
-          toAccountNumber: acct,
-          amount,
-        }),
-      });
-
-      const data = await res.json();
-      alert(data.message || 'Transfer successful');
-      fetchWallet();
-      fetchTransactions();
-    } catch {
-      alert('Transfer failed');
-    }
-  }
-
-  // Global
-  window.handleTransfer = handleTransfer;
-  window.resolveUser = resolveUser;
+  // Transfer/resolve removed
 });

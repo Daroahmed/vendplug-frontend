@@ -1057,6 +1057,17 @@
     document.getElementById("stateFilter").addEventListener("change", e => {
       const state = e.target.value;
       localStorage.setItem("vendplug-buyer-state", state);
+      // Update URL (remove state when All States)
+      try {
+        const url = new URL(window.location.href);
+        if (state) {
+          url.searchParams.set('state', state);
+        } else {
+          url.searchParams.delete('state');
+        }
+        const qs = url.searchParams.toString();
+        history.replaceState(null, '', url.pathname + (qs ? ('?' + qs) : '') + window.location.hash);
+      } catch(_) {}
       loadVendors();
     });
 

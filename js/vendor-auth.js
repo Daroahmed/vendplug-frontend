@@ -16,6 +16,7 @@ document.getElementById("showVendorRegisterBtn").addEventListener("click", () =>
 // 🔐 LOGIN
 document.getElementById("vendorLoginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  showLoading && showLoading();
   const email = document.getElementById("vendorLoginEmail").value;
   const password = document.getElementById("vendorLoginPassword").value;
 
@@ -43,12 +44,13 @@ document.getElementById("vendorLoginForm").addEventListener("submit", async (e) 
   } catch (err) {
     console.error("❌ Vendor login error:", err);
     alert("Login failed. Try again.");
-  }
+  } finally { hideLoading && hideLoading(); }
 });
 
 // 📝 REGISTER
 document.getElementById("vendorRegisterForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  showLoading && showLoading();
 
   const fullName = document.getElementById("vendorFullName").value;
   const email = document.getElementById("vendorEmail").value;
@@ -122,7 +124,7 @@ document.getElementById("vendorRegisterForm").addEventListener("submit", async (
   } catch (error) {
     errorMsg.textContent = error.message;
     errorMsg.style.display = "block";
-  }
+  } finally { hideLoading && hideLoading(); }
 });
 // 🔄 Show "Other Category" input when "Other" is selected
 document.getElementById("vendorCategory").addEventListener("change", function() {

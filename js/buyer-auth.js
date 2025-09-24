@@ -16,6 +16,7 @@ document.getElementById("showRegisterBtn").addEventListener("click", () => {
 // 🔐 LOGIN
 document.getElementById("buyerLoginForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  showLoading && showLoading();
   const email = document.getElementById("loginEmail").value;
   const password = document.getElementById("loginPassword").value;
   const messageEl = document.getElementById("loginMessage");
@@ -52,12 +53,13 @@ document.getElementById("buyerLoginForm").addEventListener("submit", async (e) =
     console.error("❌ Login error:", err);
     messageEl.textContent = "Error logging in.";
     messageEl.style.color = "red";
-  }
+  } finally { hideLoading && hideLoading(); }
 });
 
 // 📝 REGISTER
 document.getElementById("buyerRegisterForm").addEventListener("submit", async (e) => {
   e.preventDefault();
+  showLoading && showLoading();
   const fullName = document.getElementById("registerFullName").value;
   const email = document.getElementById("registerEmail").value;
   const phoneNumber = document.getElementById("registerPhone").value;
@@ -107,5 +109,5 @@ document.getElementById("buyerRegisterForm").addEventListener("submit", async (e
     console.error("❌ Registration error:", err);
     messageEl.textContent = "Error registering.";
     messageEl.style.color = "red";
-  }
+  } finally { hideLoading && hideLoading(); }
 });

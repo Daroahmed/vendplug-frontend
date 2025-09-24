@@ -35,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   async function loadCart() {
     try {
+      showLoading && showLoading();
       const [cartRes, walletRes] = await Promise.all([
         fetch(`${baseURL}/api/agent-cart`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -61,7 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       alert('Failed to load cart. Try again.');
-    }
+    } finally { hideLoading && hideLoading(); }
   }
 
   // =========================
@@ -220,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return alert('Insufficient wallet balance');
 
     try {
+      showLoading && showLoading();
       const res = await fetch(`${baseURL}/api/agent-checkout`, {
         method: 'POST',
         headers: {
@@ -243,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error(err);
       alert(err.message);
-    }
+    } finally { hideLoading && hideLoading(); }
   });
 
   // =========================

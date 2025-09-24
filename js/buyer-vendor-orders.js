@@ -14,6 +14,7 @@ if (!token) {
 
 async function fetchOrders() {
   try {
+    showLoading && showLoading();
     // ✅ Correct endpoint
     const res = await fetch(`${API_BASE}/api/buyer-orders`, {
       headers: {
@@ -74,5 +75,5 @@ async function fetchOrders() {
   } catch (err) {
     console.error("❌ Failed to load orders:", err);
     container.innerHTML = "<p>Error loading orders.</p>";
-  }
+  } finally { hideLoading && hideLoading(); }
 }

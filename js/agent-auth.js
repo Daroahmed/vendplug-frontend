@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ✅ Agent Login
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      showLoading && showLoading();
       const email = document.getElementById("agentLoginEmail").value;
       const password = document.getElementById("agentLoginPassword").value;
   
@@ -53,12 +54,13 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Login Error:", error);
         loginMsg.textContent = "Server error";
         loginMsg.style.color = "red";
-      }
+      } finally { hideLoading && hideLoading(); }
     });
   
     // ✅ Agent Registration
     registerForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      showLoading && showLoading();
       const fullName = document.getElementById("agentFullName").value;
       const email = document.getElementById("agentEmail").value;
       const phoneNumber = document.getElementById("agentPhoneNumber").value;
@@ -108,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Register Error:", error);
         registerMsg.textContent = "Server error";
         registerMsg.style.color = "red";
-      }
+      } finally { hideLoading && hideLoading(); }
     });
   });
   

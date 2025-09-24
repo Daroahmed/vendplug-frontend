@@ -171,3 +171,27 @@ window.redirectToLogin = redirectToLogin;
 window.getCurrentUser = getCurrentUser;
 window.clearAuth = clearAuth;
 window.clearOtherUserTokens = clearOtherUserTokens;
+
+// Lightweight global loading overlay
+;(function(){
+  try {
+    if (!document.getElementById('global-loading-overlay')) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:9999}
+        .loading-spinner{width:56px;height:56px;border:4px solid rgba(255,255,255,0.25);border-top-color:var(--primary, #00cc99);border-radius:50%;animation:spin 1s linear infinite}
+        @keyframes spin{to{transform:rotate(360deg)}}
+      `;
+      document.head.appendChild(style);
+      const overlay = document.createElement('div');
+      overlay.id = 'global-loading-overlay';
+      overlay.className = 'loading-overlay';
+      overlay.innerHTML = '<div class="loading-spinner"></div>';
+      document.addEventListener('DOMContentLoaded', () => {
+        document.body.appendChild(overlay);
+      });
+    }
+  } catch(_){}
+  window.showLoading = function(){ const el = document.getElementById('global-loading-overlay'); if (el) el.style.display = 'flex'; };
+  window.hideLoading = function(){ const el = document.getElementById('global-loading-overlay'); if (el) el.style.display = 'none'; };
+})();
