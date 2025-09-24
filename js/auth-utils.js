@@ -187,12 +187,27 @@ window.clearOtherUserTokens = clearOtherUserTokens;
       overlay.id = 'global-loading-overlay';
       overlay.className = 'loading-overlay';
       overlay.innerHTML = '<div class="loading-spinner"></div>';
-      document.addEventListener('DOMContentLoaded', () => {
-        document.body.appendChild(overlay);
-      });
+      const mount = ()=>{ try{ if (!document.getElementById('global-loading-overlay')) document.body.appendChild(overlay);}catch(_){} };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mount);
+      } else {
+        mount();
+      }
     }
   } catch(_){}
-  window.showLoading = function(){ const el = document.getElementById('global-loading-overlay'); if (el) el.style.display = 'flex'; };
+  window.showLoading = function(){
+    let el = document.getElementById('global-loading-overlay');
+    if (!el) {
+      try{
+        el = document.createElement('div');
+        el.id = 'global-loading-overlay';
+        el.className = 'loading-overlay';
+        el.innerHTML = '<div class="loading-spinner"></div>';
+        document.body.appendChild(el);
+      }catch(_){ return; }
+    }
+    el.style.display = 'flex';
+  };
   window.hideLoading = function(){ const el = document.getElementById('global-loading-overlay'); if (el) el.style.display = 'none'; };
 })();
 

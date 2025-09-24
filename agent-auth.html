@@ -144,6 +144,7 @@
   </style>
 </head>
 <body>
+  <div id="global-loading-overlay" class="loading-overlay" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:9999"><div class="loading-spinner" style="width:56px;height:56px;border:4px solid rgba(255,255,255,0.25);border-top-color:#00cc99;border-radius:50%;"></div></div>
   <div class="auth-container">
     <h2>Agent Portal</h2>
 
@@ -351,7 +352,12 @@
     </div>
   </div>
 
-  <script src="js/auth-utils.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/auth-utils.js"></script>
+  <script>
+    window.showLoading = window.showLoading || function(){ const el = document.getElementById('global-loading-overlay'); if (el) el.style.display='flex'; };
+    window.hideLoading = window.hideLoading || function(){ const el = document.getElementById('global-loading-overlay'); if (el) el.style.display='none'; };
+  </script>
   <script src="/js/back-button.js"></script>
   <script>
     console.log("✅ agent-auth.js loaded");
