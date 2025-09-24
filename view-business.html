@@ -673,6 +673,13 @@
         return;
       }
 
+      if (typeof showToast === 'function') {
+        try { showToast('Opening chat...'); } catch (_) {}
+      }
+      if (typeof showLoading === 'function') {
+        try { showLoading(); } catch (_) {}
+      }
+
       try {
         const response = await fetch('/api/chats', {
           method: 'POST',
@@ -698,6 +705,10 @@
       } catch (error) {
         console.error('Error creating chat:', error);
         alert('Error starting chat. Please try again.');
+      } finally {
+        if (typeof hideLoading === 'function') {
+          try { hideLoading(); } catch (_) {}
+        }
       }
     }
 

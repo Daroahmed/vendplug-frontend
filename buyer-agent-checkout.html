@@ -44,14 +44,6 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
 
-    .back-button {
-      background: none;
-      border: none;
-      color: var(--text-light);
-      font-size: 1.2rem;
-      margin-right: 15px;
-      cursor: pointer;
-    }
 
     .header-title {
       font-size: 1.2rem;
@@ -253,9 +245,7 @@
 <body>
   <!-- Header with Back + quick actions -->
   <div class="header">
-    <button class="back-button" onclick="window.location.href='agent-shop.html'">
-      <i class="fas fa-arrow-left"></i>
-    </button>
+    
     <div class="header-title" style="flex:1;color:#00cc99;">Agent Checkout</div>
     <div class="header-actions" style="margin-left:auto;display:flex;align-items:center;gap:12px;">
       <a href="chat.html" title="Messages" style="color:#fff;"><i class="fas fa-comments"></i></a>
@@ -305,15 +295,8 @@
   </div>
 
   <script>
-    // Back button functionality
-    document.querySelector('.back-button').addEventListener('click', function() {
-      window.location.href = 'agent-shop.html';
-    });
   
-        
-        
    
-          
       
 
     // Checkout button functionality

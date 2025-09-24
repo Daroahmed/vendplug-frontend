@@ -1028,7 +1028,7 @@
       console.log(`📍 State: ${state}, 📦 Category: ${category}`);
       
       // Load agents after a short delay to ensure DOM is fully ready
-      setTimeout(loadAgents, 100);
+      setTimeout(() => loadAgents(true), 100);
     });
 
     // Backend URL configuration 
@@ -1042,15 +1042,18 @@
 
     // Event listeners for filters
     let debounceTimeout;
+    let currentPage = 1;
+    let isLoading = false;
+    let hasMore = true;
     document.getElementById("searchBox").addEventListener("input", e => {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
-        loadAgents();
+        loadAgents(true);
       }, 500);
     });
 
     document.getElementById("transactionFilter").addEventListener("change", e => {
-      loadAgents();
+      loadAgents(true);
     });
 
     document.getElementById("stateFilter").addEventListener("change", e => {
@@ -1067,13 +1070,13 @@
         const qs = url.searchParams.toString();
         history.replaceState(null, '', url.pathname + (qs ? ('?' + qs) : '') + window.location.hash);
       } catch(_) {}
-      loadAgents();
+      loadAgents(true);
     });
 
     document.getElementById("categoryFilter").addEventListener("change", e => {
       const category = e.target.value;
       localStorage.setItem("vendplug-category", category);
-      loadAgents();
+      loadAgents(true);
     });
 
     // Back to top functionality
@@ -1120,15 +1123,21 @@
       return queryParams.toString();
     }
 
-    async function loadAgents() {
+    async function loadAgents(reset = true) {
       try {
+        if (isLoading) return;
+        isLoading = true;
         const loadingSpinner = document.getElementById("loadingSpinner");
         const agentGrid = document.getElementById("agentGrid");
         const agentCombined = document.getElementById("agentCombined");
-        
+
+        if (reset) {
+          currentPage = 1;
+          hasMore = true;
+          agentGrid.innerHTML = "";
+          agentCombined.innerHTML = "";
+        }
         loadingSpinner.style.display = "flex";
-        agentGrid.innerHTML = "";
-        agentCombined.innerHTML = "";
 
         // Get current filter values
         const state = document.getElementById("stateFilter").value;
@@ -1140,7 +1149,9 @@
           state: state,
           category: category,
           search: search,
-          minTransactions: minTransactions
+          minTransactions: minTransactions,
+          page: currentPage,
+          limit: 24
         });
 
         console.log("Fetching from:", `${API_BASE}/agents/shop-agents?${queryParams}`);
@@ -1152,36 +1163,37 @@
         }
         
         const data = await res.json();
-        
-        // Check if the response has a agents property
-        const agents = data.agents || data || [];
-        
-        if (!agents || agents.length === 0) {
-          agentGrid.innerHTML = `<p class="no-results">No agents found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
-          agentCombined.innerHTML = `<p class="no-results">No agents found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
-          return;
+        const agents = data.agents || [];
+        hasMore = !!data.hasMore;
+
+        if (reset && agents.length === 0) {
+          agentGrid.innerHTML = `<p class=\"no-results\">No agents found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
+          agentCombined.innerHTML = `<p class=\"no-results\">No agents found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
+        } else if (agents.length > 0) {
+          appendAgents(agents);
         }
-        
-        renderAgents(agents);
 
       } catch (err) {
         console.error("❌ Error fetching agents:", err);
         const agentGrid = document.getElementById("agentGrid");
         const agentCombined = document.getElementById("agentCombined");
-        agentGrid.innerHTML = `<p class="error">Error loading agents. Please try again later.</p>`;
-        agentCombined.innerHTML = `<p class="error">Error loading agents. Please try again later.</p>`;
+        if (currentPage === 1) {
+          agentGrid.innerHTML = `<p class=\"error\">Error loading agents. Please try again later.</p>`;
+          agentCombined.innerHTML = `<p class=\"error\">Error loading agents. Please try again later.</p>`;
+        }
       } finally {
         const loadingSpinner = document.getElementById("loadingSpinner");
         loadingSpinner.style.display = "none";
+        isLoading = false;
       }
     }
 
-    function renderAgents(agents) {
+    function appendAgents(agents) {
       const agentGrid = document.getElementById("agentGrid");
       const agentCombined = document.getElementById("agentCombined");
-      
-      agentGrid.innerHTML = agents.map(agent => agentCardHTML(agent)).join("");
-      agentCombined.innerHTML = agents.map(agent => agentCardHTML(agent)).join("");
+      const html = agents.map(agent => agentCardHTML(agent)).join("");
+      agentGrid.insertAdjacentHTML('beforeend', html);
+      agentCombined.insertAdjacentHTML('beforeend', html);
     }
 
     function agentCardHTML(agent) {
@@ -1214,6 +1226,16 @@
     function viewBusiness(id) {
       window.location.href = `/view-business.html?agent=${id}`;
     }
+
+    // Infinite scroll
+    window.addEventListener('scroll', () => {
+      if (!hasMore || isLoading) return;
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 600;
+      if (nearBottom) {
+        currentPage += 1;
+        loadAgents(false);
+      }
+    });
 
     // Start chat with agent
     async function startChat(participantId, participantType, participantName) {

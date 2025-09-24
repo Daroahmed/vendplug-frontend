@@ -1029,7 +1029,7 @@
       console.log(`📍 State: ${state}, 📦 Category: ${category}`);
       
       // Load vendors after a short delay to ensure DOM is fully ready
-      setTimeout(loadVendors, 100);
+      setTimeout(() => loadVendors(true), 100);
     });
 
     // Backend URL configuration 
@@ -1043,15 +1043,18 @@
 
     // Event listeners for filters
     let debounceTimeout;
+    let currentPage = 1;
+    let isLoading = false;
+    let hasMore = true;
     document.getElementById("searchBox").addEventListener("input", e => {
       clearTimeout(debounceTimeout);
       debounceTimeout = setTimeout(() => {
-        loadVendors();
+        loadVendors(true);
       }, 500);
     });
 
     document.getElementById("transactionFilter").addEventListener("change", e => {
-      loadVendors();
+      loadVendors(true);
     });
 
     document.getElementById("stateFilter").addEventListener("change", e => {
@@ -1068,13 +1071,13 @@
         const qs = url.searchParams.toString();
         history.replaceState(null, '', url.pathname + (qs ? ('?' + qs) : '') + window.location.hash);
       } catch(_) {}
-      loadVendors();
+      loadVendors(true);
     });
 
     document.getElementById("categoryFilter").addEventListener("change", e => {
       const category = e.target.value;
       localStorage.setItem("vendplug-category", category);
-      loadVendors();
+      loadVendors(true);
     });
 
     // Back to top functionality
@@ -1121,15 +1124,21 @@
       return queryParams.toString();
     }
 
-    async function loadVendors() {
+    async function loadVendors(reset = true) {
       try {
+        if (isLoading) return;
+        isLoading = true;
         const loadingSpinner = document.getElementById("loadingSpinner");
         const vendorGrid = document.getElementById("vendorGrid");
         const vendorCombined = document.getElementById("vendorCombined");
-        
+
+        if (reset) {
+          currentPage = 1;
+          hasMore = true;
+          vendorGrid.innerHTML = "";
+          vendorCombined.innerHTML = "";
+        }
         loadingSpinner.style.display = "flex";
-        vendorGrid.innerHTML = "";
-        vendorCombined.innerHTML = "";
 
         // Get current filter values
         const state = document.getElementById("stateFilter").value;
@@ -1141,7 +1150,9 @@
           state: state,
           category: category,
           search: search,
-          minTransactions: minTransactions
+          minTransactions: minTransactions,
+          page: currentPage,
+          limit: 24
         });
 
         console.log("Fetching from:", `${API_BASE}/vendors/shop-vendors?${queryParams}`);
@@ -1153,36 +1164,37 @@
         }
         
         const data = await res.json();
-        
-        // Check if the response has a vendors property
-        const vendors = data.vendors || data || [];
-        
-        if (!vendors || vendors.length === 0) {
-          vendorGrid.innerHTML = `<p class="no-results">No vendors found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
-          vendorCombined.innerHTML = `<p class="no-results">No vendors found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
-          return;
+        const vendors = data.vendors || [];
+        hasMore = !!data.hasMore;
+
+        if (reset && vendors.length === 0) {
+          vendorGrid.innerHTML = `<p class=\"no-results\">No vendors found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
+          vendorCombined.innerHTML = `<p class=\"no-results\">No vendors found for ${category || 'this category'} in ${state || 'this state'}.</p>`;
+        } else if (vendors.length > 0) {
+          appendVendors(vendors);
         }
-        
-        renderVendors(vendors);
 
       } catch (err) {
         console.error("❌ Error fetching vendors:", err);
         const vendorGrid = document.getElementById("vendorGrid");
         const vendorCombined = document.getElementById("vendorCombined");
-        vendorGrid.innerHTML = `<p class="error">Error loading vendors. Please try again later.</p>`;
-        vendorCombined.innerHTML = `<p class="error">Error loading vendors. Please try again later.</p>`;
+        if (currentPage === 1) {
+          vendorGrid.innerHTML = `<p class=\"error\">Error loading vendors. Please try again later.</p>`;
+          vendorCombined.innerHTML = `<p class=\"error\">Error loading vendors. Please try again later.</p>`;
+        }
       } finally {
         const loadingSpinner = document.getElementById("loadingSpinner");
         loadingSpinner.style.display = "none";
+        isLoading = false;
       }
     }
 
-    function renderVendors(vendors) {
+    function appendVendors(vendors) {
       const vendorGrid = document.getElementById("vendorGrid");
       const vendorCombined = document.getElementById("vendorCombined");
-      
-      vendorGrid.innerHTML = vendors.map(vendor => vendorCardHTML(vendor)).join("");
-      vendorCombined.innerHTML = vendors.map(vendor => vendorCardHTML(vendor)).join("");
+      const html = vendors.map(vendor => vendorCardHTML(vendor)).join("");
+      vendorGrid.insertAdjacentHTML('beforeend', html);
+      vendorCombined.insertAdjacentHTML('beforeend', html);
     }
 
     function vendorCardHTML(vendor) {
@@ -1215,6 +1227,16 @@
     function viewShop(id) {
       window.location.href = `/view-shop.html?vendor=${id}`;
     }
+
+    // Infinite scroll
+    window.addEventListener('scroll', () => {
+      if (!hasMore || isLoading) return;
+      const nearBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 600;
+      if (nearBottom) {
+        currentPage += 1;
+        loadVendors(false);
+      }
+    });
 
     // Start chat with vendor
     async function startChat(participantId, participantType, participantName) {
