@@ -777,7 +777,7 @@
         </div>
       </a>
 
-      <a href="auth-selection.html">
+      <a id="vendorSignOut" href="#" onclick="event.preventDefault(); window.logout && window.logout('vendor');">
         <div class="card">
           <div class="card-icon">
             <i class="fas fa-sign-out-alt"></i>
@@ -788,6 +788,7 @@
       </a>
     </div>
   </div>
+
 
   <!-- Share Shop Modal -->
   <div class="share-modal" id="shareModal">
@@ -840,7 +841,7 @@
 
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <script src="/js/config.js"></script>
-  <script src="/js/auth-utils.js"></script>
+  <script src="/js/auth-utils.js?v=2"></script>
   <script src="/js/notifications.js"></script>
   <script src="/js/messageNotifications.js"></script>
   <script>
@@ -1216,6 +1217,18 @@
       
       // Refresh message count every 30 seconds
       setInterval(loadMessageCount, 30000);
+    });
+  </script>
+  <script>
+    // Ensure signout works even if inline handlers are blocked/cached
+    document.addEventListener('DOMContentLoaded', function(){
+      var el = document.getElementById('vendorSignOut');
+      if (el) {
+        el.addEventListener('click', function(e){
+          try{ e.preventDefault(); }catch(_){}
+          if (window.logout) { window.logout('vendor'); }
+        });
+      }
     });
   </script>
   <script src="js/adManager.js"></script>

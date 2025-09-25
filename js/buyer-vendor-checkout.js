@@ -76,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cartContainer.innerHTML = '<p>Your cart is empty.</p>';
       totalEl.textContent = 'Total: ₦0';
       updateCartBadge(cart);
+      if (checkoutBtn) checkoutBtn.disabled = true;
       return;
     }
   
@@ -113,6 +114,19 @@ document.addEventListener('DOMContentLoaded', () => {
   
     totalEl.textContent = `Total: ₦${total.toLocaleString()}`;
     updateCartBadge(cart);
+
+    // Disable checkout if any item exceeds available stock
+    try {
+      const hasInsufficient = cart.some((item) => {
+        const qty = item.quantity || 1;
+        const stock = Number(item?.product?.stock ?? NaN);
+        const reserved = Number(item?.product?.reserved ?? 0);
+        const hasFiniteStock = Number.isFinite(stock);
+        const available = hasFiniteStock ? Math.max(0, stock - (Number.isFinite(reserved) ? reserved : 0)) : Infinity;
+        return hasFiniteStock && qty > available;
+      });
+      if (checkoutBtn) checkoutBtn.disabled = hasInsufficient === true;
+    } catch (_) { /* noop */ }
   }
   
 
@@ -208,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // CHECKOUT
   // =========================
   checkoutBtn.addEventListener('click', async () => {
+    if (checkoutBtn && checkoutBtn.disabled) return;
     const location = locationInput.value.trim();
     if (!location) return alert('Please enter pickup location');
 
@@ -244,7 +259,13 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = '/buyer-vendor-orders.html';
     } catch (err) {
       console.error(err);
-      alert(err.message);
+      const msg = String(err?.message || '').toLowerCase();
+      if (msg.includes('insufficient stock') || msg.includes('out of stock')) {
+        // Refresh cart to reflect latest availability; suppress alert
+        try { await loadCart(); } catch (_) {}
+      } else {
+        alert('Checkout failed. Please try again.');
+      }
     } finally { hideLoading && hideLoading(); }
   });
 

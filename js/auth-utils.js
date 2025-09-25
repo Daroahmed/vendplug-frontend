@@ -211,6 +211,45 @@ window.clearOtherUserTokens = clearOtherUserTokens;
   window.hideLoading = function(){ const el = document.getElementById('global-loading-overlay'); if (el) el.style.display = 'none'; };
 })();
 
+/**
+ * Full logout: clear tokens, user data, carts and unsubscribe from push
+ * @param {('buyer'|'vendor'|'agent'|'staff'|'admin')} [currentUserType]
+ */
+async function logout(currentUserType){
+  try { if (window.showLoading) window.showLoading(); } catch(_) {}
+  // Fire-and-forget push unsubscribe without blocking redirect
+  try {
+    if ('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations) {
+      navigator.serviceWorker.getRegistrations().then(async (regs)=>{
+        try {
+          await Promise.all((regs||[]).map(async (r)=>{
+            try { const sub = await r.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch(_) {}
+          }));
+        } catch(_) {}
+      }).catch(()=>{});
+    }
+  } catch(_) {}
+
+  // Clear auth and user-specific storage
+  try { if (typeof clearAuth === 'function') clearAuth(); } catch(_) {}
+  // Remove carts and transient data
+  try { localStorage.removeItem('vendorCart'); } catch(_) {}
+  try { localStorage.removeItem('agentCart'); } catch(_) {}
+  try { localStorage.removeItem('cart'); } catch(_) {}
+  try { localStorage.removeItem('vendplug-category'); } catch(_) {}
+  try { localStorage.removeItem('vendplug-buyer-state'); } catch(_) {}
+  try { localStorage.removeItem('role'); } catch(_) {}
+
+  try { if (window.hideLoading) window.hideLoading(); } catch(_) {}
+  // Redirect to auth selection (entry point)
+  window.location.href = 'auth-selection.html';
+}
+
+window.logout = logout;
+
+// Lightweight vendor-specific wrapper if inline handler is cached
+window.vendorLogout = function(){ try{ logout('vendor'); }catch(_){ window.location.href = 'auth-selection.html'; } };
+
 // Minimal Web Push client helper (permission + subscribe)
 window.enablePushIfPossible = async function() {
   try {
