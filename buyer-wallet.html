@@ -2,76 +2,339 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VendPlug Wallet - Buyer</title>
+  <title>VendPlug Wallet</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <style>
+    :root {
+      --primary: #00cc99;
+      --bg-dark: #121212;
+      --card: #1e1e1e;
+      --text-light: #fff;
+      --muted: #aaa;
+      --success: #28a745;
+      --fail: #dc3545;
+    }
+
     body {
-      font-family: sans-serif;
-      background-color: #111;
-      color: #fff;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
       padding: 1rem;
     }
-    .wallet-card {
-      background-color: #222;
-      border-radius: 1rem;
-      padding: 1.5rem;
+
+    h2 {
+      color: var(--primary);
+      font-size: 1.5rem;
       margin-bottom: 1rem;
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
     }
-    .section-title {
-      margin: 1.5rem 0 0.5rem;
+
+    .flex-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: var(--card);
+      padding: 1rem;
+      border-radius: 10px;
+      flex: 1;
+      min-width: 250px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .card-title {
       font-weight: bold;
-      color: #ccc;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
     }
-    input, button {
-      width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0;
-      border-radius: 0.5rem;
-      border: none;
-    }
-    button {
-      background-color: #04a96d;
-      color: white;
+
+    .card span {
+      font-size: 1.2rem;
       font-weight: bold;
+    }
+
+    .copy-btn {
+      margin-top: 0.5rem;
+      background: none;
+      border: 1px solid var(--primary);
+      color: var(--primary);
+      padding: 0.4rem 0.75rem;
+      border-radius: 6px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #038e5d;
+
+    .form-section {
+      background: var(--card);
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1.5rem;
     }
-    .resolved-user {
-      color: #8f8;
+
+    .form-section h3 {
+      margin-top: 0;
+      color: var(--primary);
+    }
+
+    label {
+      display: block;
+      margin: 0.75rem 0 0.3rem;
+      font-size: 0.95rem;
+    }
+
+    input, textarea, button {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 0.25rem;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 6px;
+      font-size: 0.95rem;
+      color: var(--text-light);
+    }
+
+    button {
+      background: var(--primary);
+      color: #000;
+      font-weight: bold;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+
+    #userNameResolved {
+      font-style: italic;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .transaction-card {
+      border: 1px solid #333;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+      background: var(--card);
+    }
+
+    .transaction-header {
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      font-weight: bold;
+    }
+
+    .transaction-header.success {
+      color: var(--success);
+    }
+
+    .transaction-header.failed {
+      color: var(--fail);
+    }
+
+    .transaction-details {
+      padding: 0.75rem 1rem;
       font-size: 0.9rem;
+      color: var(--muted);
+      display: none;
+      border-top: 1px solid #444;
+    }
+
+    .transaction-card.active .transaction-details {
+      display: block;
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-content {
+      background-color: var(--card);
+      margin: 15% auto;
+      padding: 0;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      animation: modalSlide 0.3s ease-out;
+    }
+
+    @keyframes modalSlide {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      padding: 1rem;
+      border-bottom: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      color: var(--primary);
+    }
+
+    .close {
+      color: var(--muted);
+      font-size: 1.5rem;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0 0.5rem;
+    }
+
+    .close:hover {
+      color: var(--text-light);
+    }
+
+    .modal-body {
+      padding: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .fund-btn {
+      background: var(--primary);
+      color: #000;
+      border: none;
+      padding: 0.8rem 1rem;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+
+    .fund-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0, 204, 153, 0.3);
+    }
+
+    /* Loading State */
+    .fund-btn.loading {
+      position: relative;
+      color: transparent;
+    }
+
+    .fund-btn.loading::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #000;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+      transform: translate(-50%, -50%);
+    }
+
+    @keyframes spin {
+      to { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    @media (max-width: 600px) {
+      .card {
+        min-width: 100%;
+      }
+      .modal-content {
+        margin: 10% auto;
+        width: 95%;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="wallet-card">
-    <h2>Wallet Summary</h2>
-    <p><strong>Account Number:</strong> <span id="accountNumber">Loading...</span></p>
-    <p><strong>Balance:</strong> ₦<span id="balance">Loading...</span></p>
+
+  <h2>VendPlug Wallet</h2>
+
+  <!-- Wallet Info + Filter -->
+  <div class="flex-row">
+    <div class="card">
+      <div class="card-title">Account Number</div>
+      <span id="accountNumber">Loading...</span>
+      <button class="copy-btn" onclick="copyAccount()">Copy</button>
+      <p style="margin-top: 1rem;">Balance: ₦<span id="balance">0</span></p>
+      <button class="fund-btn" onclick="showFundingModal()" style="margin-top: 1rem; background: var(--primary);">
+        Fund Wallet
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Filter Transactions</div>
+      <label for="startDate">Start Date</label>
+      <input type="date" id="startDate" />
+      <label for="endDate">End Date</label>
+      <input type="date" id="endDate" />
+      <button id="filterBtn">Apply Filter</button>
+    </div>
   </div>
 
-  <div class="wallet-card">
-    <h3 class="section-title">Fund Wallet</h3>
-    <p>Transfer from your bank to the unique account number above. Funds will reflect shortly.</p>
+  <!-- Transfer Section removed: wallet is debited during orders -->
+
+  <!-- Transactions -->
+  <div class="form-section">
+    <h3>Transaction History</h3>
+    <div id="transactionsList">Loading...</div>
   </div>
 
-  <div class="wallet-card">
-    <h3 class="section-title">Transfer to Another VendPlug User</h3>
-    <input type="text" id="recipientAccount" placeholder="Recipient Account Number" />
-    <div id="userNameResolved" class="resolved-user"></div>
-    <input type="number" id="transferAmount" placeholder="Amount" />
-    <button onclick="handleTransfer()">Transfer</button>
+  <script>
+    function copyAccount() {
+      const acct = document.getElementById('accountNumber').textContent.trim();
+      navigator.clipboard.writeText(acct).then(() => {
+        alert("✅ Account number copied!");
+      });
+    }
+
+    // Toggle collapse for transactions
+    document.addEventListener("click", function (e) {
+      const header = e.target.closest(".transaction-header");
+      if (header) {
+        const card = header.closest(".transaction-card");
+        card.classList.toggle("active");
+      }
+    });
+  </script>
+
+  <!-- Funding Modal -->
+  <div id="fundingModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Fund Your Wallet</h3>
+        <span class="close" onclick="closeFundingModal()">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="fundingAmount">Amount (₦)</label>
+          <input type="number" id="fundingAmount" min="100" step="100" placeholder="Enter amount">
+        </div>
+        <button onclick="initiateFunding()" class="fund-btn">
+          Proceed to Payment
+        </button>
+      </div>
+    </div>
   </div>
 
-  <div class="wallet-card">
-    <h3 class="section-title">Transaction History</h3>
-    <ul id="transactionsList">
-      <li>Loading...</li>
-    </ul>
-  </div>
-
+  <script src="https://js.paystack.co/v1/inline.js"></script>
+  <script src="/js/config.js"></script>
+  <script src="/js/auth-utils.js"></script>
+  <script src="/js/back-button.js"></script>
   <script src="/js/buyer-wallet.js"></script>
 </body>
 </html>

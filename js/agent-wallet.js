@@ -1,21 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
   const accountNumberEl = document.getElementById('accountNumber');
   const balanceEl = document.getElementById('balance');
-  const agent = JSON.parse(localStorage.getItem('vendplugAgent'));
+  const agent = getCurrentUser();
+  const token = getAuthToken();
 
-  if (!agent || !agent.token) {
+  if (!agent || !token) {
     alert('Unauthorized. Please log in again.');
-    window.location.href = '/agent-login.html';
+    redirectToLogin();
     return;
   }
+  const resolvedNameEl = document.getElementById('resolvedName');
 
-  const token = agent.token;
-
-  // Load wallet data initially
   fetchWallet();
   fetchTransactions();
 
-  // Date filter button
   document.getElementById('filterBtn')?.addEventListener('click', () => {
     const start = document.getElementById('startDate').value;
     const end = document.getElementById('endDate').value;
@@ -52,7 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const data = await res.json();
-
       const container = document.getElementById('transactionsList');
       container.innerHTML = '';
 
@@ -65,11 +62,47 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      data.transactions.forEach(txn => {
+      const nameCache = {};
+
+      for (const txn of data.transactions) {
         const isSender = txn.from === data.accountNumber;
+        const otherAccount = isSender ? txn.to : txn.from;
         const direction = isSender ? 'Sent to' : 'Received from';
-        const otherParty = isSender ? txn.to : txn.from;
-        const name = txn.initiatedBy?.name || 'Unknown';
+
+        let displayName = '';
+        if (!isSender && txn.initiatorName && txn.initiatorName !== 'Unknown') {
+          displayName = txn.initiatorName;
+        } else {
+          const acctLower = (otherAccount || '').toString().toLowerCase();
+          const knownMap = { escrow: 'Escrow', paystack: 'Paystack', system: 'System', platform: 'VendPlug', vendplug: 'VendPlug' };
+          if (knownMap[acctLower]) displayName = knownMap[acctLower];
+
+          if (!displayName && typeof txn.ref === 'string') {
+            const refUpper = txn.ref.toUpperCase();
+            if (refUpper.includes('PAYSTACK')) displayName = 'Paystack';
+            if (refUpper.includes('VENDPLUG')) displayName = 'VendPlug';
+          }
+
+          if (!displayName && txn.initiatorType) displayName = txn.initiatorType;
+
+          if (!displayName) {
+            if (!nameCache[otherAccount]) {
+              try {
+                const lookupRes = await fetch(`${window.BACKEND_URL}/api/wallet/lookup/${otherAccount}`);
+                const lookupData = await lookupRes.json();
+                nameCache[otherAccount] =
+                  lookupData.user?.fullName ||
+                  lookupData.user?.name ||
+                  lookupData.user?.businessName ||
+                  '';
+              } catch {
+                nameCache[otherAccount] = '';
+              }
+            }
+            displayName = nameCache[otherAccount] || '';
+          }
+        }
+        if (!displayName) displayName = 'Unknown';
 
         const card = document.createElement('div');
         card.className = 'transaction-card';
@@ -82,99 +115,21 @@ document.addEventListener('DOMContentLoaded', () => {
               ₦${txn.amount.toLocaleString()}
             </div>
           </div>
-          <div class="transaction-direction">${direction}: ${otherParty}</div>
+          <div class="transaction-direction">${direction}: ${displayName} (${otherAccount})</div>
           <div class="transaction-meta">
             Ref: ${txn.ref}<br />
             Status: ${txn.status}<br />
-            By: ${name}<br />
-            Balance After: ₦${txn.balanceAfter?.toLocaleString() || 'N/A'}<br />
+            By: ${txn.initiatorType || 'N/A'}<br />
             Date: ${new Date(txn.createdAt).toLocaleString()}
           </div>
         `;
         container.appendChild(card);
-      });
+      }
     } catch (err) {
       console.error('Error fetching transactions:', err);
       document.getElementById('transactionsList').innerHTML = '<p>Error loading transactions.</p>';
     }
   }
 
-  async function resolveUser() {
-    const acct = document.getElementById('recipientAccount').value.trim();
-    const display = document.getElementById('userNameResolved');
-    if (!acct) return (display.textContent = '');
-
-    try {
-      const res = await fetch(`${window.BACKEND_URL}/api/wallet/lookup/${acct}`);
-      const data = await res.json();
-
-      if (data.userType && data.user && data.user.name) {
-        display.textContent = `Recipient: ${data.user.name} (${data.userType})`;
-      } else {
-        display.textContent = 'User not found';
-      }
-    } catch {
-      display.textContent = 'Error resolving user';
-    }
-  }
-
-  async function handleTransfer() {
-    const acct = document.getElementById('recipientAccount').value.trim();
-    const amount = Number(document.getElementById('transferAmount').value);
-    if (!acct || amount <= 0) return alert('Enter valid account and amount');
-
-    try {
-      const res = await fetch(`${window.BACKEND_URL}/api/wallet/transfer`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          fromAccountNumber: accountNumberEl.textContent.trim(),
-          toAccountNumber: acct,
-          amount,
-        }),
-      });
-
-      const data = await res.json();
-      alert(data.message || 'Transfer successful');
-      fetchWallet();
-      fetchTransactions();
-    } catch {
-      alert('Transfer failed');
-    }
-  }
-
-  async function handlePayout() {
-    const amount = Number(document.getElementById('payoutAmount').value);
-    if (!amount || amount <= 0) {
-      alert('Please enter a valid payout amount');
-      return;
-    }
-
-    try {
-      const res = await fetch(`${window.BACKEND_URL}/api/wallet/payout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount }),
-      });
-
-      const data = await res.json();
-      alert(data.message || 'Payout requested');
-      fetchWallet();
-      fetchTransactions();
-    } catch (err) {
-      alert('Payout failed');
-      console.error(err);
-    }
-  }
-
-  // Global scope
-  window.handleTransfer = handleTransfer;
-  window.handlePayout = handlePayout;
-  window.resolveUser = resolveUser;
+  // Transfer/resolve removed
 });
