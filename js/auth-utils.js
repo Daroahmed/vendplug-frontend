@@ -315,3 +315,26 @@ function urlBase64ToUint8Array(base64String) {
     try{ const s2=document.createElement('script'); s2.src='/js/back-button.js'; document.body.appendChild(s2);}catch(_){}
   });
 })();
+
+// ===== Silent refresh helper =====
+;(function(){
+  async function tryRefresh(){
+    try {
+      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json().catch(()=>({}));
+      if (data?.token && data?.role){
+        // Store short-lived access token under role-specific key
+        const map = { buyer:'vendplug-buyer-token', agent:'vendplug-agent-token', vendor:'vendplug-vendor-token' };
+        const k = map[data.role] || 'vendplug-token';
+        localStorage.setItem(k, data.token);
+      }
+    } catch(_) {}
+  }
+
+  // Run on load, then periodically to keep session alive
+  if (document.visibilityState !== 'hidden') tryRefresh();
+  document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'visible') tryRefresh(); });
+  // Refresh every 10 minutes
+  setInterval(tryRefresh, 10*60*1000);
+})();

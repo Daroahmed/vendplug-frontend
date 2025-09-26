@@ -451,6 +451,10 @@
         const data = await res.json();
 
         if (!res.ok) {
+          if (res.status === 403 && data && data.code === 'EMAIL_NOT_VERIFIED') {
+            window.location.href = `verify-email.html?prefill=${encodeURIComponent(data.email)}&userType=vendor`;
+            return;
+          }
           alert(data.message || "Login failed");
           return;
         }
@@ -531,9 +535,8 @@
           throw new Error(data.message || "Vendor registration failed");
         }
 
-        localStorage.setItem("vendplug-vendor-token", data.token);
-        localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
-        window.location.href = "vendor-dashboard.html";
+        alert('Registration successful! Please check your email to verify your account.');
+        window.location.href = 'verify-email.html?prefill=' + encodeURIComponent(email) + '&userType=vendor';
 
       } catch (error) {
         errorMsg.textContent = error.message;

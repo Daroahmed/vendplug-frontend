@@ -450,6 +450,10 @@
         const data = await res.json();
 
         if (!res.ok) {
+          if (res.status === 403 && data && data.code === 'EMAIL_NOT_VERIFIED') {
+            window.location.href = `verify-email.html?prefill=${encodeURIComponent(data.email)}&userType=agent`;
+            return;
+          }
           alert(data.message || "Login failed");
           return;
         }
@@ -528,9 +532,8 @@
           throw new Error(data.message || "Agent registration failed");
         }
 
-        localStorage.setItem("vendplug-agent-token", data.token);
-        localStorage.setItem("vendplugAgent", JSON.stringify(data.agent));
-        window.location.href = "agent-dashboard.html";
+        alert('Registration successful! Please check your email to verify your account.');
+        window.location.href = 'verify-email.html?prefill=' + encodeURIComponent(email) + '&userType=agent';
 
       } catch (error) {
         errorMsg.textContent = error.message;
