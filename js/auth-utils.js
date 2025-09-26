@@ -6,15 +6,15 @@ console.log("✅ auth-utils.js loaded");
  * @returns {string|null} The authentication token or null if not found
  */
 function getAuthToken() {
-  // Try user-specific tokens first (recommended approach)
+  // Prefer elevated roles first to avoid using a buyer/agent token on staff/admin pages
+  const adminToken = localStorage.getItem("vendplug-admin-token");
+  const staffToken = localStorage.getItem("vendplug-staff-token");
   const buyerToken = localStorage.getItem("vendplug-buyer-token");
   const agentToken = localStorage.getItem("vendplug-agent-token");
   const vendorToken = localStorage.getItem("vendplug-vendor-token");
-  const staffToken = localStorage.getItem("vendplug-staff-token");
-  const adminToken = localStorage.getItem("vendplug-admin-token");
   
-  // Return the first available token
-  const token = buyerToken || agentToken || vendorToken || staffToken || adminToken;
+  // Return the first available token in priority order
+  const token = adminToken || staffToken || buyerToken || agentToken || vendorToken;
   
   if (token) {
     return token;
