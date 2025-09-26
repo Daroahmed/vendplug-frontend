@@ -289,6 +289,17 @@ function urlBase64ToUint8Array(base64String) {
       style.textContent = `
         .vp-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:99999;display:flex;gap:8px;align-items:center;background:#1e1e1e;color:#fff;border:1px solid rgba(255,255,255,.1);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transition:opacity .25s ease}
         .vp-toast.show{opacity:1}
+        .vp-overlay-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:100000}
+        .vp-overlay-card{width:min(92vw,380px);background:#1e1e1e;border:1px solid rgba(255,255,255,.08);border-radius:14px;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.45);padding:22px;text-align:center}
+        .vp-overlay-icon{font-size:42px;margin-bottom:10px}
+        .vp-ok{color:#00cc99}
+        .vp-err{color:#ff5c5c}
+        .vp-info{color:#66b2ff}
+        .vp-overlay-title{font-weight:700;margin:8px 0 4px}
+        .vp-overlay-msg{opacity:.9}
+        .vp-overlay-actions{margin-top:16px}
+        .vp-overlay-btn{background:#00cc99;color:#000;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700}
+        .vp-overlay-btn.secondary{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.15);margin-left:8px}
       `;
       document.head.appendChild(style);
       const c = document.createElement('div');
@@ -305,6 +316,36 @@ function urlBase64ToUint8Array(base64String) {
     c.appendChild(t);
     requestAnimationFrame(()=>t.classList.add('show'));
     setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 250); }, timeout);
+  };
+  // Pretty overlay (success/error/info)
+  window.showOverlay = function(opts){
+    try{
+      const options = typeof opts === 'string' ? { message: opts } : (opts||{});
+      const type = options.type || 'success';
+      const title = options.title || (type==='success'?'Success': type==='error'?'Error':'Notice');
+      const message = options.message || '';
+      const autoClose = options.autoClose ?? (type==='success' ? 1600 : null);
+      const onClose = typeof options.onClose === 'function' ? options.onClose : null;
+      const icon = type==='success' ? '✔' : (type==='error' ? '✖' : 'ℹ');
+      const colorClass = type==='success' ? 'vp-ok' : (type==='error' ? 'vp-err' : 'vp-info');
+
+      const backdrop = document.createElement('div');
+      backdrop.className = 'vp-overlay-backdrop';
+      backdrop.innerHTML = `
+        <div class="vp-overlay-card">
+          <div class="vp-overlay-icon ${colorClass}">${icon}</div>
+          <div class="vp-overlay-title">${title}</div>
+          <div class="vp-overlay-msg">${message}</div>
+          <div class="vp-overlay-actions">
+            <button class="vp-overlay-btn">OK</button>
+          </div>
+        </div>`;
+      const close = ()=>{ try{ backdrop.remove(); if(onClose) onClose(); }catch(_){}}
+      backdrop.querySelector('.vp-overlay-btn').addEventListener('click', close);
+      document.body.appendChild(backdrop);
+      if (autoClose) setTimeout(close, autoClose);
+      return close;
+    }catch(_){ try{ alert(opts?.message || opts || ''); }catch(__){} }
   };
 })();
 

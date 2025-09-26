@@ -489,9 +489,10 @@
     function copyAccountNumber() {
       const accountNumber = document.getElementById('accountNumber').textContent;
       navigator.clipboard.writeText(accountNumber).then(() => {
-        alert('Account number copied to clipboard!');
+        window.showOverlay && showOverlay({ type:'success', title:'Copied', message:'Account number copied to clipboard!' });
       }).catch(err => {
         console.error('Failed to copy: ', err);
+        window.showOverlay && showOverlay({ type:'error', title:'Clipboard', message:'Failed to copy account number' });
       });
     }
 
@@ -515,15 +516,12 @@
       
       if (!buyerToken) {
         // User is not logged in - show login prompt
-        const login = confirm('Please sign in to add items to your cart. Would you like to sign in now?');
-        if (login) {
-          window.location.href = 'buyer-login.html';
-        }
+        window.showOverlay && showOverlay({ type:'info', title:'Sign in required', message:'Please sign in to add items to your cart.' });
         return;
       }
       
       // User is logged in - add to cart
-      alert('Product added to cart!');
+      window.showOverlay && showOverlay({ type:'success', title:'Added', message:'Product added to cart!' });
       // Add your actual cart logic here
     });
 

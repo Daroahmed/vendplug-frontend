@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = getAuthToken();
 
   if (!vendor || !token) {
-    alert('Unauthorized. Please log in again.');
+    window.showOverlay && showOverlay({ type:'error', title:'Unauthorized', message:'Please log in again.' });
     redirectToLogin();
     return;
   }

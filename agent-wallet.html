@@ -188,7 +188,7 @@
     function copyAccount() {
       const acct = document.getElementById('accountNumber').textContent.trim();
       navigator.clipboard.writeText(acct).then(() => {
-        alert("✅ Account number copied!");
+        window.showOverlay && showOverlay({ type:'success', title:'Copied', message:'Account number copied!' });
       });
     }
 

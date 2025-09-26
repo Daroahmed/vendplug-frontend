@@ -202,7 +202,7 @@ function openOrderModal(orderId) {
 ---------------------------- */
 function copyToClipboard(text) {
   if (!text || text === 'N/A') {
-    alert('Nothing to copy');
+    window.showOverlay && showOverlay({ type:'info', title:'Clipboard', message:'Nothing to copy' });
     return;
   }
   
@@ -219,7 +219,7 @@ function copyToClipboard(text) {
     }, 1500);
   }).catch(err => {
     console.error('Failed to copy: ', err);
-    alert('Failed to copy to clipboard');
+    window.showOverlay && showOverlay({ type:'error', title:'Clipboard', message:'Failed to copy to clipboard' });
   });
 }
 
@@ -289,7 +289,7 @@ function showDisputeModal(order) {
     const filesInput = document.getElementById('dp_files');
 
     if (!title || !category || !description) {
-      return alert('Please fill in title, category and description.');
+      return (window.showOverlay && showOverlay({ type:'info', title:'Incomplete', message:'Please fill in title, category and description.' }));
     }
 
     try {
@@ -315,14 +315,14 @@ function showDisputeModal(order) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert('✅ Dispute created successfully');
+        window.showOverlay && showOverlay({ type:'success', title:'Dispute', message:'Dispute created successfully' });
         overlay.remove();
       } else {
-        alert(`❌ ${data.error || 'Failed to create dispute'}`);
+        window.showOverlay && showOverlay({ type:'error', title:'Dispute', message: data.error || 'Failed to create dispute' });
       }
     } catch (e) {
       console.error('Create dispute error:', e);
-      alert('Network error. Please try again.');
+      window.showOverlay && showOverlay({ type:'error', title:'Network', message:'Network error. Please try again.' });
     }
   };
 }
