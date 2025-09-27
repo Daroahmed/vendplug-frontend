@@ -1,12 +1,13 @@
 // js/config.js
+// Always prefer same-origin in production so cookies/paths match Nginx
 window.BACKEND_URL = window.location.hostname === "localhost"
   ? "http://localhost:5000"
-  : "https://api.vendplug.com.ng";
+  : window.location.origin;
 
 // Frontend URL for email verification links
 window.FRONTEND_URL = window.location.hostname === "localhost"
   ? "http://localhost:5000"
-  : "https://vendplug.com.ng";
+  : window.location.origin;
 
 // Paystack configuration
 window.PAYSTACK_PUBLIC_KEY = window.location.hostname === "localhost"

@@ -18,7 +18,9 @@ class StaffDisputeDashboard {
         const userType = getCurrentUserType();
         if (userType !== 'staff') {
             console.error('❌ Access denied: User is not staff, userType:', userType);
-            alert('Access denied. This page is only for staff members.');
+            if (window.showOverlay) {
+                window.showOverlay({ type:'error', title:'Access Denied', message:'This page is only for staff members.', autoClose: 2500 });
+            }
             // Redirect to appropriate dashboard based on user type
             if (userType === 'buyer') {
                 window.location.href = 'buyer-home.html';

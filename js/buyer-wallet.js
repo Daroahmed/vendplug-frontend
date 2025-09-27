@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const token = getAuthToken();
 
   if (!buyer || !token) {
-    alert('Unauthorized. Please log in again.');
+    window.showOverlay && showOverlay({ type:'error', title:'Unauthorized', message:'Please log in again.' });
     redirectToLogin();
     return;
   }
@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function initiateFunding() {
     const amount = Number(document.getElementById('fundingAmount').value);
     if (!amount || amount < 100) {
-      alert('Please enter a valid amount (minimum ₦100)');
+      window.showOverlay && showOverlay({ type:'info', title:'Amount', message:'Please enter a valid amount (minimum ₦100)' });
       return;
     }
 
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = authorizationUrl;
     } catch (error) {
       console.error('Payment initialization error:', error);
-      alert('Error initializing payment. Please try again.');
+      window.showOverlay && showOverlay({ type:'error', title:'Payment', message:'Error initializing payment. Please try again.' });
       fundBtn.classList.remove('loading');
     }
   }
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const verifyData = await verifyRes.json();
       
       if (verifyRes.ok && verifyData.success) {
-        alert('🎉 Payment successful! Your wallet has been credited.');
+        window.showOverlay && showOverlay({ type:'success', title:'Payment', message:'Payment successful! Your wallet has been credited.' });
         fetchWallet(); // Refresh wallet balance
         fetchTransactions(); // Refresh transaction history
         closeFundingModal();
@@ -227,7 +227,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (error) {
       console.error('❌ Payment verification error:', error);
-      alert('❌ Error verifying payment. Please contact support if your wallet is not credited.');
+      window.showOverlay && showOverlay({ type:'error', title:'Payment', message:'Error verifying payment. Please contact support if your wallet is not credited.' });
     }
   }
 

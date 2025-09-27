@@ -453,16 +453,17 @@
     function copyAccountNumber() {
       const accountNumber = document.getElementById('accountNumber').textContent;
       navigator.clipboard.writeText(accountNumber).then(() => {
-        alert('Account number copied to clipboard!');
+        window.showOverlay && showOverlay({ type:'success', title:'Copied', message:'Account number copied to clipboard!' });
       }).catch(err => {
         console.error('Failed to copy: ', err);
+        window.showOverlay && showOverlay({ type:'error', title:'Clipboard', message:'Failed to copy account number' });
       });
     }
 
     // Add to cart functionality
     document.getElementById('addToCartBtn').addEventListener('click', function() {
       // This would be implemented with your actual cart logic
-      alert('Product added to cart!');
+      window.showOverlay && showOverlay({ type:'success', title:'Added', message:'Product added to cart!' });
     });
         
         // Load reviews

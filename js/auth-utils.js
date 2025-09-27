@@ -6,15 +6,15 @@ console.log("✅ auth-utils.js loaded");
  * @returns {string|null} The authentication token or null if not found
  */
 function getAuthToken() {
-  // Try user-specific tokens first (recommended approach)
+  // Prefer elevated roles first to avoid using a buyer/agent token on staff/admin pages
+  const adminToken = localStorage.getItem("vendplug-admin-token");
+  const staffToken = localStorage.getItem("vendplug-staff-token");
   const buyerToken = localStorage.getItem("vendplug-buyer-token");
   const agentToken = localStorage.getItem("vendplug-agent-token");
   const vendorToken = localStorage.getItem("vendplug-vendor-token");
-  const staffToken = localStorage.getItem("vendplug-staff-token");
-  const adminToken = localStorage.getItem("vendplug-admin-token");
   
-  // Return the first available token
-  const token = buyerToken || agentToken || vendorToken || staffToken || adminToken;
+  // Return the first available token in priority order
+  const token = adminToken || staffToken || buyerToken || agentToken || vendorToken;
   
   if (token) {
     return token;
@@ -289,6 +289,17 @@ function urlBase64ToUint8Array(base64String) {
       style.textContent = `
         .vp-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:99999;display:flex;gap:8px;align-items:center;background:#1e1e1e;color:#fff;border:1px solid rgba(255,255,255,.1);padding:10px 14px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);opacity:0;transition:opacity .25s ease}
         .vp-toast.show{opacity:1}
+        .vp-overlay-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:100000}
+        .vp-overlay-card{width:min(92vw,380px);background:#1e1e1e;border:1px solid rgba(255,255,255,.08);border-radius:14px;color:#fff;box-shadow:0 20px 60px rgba(0,0,0,.45);padding:22px;text-align:center}
+        .vp-overlay-icon{font-size:42px;margin-bottom:10px}
+        .vp-ok{color:#00cc99}
+        .vp-err{color:#ff5c5c}
+        .vp-info{color:#66b2ff}
+        .vp-overlay-title{font-weight:700;margin:8px 0 4px}
+        .vp-overlay-msg{opacity:.9}
+        .vp-overlay-actions{margin-top:16px}
+        .vp-overlay-btn{background:#00cc99;color:#000;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700}
+        .vp-overlay-btn.secondary{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.15);margin-left:8px}
       `;
       document.head.appendChild(style);
       const c = document.createElement('div');
@@ -306,6 +317,36 @@ function urlBase64ToUint8Array(base64String) {
     requestAnimationFrame(()=>t.classList.add('show'));
     setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(), 250); }, timeout);
   };
+  // Pretty overlay (success/error/info)
+  window.showOverlay = function(opts){
+    try{
+      const options = typeof opts === 'string' ? { message: opts } : (opts||{});
+      const type = options.type || 'success';
+      const title = options.title || (type==='success'?'Success': type==='error'?'Error':'Notice');
+      const message = options.message || '';
+      const autoClose = options.autoClose ?? (type==='success' ? 1600 : null);
+      const onClose = typeof options.onClose === 'function' ? options.onClose : null;
+      const icon = type==='success' ? '✔' : (type==='error' ? '✖' : 'ℹ');
+      const colorClass = type==='success' ? 'vp-ok' : (type==='error' ? 'vp-err' : 'vp-info');
+
+      const backdrop = document.createElement('div');
+      backdrop.className = 'vp-overlay-backdrop';
+      backdrop.innerHTML = `
+        <div class="vp-overlay-card">
+          <div class="vp-overlay-icon ${colorClass}">${icon}</div>
+          <div class="vp-overlay-title">${title}</div>
+          <div class="vp-overlay-msg">${message}</div>
+          <div class="vp-overlay-actions">
+            <button class="vp-overlay-btn">OK</button>
+          </div>
+        </div>`;
+      const close = ()=>{ try{ backdrop.remove(); if(onClose) onClose(); }catch(_){}}
+      backdrop.querySelector('.vp-overlay-btn').addEventListener('click', close);
+      document.body.appendChild(backdrop);
+      if (autoClose) setTimeout(close, autoClose);
+      return close;
+    }catch(_){ try{ alert(opts?.message || opts || ''); }catch(__){} }
+  };
 })();
 
 // Ensure push CTA loads on most pages
@@ -314,4 +355,27 @@ function urlBase64ToUint8Array(base64String) {
     try{ const s=document.createElement('script'); s.src='/js/push-cta.js'; document.body.appendChild(s);}catch(_){}
     try{ const s2=document.createElement('script'); s2.src='/js/back-button.js'; document.body.appendChild(s2);}catch(_){}
   });
+})();
+
+// ===== Silent refresh helper =====
+;(function(){
+  async function tryRefresh(){
+    try {
+      const res = await fetch('/api/auth/refresh', { method: 'POST', credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json().catch(()=>({}));
+      if (data?.token && data?.role){
+        // Store short-lived access token under role-specific key
+        const map = { buyer:'vendplug-buyer-token', agent:'vendplug-agent-token', vendor:'vendplug-vendor-token' };
+        const k = map[data.role] || 'vendplug-token';
+        localStorage.setItem(k, data.token);
+      }
+    } catch(_) {}
+  }
+
+  // Run on load, then periodically to keep session alive
+  if (document.visibilityState !== 'hidden') tryRefresh();
+  document.addEventListener('visibilitychange', ()=>{ if (document.visibilityState === 'visible') tryRefresh(); });
+  // Refresh every 10 minutes
+  setInterval(tryRefresh, 10*60*1000);
 })();

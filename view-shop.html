@@ -457,74 +457,32 @@
   </section>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+    // Utility to determine if the current viewer is a buyer (from token or stored profile)
+    function isBuyer(){
+      try{
+        const token = localStorage.getItem('vendplug-buyer-token');
+        if (token) return true;
+        const buyer = localStorage.getItem('vendplugBuyer');
+        return !!buyer;
+      }catch(_){ return false; }
+    }
+
+    // Render the message button reliably if viewer is a buyer
+    function ensureMessageButton(){
+      const messageButtonContainer = document.getElementById('messageButtonContainer');
+      if (!messageButtonContainer) return;
       const vendorId = new URLSearchParams(window.location.search).get('vendor');
-
-      if (!vendorId) {
-        alert('Vendor ID is missing from the URL');
-        return;
-      }
-
-      const vendorProfileEl = document.getElementById('vendorProfile');
-      const vendorProductsEl = document.getElementById('vendorProducts');
-      const loadingEl = document.querySelector('.loading');
-
-      try {
-        // Fetch vendor profile
-        const vendorRes = await fetch(`/api/vendors/${vendorId}`);
-        const vendor = await vendorRes.json();
-
-        if (!vendor || !vendor.fullName) {
-          vendorProfileEl.innerHTML = '<p class="error-message">Vendor not found.</p>';
-          loadingEl.style.display = 'none';
-          return;
-        }
-
-        vendorProfileEl.innerHTML = `
-          <div class="vendor-details">
-            <div class="vendor-info">
-              <h2>${vendor.fullName}</h2>
-              <p><strong>Phone:</strong> <span>${vendor.phoneNumber || 'Not provided'}</span></p>
-              <p><strong>Address:</strong> ${vendor.businessAddress || 'Not provided'}</p>
-              <p><strong>State:</strong> ${vendor.state || 'Not specified'}</p>
-              <p><strong>Total Transactions:</strong> ${vendor.totalTransactions || 0}</p>
-            </div>
-          </div>
+      if (isBuyer()){
+        messageButtonContainer.innerHTML = `
+          <button class="message-btn" onclick="startChat('${vendorId}', 'Vendor', 'Vendor')">
+            <i class="fas fa-comments"></i>
+            Message Vendor
+          </button>
         `;
-
-        // Fetch vendor products
-        console.log("Loading shop for vendor:", vendorId);
-        const productsRes = await fetch(`/api/vendor-products/vendor/${vendorId}`);
-        const products = await productsRes.json();
-
-        // Hide loading spinner
-        loadingEl.style.display = 'none';
-
-        if (!products || products.length === 0) {
-          vendorProductsEl.innerHTML = '<p class="no-products">No products for this vendor yet.</p>';
-          return;
-        }
-
-        vendorProductsEl.innerHTML = products.map(product => `
-          <div class="product-card" onclick="window.location.href='/view-shop-view.html?product=${product._id}'">
-            <img src="${product.image || '/placeholder.png'}" alt="${product.name}" class="product-image" />
-            <div class="product-info">
-              <h4>${product.name}</h4>
-              <p>₦${product.price.toLocaleString()}</p>
-              <p style="margin-top:6px;color:${(() => { const a=Math.max(0, Number(product.stock||0)-Number(product.reserved||0)); return a<=0?'#ff7675':'var(--muted)'; })()}">
-                ${(() => { const a=Math.max(0, Number(product.stock||0)-Number(product.reserved||0)); if(a<=0) return 'Out of Stock'; const hint = a<=5?` <span style=\"margin-left:6px;\">Only ${a} available</span>`:''; return `Stock: ${a}${hint}`; })()}
-              </p>
-            </div>
-          </div>
-        `).join('');
-
-      } catch (error) {
-        console.error('Error loading vendor data:', error);
-        loadingEl.style.display = 'none';
-        vendorProfileEl.innerHTML = '<p class="error-message">Error loading vendor data.</p>';
-        vendorProductsEl.innerHTML = '';
+      } else {
+        messageButtonContainer.innerHTML = '';
       }
-    });
+    }
 
     // Copy account number function
     function copyAccount() {
@@ -770,6 +728,9 @@
           </div>
         `;
 
+        // Ensure message button reflects current auth state
+        ensureMessageButton();
+
         // Fetch vendor products
         console.log("Loading shop for vendor:", vendorId);
         const productsRes = await fetch(`/api/vendor-products/vendor/${vendorId}`);
@@ -821,9 +782,12 @@
       }
     }
 
-    // Call the function after the page loads
+    // Keep the button in sync with auth changes and after render
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(showMessageButtonIfBuyer, 1000); // Wait for vendor data to load
+      setTimeout(ensureMessageButton, 300);
+    });
+    window.addEventListener('storage', (e)=>{
+      if (e.key === 'vendplug-buyer-token' || e.key === 'vendplugBuyer') ensureMessageButton();
     });
   </script>
   <script src="/js/auth-utils.js"></script>

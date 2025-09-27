@@ -1241,10 +1241,7 @@
     async function startChat(participantId, participantType, participantName) {
       const buyerToken = localStorage.getItem('vendplug-buyer-token');
       if (!buyerToken) {
-        const login = confirm('Please sign in to start a chat. Would you like to sign in now?');
-        if (login) {
-          window.location.href = 'buyer-login.html';
-        }
+        window.showOverlay && showOverlay({ type:'info', title:'Sign in required', message:'Please sign in to start a chat.' });
         return;
       }
 
@@ -1269,11 +1266,11 @@
         } else {
           const error = await response.json();
           console.error('Failed to create chat:', error);
-          alert('Failed to start chat. Please try again.');
+          window.showOverlay && showOverlay({ type:'error', title:'Chat', message:'Failed to start chat. Please try again.' });
         }
       } catch (error) {
         console.error('Error creating chat:', error);
-        alert('Error starting chat. Please try again.');
+        window.showOverlay && showOverlay({ type:'error', title:'Chat', message:'Error starting chat. Please try again.' });
       }
     }
     function addToFavorites(id) {

@@ -216,7 +216,7 @@ async function acceptOrder() {
 
     if (!res.ok) throw new Error(await res.text());
 
-    alert("✅ Order accepted!");
+    window.showOverlay && showOverlay({ type:'success', title:'Accepted', message:'Order accepted!' });
     // Disable buttons after action
     const aBtn = document.getElementById('acceptBtn');
     const rBtn = document.getElementById('rejectBtn');
@@ -233,7 +233,7 @@ async function acceptOrder() {
     fetchOrders();
   } catch (err) {
     console.error("Accept error:", err);
-    alert("Something went wrong while accepting the order.");
+    window.showOverlay && showOverlay({ type:'error', title:'Error', message:'Something went wrong while accepting the order.' });
   }
 }
 
@@ -250,7 +250,7 @@ async function rejectOrder(reason) {
 
     if (!res.ok) throw new Error(await res.text());
 
-    alert("❌ Order rejected and refunded!");
+    window.showOverlay && showOverlay({ type:'success', title:'Rejected', message:'Order rejected and refunded!' });
     // Disable buttons after action
     const aBtn2 = document.getElementById('acceptBtn');
     const rBtn2 = document.getElementById('rejectBtn');
@@ -267,7 +267,7 @@ async function rejectOrder(reason) {
     fetchOrders();
   } catch (err) {
     console.error("Reject error:", err);
-    alert("Something went wrong while rejecting the order.");
+    window.showOverlay && showOverlay({ type:'error', title:'Error', message:'Something went wrong while rejecting the order.' });
   }
 }
 
@@ -284,12 +284,12 @@ async function updateOrderStatus(status) {
 
     if (!res.ok) throw new Error(await res.text());
 
-    alert(`📦 Order marked as ${status}!`);
+    window.showOverlay && showOverlay({ type:'success', title:'Updated', message:`Order marked as ${status}!` });
     orderModal.style.display = "none";
     fetchOrders();
   } catch (err) {
     console.error("Update status error:", err);
-    alert("Something went wrong while updating the status.");
+    window.showOverlay && showOverlay({ type:'error', title:'Error', message:'Something went wrong while updating the status.' });
   }
 }
 
@@ -312,7 +312,7 @@ document.getElementById("cancelRejectBtn")?.addEventListener("click", closeRejec
 document.getElementById("confirmRejectBtn")?.addEventListener("click", () => {
   const reason = document.getElementById("rejectionReason").value.trim();
   if (reason.length < 10) {
-    alert("Please provide a rejection reason with at least 10 characters.");
+    window.showOverlay && showOverlay({ type:'info', title:'Add reason', message:'Please provide a rejection reason with at least 10 characters.' });
     return;
   }
   closeRejectionModal();
@@ -329,7 +329,7 @@ document.getElementById("rejectBtn")?.addEventListener("click", () => {
   if (reason?.trim()) {
     rejectOrder(reason.trim());
   } else {
-    alert("Rejection cancelled. A reason is required.");
+    window.showOverlay && showOverlay({ type:'info', title:'Cancelled', message:'Rejection cancelled. A reason is required.' });
   }
 });
 
@@ -340,7 +340,7 @@ document.getElementById("rejectBtn")?.addEventListener("click", () => {
   if (reason?.trim()) {
     rejectOrder(reason.trim());
   } else {
-    alert("Rejection cancelled. A reason is required.");
+    window.showOverlay && showOverlay({ type:'info', title:'Cancelled', message:'Rejection cancelled. A reason is required.' });
   }
 });
 
@@ -367,7 +367,7 @@ document.getElementById("applyFilters")?.addEventListener("click", fetchOrders);
 ---------------------------- */
 function copyToClipboard(text) {
   if (!text || text === 'N/A') {
-    alert('Nothing to copy');
+    window.showOverlay && showOverlay({ type:'info', title:'Clipboard', message:'Nothing to copy' });
     return;
   }
   
@@ -384,7 +384,7 @@ function copyToClipboard(text) {
     }, 1500);
   }).catch(err => {
     console.error('Failed to copy: ', err);
-    alert('Failed to copy to clipboard');
+    window.showOverlay && showOverlay({ type:'error', title:'Clipboard', message:'Failed to copy to clipboard' });
   });
 }
 
@@ -445,7 +445,7 @@ function showDisputeModal(order) {
     const filesInput = document.getElementById('dp_files');
 
     if (!title || !category || !description) {
-      return alert('Please fill in title, category and description.');
+      return (window.showOverlay && showOverlay({ type:'info', title:'Incomplete', message:'Please fill in title, category and description.' }));
     }
 
     try {
@@ -471,14 +471,14 @@ function showDisputeModal(order) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert('✅ Dispute created successfully');
+        window.showOverlay && showOverlay({ type:'success', title:'Dispute', message:'Dispute created successfully' });
         overlay.remove();
       } else {
-        alert(`❌ ${data.error || 'Failed to create dispute'}`);
+        window.showOverlay && showOverlay({ type:'error', title:'Dispute', message: data.error || 'Failed to create dispute' });
       }
     } catch (e) {
       console.error('Create dispute error:', e);
-      alert('Network error. Please try again.');
+      window.showOverlay && showOverlay({ type:'error', title:'Network', message:'Network error. Please try again.' });
     }
   };
 }

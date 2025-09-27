@@ -17,12 +17,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!baseURL) {
     console.error("❌ BACKEND_URL is not defined. Check config.js load order.");
-    alert('Configuration error: BACKEND_URL not set.');
+    window.showOverlay && showOverlay({ type:'error', title:'Configuration', message:'BACKEND_URL not set.' });
     return;
   }
 
   if (!token) {
-    alert('Please login first');
+    window.showOverlay && showOverlay({ type:'error', title:'Login required', message:'Please login first' });
     redirectToLogin();
     return;
   }
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       displayCart();
     } catch (err) {
       console.error(err);
-      alert('Failed to load cart. Try again.');
+      window.showOverlay && showOverlay({ type:'error', title:'Error', message:'Failed to load cart. Try again.' });
     } finally { hideLoading && hideLoading(); }
   }
 
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const available = hasFiniteStock ? Math.max(0, stock - (Number.isFinite(reserved) ? reserved : 0)) : Infinity;
         const nextQty = (item.quantity || 1) + 1;
         if (hasFiniteStock && nextQty > available) {
-          alert(`Only ${available} available`);
+          window.showOverlay && showOverlay({ type:'info', title:'Stock limit', message:`Only ${available} available` });
           return;
         }
         await fetch(`${baseURL}/api/agent-cart`, {
@@ -193,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
       await loadCart();
     } catch (err) {
       console.error(err);
-      alert('Failed to update cart. Please try again.');
+      window.showOverlay && showOverlay({ type:'error', title:'Error', message:'Failed to update cart. Please try again.' });
     }
   });
 
@@ -224,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
   checkoutBtn.addEventListener('click', async () => {
     if (checkoutBtn && checkoutBtn.disabled) return;
     const location = locationInput.value.trim();
-    if (!location) return alert('Please enter pickup location');
+    if (!location) return (window.showOverlay && showOverlay({ type:'error', title:'Pickup location', message:'Please enter pickup location' }));
 
     const totalAmount = cart.reduce((sum, item) => {
       const qty = item.quantity || 1;
@@ -233,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 0);
 
     if (walletBalance < totalAmount)
-      return alert('Insufficient wallet balance');
+      return (window.showOverlay && showOverlay({ type:'error', title:'Wallet', message:'Insufficient wallet balance' }));
 
     try {
       showLoading && showLoading();
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Checkout failed');
 
-      alert('Order placed successfully!');
+      window.showOverlay && showOverlay({ type:'success', title:'Success', message:'Order placed successfully!' });
       window.location.href = '/buyer-agent-orders.html';
     } catch (err) {
       console.error(err);
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (msg.includes('insufficient stock') || msg.includes('out of stock')) {
         try { await loadCart(); } catch (_) {}
       } else {
-        alert('Checkout failed. Please try again.');
+        window.showOverlay && showOverlay({ type:'error', title:'Checkout', message:'Checkout failed. Please try again.' });
       }
     } finally { hideLoading && hideLoading(); }
   });

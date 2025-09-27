@@ -21,7 +21,7 @@ function copyToClipboard(text) {
     }, 2000);
   }).catch(err => {
     console.error('Failed to copy: ', err);
-    alert('Failed to copy to clipboard');
+    window.showOverlay && showOverlay({ type:'error', title:'Clipboard', message:'Failed to copy to clipboard' });
   });
 }
 
@@ -165,10 +165,10 @@ async function confirmReceipt(orderId) {
     
     const data = await res.json();
     if (res.ok) {
-      alert("✅ Delivery confirmed! Payment has been released to the vendor/agent.");
+      window.showOverlay && showOverlay({ type:'success', title:'Delivery', message:'Delivery confirmed! Payment has been released to the vendor/agent.' });
       fetchOrderDetails(orderId); // reload status
     } else {
-      alert(`❌ ${data.message || "Failed to confirm"}`);
+      window.showOverlay && showOverlay({ type:'error', title:'Delivery', message: data.message || 'Failed to confirm' });
     }
   } catch (err) {
     console.error("❌ confirmReceipt error:", err);
@@ -223,7 +223,7 @@ function showDisputeModal(order) {
     const filesInput = document.getElementById('dp_files');
 
     if (!title || !category || !description) {
-      return alert('Please fill in title, category and description.');
+      return (window.showOverlay && showOverlay({ type:'info', title:'Incomplete', message:'Please fill in title, category and description.' }));
     }
 
     try {
@@ -249,14 +249,14 @@ function showDisputeModal(order) {
       });
       const data = await res.json();
       if (res.ok) {
-        alert('✅ Dispute created successfully');
+        window.showOverlay && showOverlay({ type:'success', title:'Dispute', message:'Dispute created successfully' });
         overlay.remove();
       } else {
-        alert(`❌ ${data.error || 'Failed to create dispute'}`);
+        window.showOverlay && showOverlay({ type:'error', title:'Dispute', message: data.error || 'Failed to create dispute' });
       }
     } catch (e) {
       console.error('Create dispute error:', e);
-      alert('Network error. Please try again.');
+      window.showOverlay && showOverlay({ type:'error', title:'Network', message:'Network error. Please try again.' });
     }
   };
 }

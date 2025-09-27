@@ -1,5 +1,5 @@
 // Basic VendPlug Service Worker
-const CACHE_NAME = 'vendplug-app-shell-v1';
+const CACHE_NAME = 'vendplug-app-shell-v3';
 const APP_SHELL = [
   '/',
   '/public-buyer-home.html',
@@ -27,7 +27,12 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Network falling back to cache for HTML; cache-first for static assets; SWR for JSON GET
+// Strategies:
+// - HTML: network-first, fallback to cache, then /offline.html
+// - Scripts/Styles: network-first (ensure fresh code), fallback to cache
+// - Images/Fonts: cache-first
+// - API GET: network-first (avoid stale UI), fallback to cache
+// - API non-GET: network-only; on success, purge cached API GETs
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
@@ -39,7 +44,9 @@ self.addEventListener('fetch', (event) => {
   const isAPI = url.pathname.startsWith('/api/');
   const isGET = req.method === 'GET';
   const isHTML = req.headers.get('accept')?.includes('text/html');
+  const wantsFresh = url.searchParams.get('fresh') === '1' || req.cache === 'no-store' || req.headers.get('cache-control')?.includes('no-store');
 
+  // HTML: network-first
   if (isHTML) {
     event.respondWith(
       fetch(req).then((res) => {
@@ -51,8 +58,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Static assets: cache-first
-  if (req.destination === 'style' || req.destination === 'script' || req.destination === 'image' || req.destination === 'font') {
+  // Scripts/Styles: network-first to ensure latest code; Images/Fonts: cache-first
+  if (req.destination === 'script' || req.destination === 'style') {
+    event.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
+  }
+  if (req.destination === 'image' || req.destination === 'font') {
     event.respondWith(
       caches.match(req).then((cached) => cached || fetch(req).then((res) => {
         const copy = res.clone();
@@ -63,18 +80,43 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API GET: Stale-While-Revalidate
-  if (isAPI && isGET) {
+  // API non-GET: network-only; on success, purge cached API GETs so next reads are fresh
+  if (isAPI && !isGET) {
     event.respondWith(
-      caches.match(req).then((cached) => {
-        const fetchPromise = fetch(req).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-          return res;
-        }).catch(() => cached);
-        return cached || fetchPromise;
-      })
+      fetch(req).then((res) => {
+        // Purge cached API GETs (best-effort)
+        caches.open(CACHE_NAME).then(async (c) => {
+          try {
+            const keys = await c.keys();
+            await Promise.all(keys.map((k) => {
+              const u = new URL(k.url);
+              if (u.pathname.startsWith('/api/') && k.method === 'GET') {
+                return c.delete(k);
+              }
+              return Promise.resolve(false);
+            }));
+          } catch(_) {}
+        });
+        return res;
+      }).catch(() => new Response(JSON.stringify({ error: 'Network error' }), { status: 503, headers: { 'Content-Type': 'application/json' } }))
     );
+    return;
+  }
+
+  // API GET: network-first (unless explicitly fresh-only), fallback to cache
+  if (isAPI && isGET) {
+    if (wantsFresh) {
+      event.respondWith(fetch(req));
+      return;
+    }
+    event.respondWith(
+      fetch(req).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        return res;
+      }).catch(() => caches.match(req))
+    );
+    return;
   }
 });
 

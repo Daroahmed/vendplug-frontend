@@ -83,13 +83,13 @@ async function loadAgentDetails(agentId) {
       const comment = document.getElementById('reviewComment').value;
 
       if (!rating || !comment) {
-        return alert("Please enter both a rating and a comment.");
+        return (window.showOverlay && showOverlay({ type:'error', title:'Incomplete', message:'Please enter both a rating and a comment.' }));
       }
 
       try {
         const token = getAuthToken();
         if (!token) {
-          return alert("You must be logged in to leave a review.");
+          return (window.showOverlay && showOverlay({ type:'error', title:'Login required', message:'You must be logged in to leave a review.' }));
         }
 
         const reviewRes = await fetch(`/api/agents/${agentId}/reviews`, {
@@ -106,10 +106,10 @@ async function loadAgentDetails(agentId) {
           throw new Error(errData.message || "Failed to submit review");
         }
 
-        alert("Review submitted successfully!");
+        window.showOverlay && showOverlay({ type:'success', title:'Thank you!', message:'Review submitted successfully!' });
         location.reload();
       } catch (err) {
-        alert(err.message);
+        window.showOverlay && showOverlay({ type:'error', title:'Error', message: err.message || 'Something went wrong' });
       }
     });
 
@@ -143,7 +143,7 @@ async function addToCart(productId, quantity = 1) {
   const token = getAuthToken();
 
   if (!token) {
-      alert("Please log in to add items to your cart.");
+      window.showOverlay && showOverlay({ type:'error', title:'Login required', message:'Please log in to add items to your cart.' });
       return;
   }
 
@@ -166,11 +166,11 @@ async function addToCart(productId, quantity = 1) {
           throw new Error(data.message || "Failed to add item to cart");
       }
 
-      alert("Item added to cart!");
+      window.showOverlay && showOverlay({ type:'success', title:'Added', message:'Item added to cart!' });
       // Optional: You could trigger a small cart badge update here
 
   } catch (error) {
       console.error("Error adding to cart:", error);
-      alert(error.message || "Something went wrong");
+      window.showOverlay && showOverlay({ type:'error', title:'Error', message: error.message || 'Something went wrong' });
   }
 }

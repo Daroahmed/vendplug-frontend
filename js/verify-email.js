@@ -3,6 +3,8 @@ console.log("✅ verify-email.js loaded");
 // Global variables
 let BACKEND_URL = null;
 let token = null;
+let prefillEmail = null;
+let prefillUserType = null;
 
 // DOM elements
 let statusDiv = null;
@@ -23,6 +25,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Get token from URL - try multiple methods
   const urlParams = new URLSearchParams(window.location.search);
   token = urlParams.get('token');
+  prefillEmail = urlParams.get('prefill');
+  prefillUserType = urlParams.get('userType');
   
   // Fallback method if URLSearchParams fails
   if (!token) {
@@ -64,10 +68,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     token = urlParams2.get('token');
     
     if (!token) {
-      // Still no token - show helpful message
-      showError('Please click the verification link from your email. If you don\'t have the email, check your spam folder or request a new verification email.');
-      showLoginLink();
-      return;
+      // Still no token
+      if (prefillEmail && prefillUserType) {
+        // Auto-resend for prefilled flows
+        try {
+          await resendVerification(prefillEmail, prefillUserType);
+          showSuccess('A new verification email has been sent. Please check your inbox.');
+        } catch (e) {
+          showError(e.message || 'Failed to resend verification email.');
+        }
+        showLoginLink();
+        return;
+      } else {
+        // No prefill; show manual form (render message first so it doesn't wipe the form)
+        showError('Enter your email and role to resend a verification link.');
+        showManualResendForm();
+        showLoginLink();
+        return;
+      }
     }
     
     console.log("✅ Token found after waiting:", token);
@@ -79,6 +97,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Start verification
   await verifyEmail();
+  // If redirected here without token, auto-resend to prefilled email
+  if (!token && prefillEmail && prefillUserType) {
+    showDebugInfo(`No token present. Auto-sending a new verification email to ${prefillEmail} (${prefillUserType}).`);
+    try {
+      await resendVerification(prefillEmail, prefillUserType);
+      showSuccess('A new verification email has been sent. Please check your inbox.');
+    } catch (e) {
+      showError(e.message || 'Failed to resend verification email.');
+    }
+  }
 });
 
 // Wait for config.js to load
@@ -109,7 +137,7 @@ async function verifyEmail() {
     console.log("🔍 Starting email verification...");
     showDebugInfo("Starting email verification...");
     
-    const verificationUrl = `${BACKEND_URL}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+    const verificationUrl = `/api/auth/verify-email?token=${encodeURIComponent(token)}`;
     console.log("🌐 Verification URL:", verificationUrl);
     showDebugInfo(`Verification URL: ${verificationUrl}`);
     
@@ -131,6 +159,10 @@ async function verifyEmail() {
     if (res.ok) {
       showSuccess(data.message || 'Email verified successfully! You can now log in to your account.');
     } else {
+      // Offer resend option if we know the email/type
+      if ((data && /invalid|expired/i.test(data.message || '')) && prefillEmail && prefillUserType) {
+        await showResendCta();
+      }
       throw new Error(data.message || `Verification failed with status ${res.status}`);
     }
     
@@ -141,6 +173,74 @@ async function verifyEmail() {
   
   // Always show login link
   showLoginLink();
+}
+
+async function resendVerification(email, userType) {
+  const res = await fetch(`/api/auth/send-verification`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, userType })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || 'Resend failed');
+  }
+  return true;
+}
+
+async function showResendCta() {
+  if (!statusDiv) return;
+  const btn = document.createElement('button');
+  btn.textContent = 'Resend Verification Email';
+  btn.style.marginTop = '10px';
+  btn.className = 'link';
+  btn.addEventListener('click', async () => {
+    try {
+      btn.disabled = true;
+      await resendVerification(prefillEmail, prefillUserType);
+      showSuccess('A new verification email has been sent. Please check your inbox.');
+    } catch (e) {
+      showError(e.message || 'Failed to resend verification email.');
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  statusDiv.appendChild(btn);
+}
+
+function showManualResendForm(){
+  if (!statusDiv) return;
+  const wrap = document.createElement('div');
+  wrap.style.marginTop = '12px';
+  wrap.innerHTML = `
+    <div style="text-align:left">
+      <label style="display:block;margin:6px 0">Email</label>
+      <input type="email" id="resendEmail" placeholder="you@example.com" style="width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:#2c2c2c;color:#fff"/>
+      <label style="display:block;margin:10px 0 6px">Role</label>
+      <select id="resendRole" style="width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,.15);background:#2c2c2c;color:#fff">
+        <option value="buyer">Buyer</option>
+        <option value="vendor">Vendor</option>
+        <option value="agent">Agent</option>
+      </select>
+      <button id="resendBtn" class="link" style="margin-top:12px">Send Verification Email</button>
+    </div>
+  `;
+  statusDiv.appendChild(wrap);
+  const emailInput = wrap.querySelector('#resendEmail');
+  const roleSelect = wrap.querySelector('#resendRole');
+  const btn = wrap.querySelector('#resendBtn');
+  btn.addEventListener('click', async ()=>{
+    const email = (emailInput.value||'').trim();
+    const role = (roleSelect.value||'buyer').trim();
+    if (!email) { showError('Please enter your email'); return; }
+    try{
+      btn.disabled = true;
+      await resendVerification(email, role);
+      showSuccess('A new verification email has been sent. Please check your inbox.');
+    }catch(e){
+      showError(e.message || 'Failed to resend verification email.');
+    }finally{ btn.disabled = false; }
+  });
 }
 
 // Helper functions

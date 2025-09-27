@@ -1128,7 +1128,7 @@
         }, 3000);
       }).catch(err => {
         console.error('Failed to copy:', err);
-        alert('Failed to copy link. Please try again.');
+        window.showOverlay && showOverlay({ type:'error', title:'Share', message:'Failed to copy link. Please try again.' });
       });
       
       // Track sharing
