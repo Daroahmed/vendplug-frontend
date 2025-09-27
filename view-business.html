@@ -457,6 +457,28 @@
   </section>
 
   <script>
+    function isBuyer(){
+      try{
+        if (localStorage.getItem('vendplug-buyer-token')) return true;
+        return !!localStorage.getItem('vendplugBuyer');
+      }catch(_){ return false; }
+    }
+
+    function ensureMessageButton(){
+      const el = document.getElementById('messageButtonContainer');
+      if (!el) return;
+      const agentId = new URLSearchParams(window.location.search).get('agent');
+      if (isBuyer()){
+        el.innerHTML = `
+          <button class="message-btn" onclick="startChat('${agentId}', 'Agent', 'Agent')">
+            <i class="fas fa-comments"></i>
+            Message Agent
+          </button>
+        `;
+      } else {
+        el.innerHTML = '';
+      }
+    }
     document.addEventListener('DOMContentLoaded', async () => {
       const agentId = new URLSearchParams(window.location.search).get('agent');
 
@@ -488,9 +510,13 @@
               <p><strong>Address:</strong> ${agent.businessAddress || 'Not provided'}</p>
               <p><strong>State:</strong> ${agent.state || 'Not specified'}</p>
               <p><strong>Total Transactions:</strong> ${agent.totalTransactions || 0}</p>
+              <div style="margin-top: 15px;" id="messageButtonContainer"></div>
             </div>
           </div>
         `;
+
+        // After profile render, ensure message button state
+        ensureMessageButton();
 
         // Fetch agent products
         console.log("Loading business for agent:", agentId);
@@ -806,9 +832,11 @@
       }
     }
 
-    // Call the function after the page loads
     document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(showMessageButtonIfBuyer, 1000); // Wait for agent data to load
+      setTimeout(ensureMessageButton, 300);
+    });
+    window.addEventListener('storage', (e)=>{
+      if (e.key === 'vendplug-buyer-token' || e.key === 'vendplugBuyer') ensureMessageButton();
     });
   </script>
     <script src="/js/auth-utils.js"></script>

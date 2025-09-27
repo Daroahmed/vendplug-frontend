@@ -228,6 +228,10 @@ function copyToClipboard(text) {
 ---------------------------- */
 document.getElementById("applyFilters")?.addEventListener("click", fetchDeliveredOrders);
 
+// Allow closing the modal by clicking backdrop or pressing Escape
+orderModal?.addEventListener('click', (e)=>{ if (e.target === orderModal) closeOrderModal(); });
+window.addEventListener('keydown', (e)=>{ if (e.key === 'Escape' && orderModal?.style.display === 'flex') closeOrderModal(); });
+
 /* ---------------------------
    Initial Load
 ---------------------------- */

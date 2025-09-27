@@ -31,6 +31,7 @@
             position: fixed;
             height: 100vh;
             overflow-y: auto;
+            z-index: 1001;
         }
 
         .sidebar-header {
@@ -367,6 +368,31 @@
             .filters {
                 flex-direction: column;
             }
+
+            /* Mobile menu button */
+            .menu-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 38px;
+                height: 38px;
+                border-radius: 8px;
+                background: #f0f2f5;
+                border: 1px solid #e5e7eb;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+        }
+
+        /* Sidebar backdrop for mobile */
+        .sidebar-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            display: none;
+            z-index: 999;
+        }
+        .sidebar.open + .sidebar-overlay { display: block; }
         }
 
         /* Modal Styles */
@@ -694,13 +720,15 @@
                 </li>
             </ul>
         </div>
+        <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open')"></div>
 
         <!-- Main Content -->
         <div class="main-content">
             <!-- Header with Notifications -->
             <div class="header">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <button class="menu-toggle" aria-label="Open menu" onclick="document.querySelector('.sidebar').classList.add('open')">☰</button>
                         <h1>Admin Dashboard</h1>
                         <p>Platform management and monitoring</p>
                     </div>
