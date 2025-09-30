@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details - Vendplug</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    :root {
+      --primary: #00cc99;
+      --primary-dark: #00b894;
+      --secondary: #6c757d;
+      --success: #28a745;
+      --danger: #dc3545;
+      --warning: #ffc107;
+      --info: #17a2b8;
+      --light: #f8f9fa;
+      --dark: #343a40;
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #1a1a1a;
+      --bg-card: #2a2a2a;
+      --text-light: #ffffff;
+      --text-muted: #6c757d;
+      --muted: #6c757d;
+      --border: #3a3a3a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-light);
+      line-height: 1.6;
+    }
+
+    .header {
+      background: var(--bg-card);
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .back-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-light);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .product-detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+
+    .product-images {
+      position: relative;
+    }
+
+    .main-image {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .image-gallery {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+    }
+
+    .gallery-thumb {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 4px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .gallery-thumb:hover,
+    .gallery-thumb.active {
+      border-color: var(--primary);
+    }
+
+    .product-info {
+      padding: 1rem 0;
+    }
+
+    .product-title {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 1rem;
+      color: var(--text-light);
+    }
+
+    .product-price {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    .product-description {
+      color: var(--muted);
+      margin-bottom: 2rem;
+      line-height: 1.8;
+    }
+
+    .product-specs {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+    }
+
+    .specs-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+
+    .spec-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .spec-item:last-child {
+      border-bottom: none;
+    }
+
+    .spec-label {
+      color: var(--muted);
+    }
+
+    .spec-value {
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    .vendor-info {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      border: 1px solid var(--border);
+    }
+
+    .vendor-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .vendor-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+
+    .vendor-details h3 {
+      color: var(--text-light);
+      margin-bottom: 0.25rem;
+    }
+
+    .vendor-type {
+      color: var(--primary);
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    .vendor-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .visit-shop-btn {
+      width: 100%;
+      background: var(--primary);
+      color: var(--text-light);
+      border: none;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .visit-shop-btn:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 1rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary);
+      color: var(--text-light);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 3rem;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid var(--border);
+      border-top: 5px solid var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .error {
+      text-align: center;
+      padding: 3rem;
+      color: var(--danger);
+    }
+
+    .error i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+     .vendor-reviews {
+       margin-top: 3rem;
+     }
+
+     .related-products {
+       margin-top: 3rem;
+     }
+
+     .section-title {
+       font-size: 1.5rem;
+       font-weight: bold;
+       margin-bottom: 1.5rem;
+       color: var(--text-light);
+     }
+
+     .reviews-container {
+       background: var(--bg-card);
+       padding: 1.5rem;
+       border-radius: 8px;
+       border: 1px solid var(--border);
+     }
+
+     .review-item {
+       padding: 1rem 0;
+       border-bottom: 1px solid var(--border);
+     }
+
+     .review-item:last-child {
+       border-bottom: none;
+     }
+
+     .review-header {
+       display: flex;
+       justify-content: space-between;
+       align-items: center;
+       margin-bottom: 0.5rem;
+     }
+
+     .review-author {
+       font-weight: 600;
+       color: var(--text-light);
+     }
+
+     .review-rating {
+       color: var(--primary);
+       font-weight: bold;
+     }
+
+     .review-comment {
+       color: var(--muted);
+       line-height: 1.6;
+     }
+
+     .no-reviews {
+       text-align: center;
+       color: var(--muted);
+       padding: 2rem;
+       font-style: italic;
+     }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .product-card {
+      background: var(--bg-card);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .product-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(0, 204, 153, 0.1);
+      border-color: var(--primary);
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      background: var(--bg-secondary);
+    }
+
+    .product-card-info {
+      padding: 1rem;
+    }
+
+    .product-card-name {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-light);
+    }
+
+    .product-card-price {
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+      .product-detail {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+
+      .action-buttons {
+        flex-direction: column;
+      }
+
+      .vendor-stats {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+      }
+
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <a href="public-buyer-home.html" class="logo">Vendplug</a>
+      <a href="javascript:history.back()" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back
+      </a>
+    </div>
+  </header>
+
+  <div class="container">
+    <div id="loadingSpinner" class="loading">
+      <div class="spinner"></div>
+      <p>Loading product details...</p>
+    </div>
+
+    <div id="errorMessage" class="error" style="display: none;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <h3>Product not found</h3>
+      <p>The product you're looking for doesn't exist or has been removed.</p>
+      <a href="public-buyer-home.html" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">
+        <i class="fas fa-home"></i> Go Home
+      </a>
+    </div>
+
+    <div id="productDetail" style="display: none;">
+      <!-- Product details will be loaded here -->
+    </div>
+
+     <div id="vendorReviews" class="vendor-reviews" style="display: none;">
+       <h2 class="section-title">Vendor Reviews</h2>
+       <div id="reviewsContainer" class="reviews-container">
+         <!-- Reviews will be loaded here -->
+       </div>
+     </div>
+
+     <div id="relatedProducts" class="related-products" style="display: none;">
+       <h2 class="section-title">Related Products</h2>
+       <div id="relatedProductsGrid" class="products-grid">
+         <!-- Related products will be loaded here -->
+       </div>
+     </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script>
+    let productId;
+    let productData;
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      productId = urlParams.get('id');
+      
+      if (productId) {
+        loadProductDetails();
+      } else {
+        showError();
+      }
+    });
+
+    // Load product details
+    async function loadProductDetails() {
+      try {
+        showLoading(true);
+        
+        const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/products/${productId}`);
+        const data = await response.json();
+        
+         if (data.success && data.product) {
+           productData = data.product;
+           displayProductDetails();
+           loadVendorReviews();
+           loadRelatedProducts();
+         } else {
+           showError();
+         }
+      } catch (error) {
+        console.error('Error loading product:', error);
+        showError();
+      } finally {
+        showLoading(false);
+      }
+    }
+
+     // Display product details
+     function displayProductDetails() {
+       const productDetail = document.getElementById('productDetail');
+       const vendor = productData.vendor || productData.agent;
+       // Debug: Let's see exactly what data we're getting
+       console.log('🔍 DEBUGGING VENDOR/AGENT DATA:');
+       console.log('Product data:', productData);
+       console.log('Vendor/Agent object:', vendor);
+       console.log('Is agent?', !!productData.agent);
+       console.log('Is vendor?', !!productData.vendor);
+       console.log('Agent businessName:', vendor?.businessName);
+       console.log('Agent fullName:', vendor?.fullName);
+       console.log('Vendor shopName:', vendor?.shopName);
+       
+       // For agents, prioritize businessName; for vendors, prioritize shopName
+       const vendorName = productData.agent 
+         ? (vendor?.businessName || vendor?.fullName || 'Unknown')
+         : (vendor?.shopName || vendor?.fullName || 'Unknown');
+       
+       console.log('Selected vendor name:', vendorName);
+       const vendorInitial = vendorName.charAt(0).toUpperCase();
+       const vendorType = productData.vendor ? 'Vendor' : 'Agent';
+      
+      productDetail.innerHTML = `
+        <div class="product-detail">
+          <div class="product-images">
+            <img src="${productData.image || '/assets/placeholder-product.jpg'}" 
+                 alt="${productData.name}" 
+                 class="main-image" 
+                 id="mainImage"
+                 onerror="this.src='/assets/placeholder-product.jpg'">
+            
+            <div class="image-gallery">
+              <img src="${productData.image || '/assets/placeholder-product.jpg'}" 
+                   alt="${productData.name}" 
+                   class="gallery-thumb active"
+                   onclick="changeMainImage(this.src)"
+                   onerror="this.src='/assets/placeholder-product.jpg'">
+              <!-- Additional images can be added here if available -->
+            </div>
+          </div>
+          
+          <div class="product-info">
+            <h1 class="product-title">${productData.name}</h1>
+            <div class="product-price">₦${(productData.price || 0).toLocaleString()}</div>
+            <p class="product-description">${productData.description || 'No description available'}</p>
+            
+            <div class="product-specs">
+              <h3 class="specs-title">Product Specifications</h3>
+              <div class="spec-item">
+                <span class="spec-label">Category</span>
+                <span class="spec-value">${productData.category || 'N/A'}</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Condition</span>
+                <span class="spec-value">${productData.condition || 'New'}</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label">Availability</span>
+                <span class="spec-value">${productData.availability || 'In Stock'}</span>
+              </div>
+               <div class="spec-item">
+                 <span class="spec-label">Location</span>
+                 <span class="spec-value" id="productLocation">Loading...</span>
+               </div>
+            </div>
+            
+            <div class="vendor-info">
+               <div class="vendor-header">
+                 <div class="vendor-avatar">${vendorInitial}</div>
+                 <div class="vendor-details">
+                   <h3>${vendorName}</h3>
+                   <span class="vendor-type">${vendorType}</span>
+                   <div class="vendor-location" id="vendorLocation" style="margin-top: 0.5rem; color: var(--muted); font-size: 0.9rem;">
+                     <i class="fas fa-map-marker-alt"></i> Loading location...
+                   </div>
+                 </div>
+               </div>
+              
+               <div class="vendor-stats">
+                 <div class="stat-item">
+                   <div class="stat-value" id="vendorRating">Loading...</div>
+                   <div class="stat-label">Rating</div>
+                 </div>
+                 <div class="stat-item">
+                   <div class="stat-value" id="vendorTransactions">Loading...</div>
+                   <div class="stat-label">Transactions</div>
+                 </div>
+                 <div class="stat-item">
+                   <div class="stat-value" id="vendorReviews">Loading...</div>
+                   <div class="stat-label">Reviews</div>
+                 </div>
+               </div>
+              
+              <button class="visit-shop-btn" onclick="visitShop('${vendor?._id}', '${vendor?.userType || (productData.vendor ? 'vendor' : 'agent')}')">
+                <i class="fas fa-store"></i> Visit ${vendorType} Shop
+              </button>
+            </div>
+            
+             <div class="action-buttons">
+               <button class="btn btn-primary" onclick="buyNow()">
+                 <i class="fas fa-shopping-bag"></i> Buy Now
+               </button>
+               <button class="btn btn-outline" onclick="startChat('${vendor?._id}', '${vendorType}', '${vendorName}')">
+                 <i class="fas fa-comments"></i> Start Chat
+               </button>
+             </div>
+          </div>
+        </div>
+      `;
+      
+      productDetail.style.display = 'block';
+    }
+
+    // Change main image
+    function changeMainImage(src) {
+      document.getElementById('mainImage').src = src;
+      
+      // Update active thumbnail
+      document.querySelectorAll('.gallery-thumb').forEach(thumb => {
+        thumb.classList.remove('active');
+      });
+      event.target.classList.add('active');
+    }
+
+     // Visit shop
+     function visitShop(vendorId, vendorType) {
+       if (vendorType === 'agent' || vendorType === 'Agent') {
+         window.location.href = `view-business.html?agent=${vendorId}`;
+       } else {
+         window.location.href = `view-shop.html?vendor=${vendorId}`;
+       }
+     }
+
+     // Add to cart
+     function buyNow() {
+       const buyerToken = localStorage.getItem('vendplug-buyer-token');
+       if (!buyerToken) {
+         const login = confirm('Please sign in to make a purchase. Would you like to sign in now?');
+         if (login) {
+           window.location.href = 'buyer-auth.html';
+         }
+         return;
+       }
+
+       const vendor = productData.vendor || productData.agent;
+       const vendorType = productData.vendor ? 'vendor' : 'agent';
+       
+       // Navigate to the appropriate shop/business page
+       if (vendorType === 'agent') {
+         window.location.href = `view-business.html?agent=${vendor._id}`;
+       } else {
+         window.location.href = `view-shop.html?vendor=${vendor._id}`;
+       }
+     }
+
+     // Start chat with vendor/agent
+     async function startChat(participantId, participantType, participantName) {
+       const buyerToken = localStorage.getItem('vendplug-buyer-token');
+       if (!buyerToken) {
+         const login = confirm('Please sign in to start a chat. Would you like to sign in now?');
+         if (login) {
+           window.location.href = 'buyer-auth.html';
+         }
+         return;
+       }
+
+       try {
+         const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/chats`, {
+           method: 'POST',
+           headers: {
+             'Content-Type': 'application/json',
+             'Authorization': `Bearer ${buyerToken}`
+           },
+           body: JSON.stringify({
+             participantId: participantId,
+             participantType: participantType
+           })
+         });
+
+         if (response.ok) {
+           const data = await response.json();
+           console.log('Chat created/found:', data);
+           // Redirect to chat page
+           window.location.href = 'chat.html';
+         } else {
+           const error = await response.json();
+           console.error('Failed to create chat:', error);
+           alert('Failed to start chat. Please try again.');
+         }
+       } catch (error) {
+         console.error('Error creating chat:', error);
+         alert('Error starting chat. Please try again.');
+       }
+     }
+
+     // Update cart count
+     function updateCartCount() {
+       const cartCountElement = document.getElementById('cartCount');
+       if (cartCountElement) {
+         const cart = JSON.parse(localStorage.getItem('cart')) || [];
+         const totalItems = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+         cartCountElement.textContent = totalItems;
+       }
+     }
+
+     // Load vendor/agent reviews and stats
+     async function loadVendorReviews() {
+       try {
+         const vendor = productData.vendor || productData.agent;
+         if (!vendor?._id) return;
+
+         const vendorType = productData.vendor ? 'vendors' : 'agents';
+         const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/${vendorType}/${vendor._id}`);
+         const data = await response.json();
+         
+         console.log('Vendor/Agent data loaded:', data); // Debug log
+         
+         // Update vendor stats and location
+         updateVendorStats(data);
+         
+         if (data && data.reviews && data.reviews.length > 0) {
+           console.log('Reviews found:', data.reviews); // Debug log
+           const rating = data.averageRating || data.rating;
+           displayVendorReviews(data.reviews, rating);
+         } else {
+           console.log('No reviews found for', vendorType); // Debug log
+           showNoReviews();
+         }
+       } catch (error) {
+         console.error('Error loading vendor reviews:', error);
+         showNoReviews();
+         updateVendorStats({}); // Update with empty data to show "N/A"
+       }
+     }
+
+     // Update vendor stats and location
+     function updateVendorStats(vendorData) {
+       // Update rating (handle both averageRating and rating fields)
+       const ratingElement = document.getElementById('vendorRating');
+       if (ratingElement) {
+         const rating = vendorData.averageRating || vendorData.rating;
+         ratingElement.textContent = rating ? rating.toFixed(1) : 'N/A';
+       }
+
+       // Update transactions
+       const transactionsElement = document.getElementById('vendorTransactions');
+       if (transactionsElement) {
+         transactionsElement.textContent = vendorData.totalTransactions || 0;
+       }
+
+       // Update reviews count
+       const reviewsElement = document.getElementById('vendorReviews');
+       if (reviewsElement) {
+         reviewsElement.textContent = vendorData.reviews ? vendorData.reviews.length : 0;
+       }
+
+       // Update location
+       const locationElement = document.getElementById('vendorLocation');
+       if (locationElement) {
+         const state = vendorData.state || vendorData.businessAddress || 'Location not specified';
+         locationElement.innerHTML = `<i class="fas fa-map-marker-alt"></i> ${state}`;
+       }
+
+       // Update product location in specs
+       const productLocationElement = document.getElementById('productLocation');
+       if (productLocationElement) {
+         const state = vendorData.state || vendorData.businessAddress || 'N/A';
+         productLocationElement.textContent = state;
+       }
+     }
+
+     // Display vendor reviews
+     function displayVendorReviews(reviews, averageRating) {
+       const vendorReviews = document.getElementById('vendorReviews');
+       const reviewsContainer = document.getElementById('reviewsContainer');
+       const vendorType = productData.vendor ? 'Vendor' : 'Agent';
+       
+       console.log('Displaying reviews:', reviews); // Debug log
+       
+       // Update section title
+       vendorReviews.querySelector('.section-title').textContent = `${vendorType} Reviews (${averageRating ? averageRating.toFixed(1) : '0.0'} ⭐)`;
+       
+       reviewsContainer.innerHTML = '';
+       
+       if (reviews && reviews.length > 0) {
+         reviews.slice(0, 5).forEach(review => {
+           const reviewItem = document.createElement('div');
+           reviewItem.className = 'review-item';
+           reviewItem.innerHTML = `
+             <div class="review-header">
+               <span class="review-author">${review.buyer?.fullName || review.buyerName || 'Anonymous'}</span>
+               <span class="review-rating">${review.rating} ⭐</span>
+             </div>
+             <div class="review-comment">${review.comment || review.text || 'No comment'}</div>
+           `;
+           reviewsContainer.appendChild(reviewItem);
+         });
+       } else {
+         reviewsContainer.innerHTML = '<div class="no-reviews">No reviews available</div>';
+       }
+       
+       vendorReviews.style.display = 'block';
+     }
+
+     // Show no reviews message
+     function showNoReviews() {
+       const vendorReviews = document.getElementById('vendorReviews');
+       const reviewsContainer = document.getElementById('reviewsContainer');
+       const vendorType = productData.vendor ? 'Vendor' : 'Agent';
+       
+       vendorReviews.querySelector('.section-title').textContent = `${vendorType} Reviews`;
+       reviewsContainer.innerHTML = '<div class="no-reviews">No reviews yet. Be the first to review this vendor!</div>';
+       vendorReviews.style.display = 'block';
+     }
+
+     // Load related products
+     async function loadRelatedProducts() {
+      try {
+        const category = productData.category;
+        if (!category) return;
+        
+        const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/products/search?category=${encodeURIComponent(category)}&limit=4&exclude=${productId}`);
+        const data = await response.json();
+        
+        if (data.success && data.products.length > 0) {
+          displayRelatedProducts(data.products);
+        }
+      } catch (error) {
+        console.error('Error loading related products:', error);
+      }
+    }
+
+    // Display related products
+    function displayRelatedProducts(products) {
+      const relatedProductsGrid = document.getElementById('relatedProductsGrid');
+      
+      relatedProductsGrid.innerHTML = '';
+      
+      products.forEach(product => {
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+        
+        const vendor = product.vendor || product.agent;
+        const vendorName = vendor?.shopName || 'Unknown';
+        
+        productCard.innerHTML = `
+          <img src="${product.image || '/assets/placeholder-product.jpg'}" 
+               alt="${product.name}" 
+               onerror="this.src='/assets/placeholder-product.jpg'">
+          <div class="product-card-info">
+            <h4 class="product-card-name">${product.name}</h4>
+            <div class="product-card-price">₦${(product.price || 0).toLocaleString()}</div>
+          </div>
+        `;
+        
+        productCard.addEventListener('click', () => {
+          window.location.href = `product-detail.html?id=${product._id}`;
+        });
+        
+        relatedProductsGrid.appendChild(productCard);
+      });
+      
+      document.getElementById('relatedProducts').style.display = 'block';
+    }
+
+    // Show loading
+    function showLoading(show) {
+      document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
+      document.getElementById('productDetail').style.display = show ? 'none' : 'block';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    // Show error
+    function showError() {
+      document.getElementById('loadingSpinner').style.display = 'none';
+      document.getElementById('productDetail').style.display = 'none';
+      document.getElementById('errorMessage').style.display = 'block';
+    }
+  </script>
+</body>
+</html>
