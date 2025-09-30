@@ -65,7 +65,13 @@ self.addEventListener('fetch', (event) => {
         const copy = res.clone();
         caches.open(CACHE_NAME).then((c) => c.put(req, copy));
         return res;
-      }).catch(() => caches.match(req))
+      }).catch(async () => {
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        // Fallback to offline page for app shell scripts if not cached
+        if (req.url.endsWith('/js/pwa-register.js')) return caches.match('/offline.html');
+        return new Response('/* script fetch failed */', { status: 503, headers: { 'Content-Type': 'application/javascript' } });
+      })
     );
     return;
   }
