@@ -39,6 +39,12 @@ document.getElementById("vendorLoginForm").addEventListener("submit", async (e) 
     const vendorData = { ...data.vendor };
     delete vendorData.token; // Remove token from user object
     localStorage.setItem("vendplugVendor", JSON.stringify(vendorData));
+    
+    // Clean up conflicting tokens after successful vendor login
+    if (typeof cleanupAfterLogin === 'function') {
+      cleanupAfterLogin('vendor');
+    }
+    
     window.location.href = "vendor-dashboard.html";
 
   } catch (err) {

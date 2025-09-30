@@ -854,6 +854,11 @@
 
     // This would be replaced with your actual data loading logic
     document.addEventListener('DOMContentLoaded', function() {
+      // Clean up conflicting tokens for vendor dashboard
+      if (typeof cleanupAfterLogin === 'function') {
+        cleanupAfterLogin('vendor');
+      }
+      
       // Load vendor data for sharing
       loadVendorData();
       

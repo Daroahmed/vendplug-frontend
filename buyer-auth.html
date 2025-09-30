@@ -111,8 +111,18 @@
     </div>
   </div>
 
+  <script src="js/config.js"></script>
   <script src="js/auth-utils.js"></script>
   <script src="/js/back-button.js"></script>
+  <script>
+    // Clean up any existing tokens when login page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🧹 Buyer login page loaded - cleaning up existing tokens');
+      if (typeof clearAllTokens === 'function') {
+        clearAllTokens();
+      }
+    });
+  </script>
   <script src="js/buyer-auth.js"></script>
 </body>
 </html>

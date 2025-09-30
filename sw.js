@@ -69,7 +69,14 @@ self.addEventListener('fetch', (event) => {
         const cached = await caches.match(req);
         if (cached) return cached;
         // Fallback to offline page for app shell scripts if not cached
-        if (req.url.endsWith('/js/pwa-register.js')) return caches.match('/offline.html');
+        if (req.url.endsWith('/js/pwa-register.js')) {
+          const offlineResponse = await caches.match('/offline.html');
+          if (offlineResponse) return offlineResponse;
+          return new Response('/* PWA registration script not available */', { 
+            status: 503, 
+            headers: { 'Content-Type': 'application/javascript' } 
+          });
+        }
         return new Response('/* script fetch failed */', { status: 503, headers: { 'Content-Type': 'application/javascript' } });
       })
     );

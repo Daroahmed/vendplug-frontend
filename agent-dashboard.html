@@ -852,6 +852,11 @@
 
     // This would be replaced with your actual data loading logic
     document.addEventListener('DOMContentLoaded', function() {
+      // Clean up conflicting tokens for agent dashboard
+      if (typeof cleanupAfterLogin === 'function') {
+        cleanupAfterLogin('agent');
+      }
+      
       // Load agent data for sharing
       loadAgentData();
       
