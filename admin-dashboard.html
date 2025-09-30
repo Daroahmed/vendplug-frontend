@@ -1647,6 +1647,14 @@
     <script src="js/auth-utils.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/adManager.js"></script>
+    <script>
+        // Clean up conflicting tokens for admin dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof cleanupAfterLogin === 'function') {
+                cleanupAfterLogin('admin');
+            }
+        });
+    </script>
     <script src="js/admin-dashboard.js"></script>
 </body>
 </html>

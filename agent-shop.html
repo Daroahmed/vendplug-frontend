@@ -675,6 +675,49 @@
     .toast-info {
       border-left: 4px solid #1DA1F2;
     }
+
+    /* Responsive Design */
+@media (max-width: 768px) {
+  .agent-grid, .agent-combined-layout {
+    grid-template-columns: repeat(2, 1fr); /* force 3 per row */
+    gap: 0.8rem;
+  }
+
+  .filters {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .filter-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .view-toggle {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.2rem;
+  }
+
+  .agent-grid, .agent-combined-layout {
+    grid-template-columns: repeat(2, 1fr); /* 2 per row on very small phones */
+  }
+
+  .shop-page {
+    padding: 1rem;
+  }
+
+  .sticky-filters {
+    top: 60px;
+  }
+}
+
+
+
   </style>
 </head>
 <body>
@@ -1033,7 +1076,7 @@
 
     // Backend URL configuration 
     const API_BASE = window.location.hostname === "localhost" 
-      ? `${window.BACKEND_URL || "http://localhost:5000"}/api` 
+      ? `${window.BACKEND_URL || window.location.origin}/api` 
       : "/api";
     // Share base URL (use deployed URL when on localhost)
     const SHARE_BASE = window.SHARE_BASE_URL || (window.location.hostname === 'localhost' 

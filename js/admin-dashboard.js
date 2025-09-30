@@ -148,6 +148,11 @@ class AdminDashboard {
             }
             return;
         }
+
+        // Clean up conflicting tokens after successful admin authentication
+        if (typeof cleanupAfterLogin === 'function') {
+            cleanupAfterLogin('admin');
+        }
     }
 
     async loadDashboardData() {
@@ -1237,7 +1242,7 @@ class AdminDashboard {
     async assignSupportTicket(ticketId) {
         try {
             // Fetch available staff for assignment
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin/staff`, {
                 headers: {
                     'Authorization': `Bearer ${this.adminToken}`,
                     'Content-Type': 'application/json'
@@ -1296,7 +1301,7 @@ class AdminDashboard {
         }
 
         try {
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/support/admin/tickets/${ticketId}/assign`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/support/admin/tickets/${ticketId}/assign`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${this.adminToken}`,
@@ -1330,7 +1335,7 @@ class AdminDashboard {
         if (!status) return;
 
         try {
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/support/admin/tickets/${ticketId}/status`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/support/admin/tickets/${ticketId}/status`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${this.adminToken}`,
@@ -1587,7 +1592,7 @@ class AdminDashboard {
     async assignDispute(disputeId) {
         try {
             // Fetch available staff for assignment
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin/staff`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
@@ -1666,7 +1671,7 @@ class AdminDashboard {
 
     async performAssignDispute(disputeId, assignedTo, staffName) {
         try {
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/assign`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin/disputes/${disputeId}/assign`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
@@ -1710,7 +1715,7 @@ class AdminDashboard {
     async performResolveDispute(disputeId, decision, reason, refundAmount, notes) {
         try {
             const token = getAuthToken();
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/resolve`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin/disputes/${disputeId}/resolve`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -2226,7 +2231,7 @@ class AdminDashboard {
             console.log('🔑 Admin token:', token ? 'Present' : 'Missing');
             console.log('🔑 Token length:', token ? token.length : 0);
             
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/resolve-escalated`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin/disputes/${disputeId}/resolve-escalated`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -2262,7 +2267,7 @@ class AdminDashboard {
     async reassignEscalatedDispute(disputeId) {
         try {
             // Fetch available staff for assignment
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/staff`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin/staff`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                     'Content-Type': 'application/json'
@@ -2341,7 +2346,7 @@ class AdminDashboard {
 
     async performReassignEscalatedDispute(disputeId, assignedTo, staffName) {
         try {
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin/disputes/${disputeId}/reassign`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin/disputes/${disputeId}/reassign`, {
                 method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
@@ -2713,8 +2718,8 @@ async function createAd() {
         };
 
         const url = isEdit 
-            ? `${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads/${editId}`
-            : `${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads`;
+            ? `${window.BACKEND_URL || window.location.origin}/api/admin-ads/ads/${editId}`
+            : `${window.BACKEND_URL || window.location.origin}/api/admin-ads/ads`;
         
         const method = isEdit ? 'PUT' : 'POST';
 
@@ -2913,7 +2918,7 @@ function filterCampaigns() {
 async function editAd(adId) {
     try {
         // Fetch the ad details
-        const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads/${adId}`, {
+        const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin-ads/ads/${adId}`, {
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,
                 'Content-Type': 'application/json'
@@ -2978,7 +2983,7 @@ async function editAd(adId) {
 async function deleteAd(adId) {
     if (confirm('Are you sure you want to delete this ad?')) {
         try {
-            const response = await fetch(`${window.BACKEND_URL || 'http://localhost:5000'}/api/admin-ads/ads/${adId}`, {
+            const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin-ads/ads/${adId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`,

@@ -564,6 +564,17 @@
       } finally { try { hideLoading && hideLoading(); } catch(_) {} }
     });
   </script>
+  <script src="js/config.js"></script>
+  <script src="js/auth-utils.js"></script>
+  <script>
+    // Clean up any existing tokens when login page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('🧹 Agent login page loaded - cleaning up existing tokens');
+      if (typeof clearAllTokens === 'function') {
+        clearAllTokens();
+      }
+    });
+  </script>
 
 </body>
 </html>

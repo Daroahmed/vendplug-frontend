@@ -2,7 +2,7 @@ console.log("✅ messageNotifications.js loaded");
 
 class MessageNotificationManager {
   constructor() {
-    this.socket = io({
+    this.socket = io(window.SOCKET_URL || window.location.origin, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
       withCredentials: true

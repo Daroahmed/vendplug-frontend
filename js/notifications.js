@@ -4,7 +4,7 @@ const BACKEND = window.BACKEND_URL || "";
 
 class NotificationManager {
   constructor() {
-    this.socket = io({
+    this.socket = io(window.SOCKET_URL || window.location.origin, {
       path: '/socket.io',
       transports: ['websocket', 'polling'],
       withCredentials: true

@@ -42,6 +42,12 @@ document.getElementById("buyerLoginForm").addEventListener("submit", async (e) =
           role: data.role || "buyer"
         };
         localStorage.setItem("vendplugBuyer", JSON.stringify(buyerData));
+        
+        // Clean up conflicting tokens after successful buyer login
+        if (typeof cleanupAfterLogin === 'function') {
+          cleanupAfterLogin('buyer');
+        }
+        
       messageEl.textContent = "Login successful!";
       messageEl.style.color = "green";
       setTimeout(() => (window.location.href = "public-buyer-home.html"), 1000);

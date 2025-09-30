@@ -436,6 +436,13 @@
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 1rem;
       }
+      @media (max-width: 768px) {
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr); /* exactly 3 columns */
+    gap: 0.5rem; /* optional: tighter spacing for small screens */
+  }
+}
+
 
     }
   </style>
