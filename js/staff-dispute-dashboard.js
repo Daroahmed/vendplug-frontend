@@ -70,6 +70,7 @@ class StaffDisputeDashboard {
             
             // Update UI
             document.getElementById('staffName').textContent = this.currentStaff.fullName;
+            document.getElementById('staffRole').textContent = this.currentStaff.role || 'Staff';
             
             // Show/hide manager features
             if (this.currentStaff.permissions?.disputeAssignment) {
@@ -78,6 +79,9 @@ class StaffDisputeDashboard {
 
         } catch (error) {
             console.error('Error loading staff info:', error);
+            // Show fallback values
+            document.getElementById('staffName').textContent = 'Staff Member';
+            document.getElementById('staffRole').textContent = 'Staff';
             throw error;
         }
     }
