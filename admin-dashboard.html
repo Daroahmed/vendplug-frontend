@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vendplug Admin Dashboard</title>
+    <link rel="manifest" href="/manifest.webmanifest">
     <style>
         * {
             margin: 0;
@@ -393,7 +394,6 @@
             z-index: 999;
         }
         .sidebar.open + .sidebar-overlay { display: block; }
-        }
 
         /* Modal Styles */
         .modal {
@@ -1656,5 +1656,6 @@
         });
     </script>
     <script src="js/admin-dashboard.js"></script>
+    <script src="/js/pwa-register.js"></script>
 </body>
 </html>
