@@ -263,7 +263,15 @@
       // Try to show a manual install option
       showManualInstallOption();
     }
-  }, 5000);
+  }, 3000);
+
+  // Additional fallback for slower connections
+  setTimeout(() => {
+    if (!deferredPrompt && !isPWAInstalled() && !localStorage.getItem('vp_install_dismissed')) {
+      console.log('🔄 Second fallback: Showing install option...');
+      showManualInstallOption();
+    }
+  }, 8000);
 
   // Show manual install option
   function showManualInstallOption() {

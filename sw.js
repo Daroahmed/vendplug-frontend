@@ -1,12 +1,15 @@
 // Basic VendPlug Service Worker
-const CACHE_NAME = 'vendplug-app-shell-v5.2';
+const CACHE_NAME = 'vendplug-app-shell-v5.3';
 const APP_SHELL = [
   '/',
   '/public-buyer-home.html',
   '/offline.html',
   '/css/ads.css',
   '/js/auth-utils.js',
-  '/js/cart-badge.js'
+  '/js/cart-badge.js',
+  '/manifest.webmanifest',
+  '/logo.png',
+  '/favicon.ico'
 ];
 
 self.addEventListener('install', (event) => {
