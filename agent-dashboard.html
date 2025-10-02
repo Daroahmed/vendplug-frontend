@@ -1224,6 +1224,53 @@
     });
   </script>
   <script src="js/adManager.js"></script>
+  
+  <!-- PWA Toast Function -->
+  <script>
+    // Toast notification function for PWA
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#00cc99' : '#ff4444'};
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 14px;
+        font-weight: 500;
+        max-width: 300px;
+        word-wrap: break-word;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+      `;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      
+      // Animate in
+      setTimeout(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(0)';
+      }, 100);
+      
+      // Auto remove after 4 seconds
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+          if (toast.parentNode) {
+            toast.remove();
+          }
+        }, 300);
+      }, 4000);
+    }
+  </script>
+  
   <script src="/js/pwa-register.js"></script>
 </body>
 </html>
