@@ -6,6 +6,7 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
+  "prefer_related_applications": false,
   "background_color": "#121212",
   "theme_color": "#00cc99",
   "categories": ["business", "shopping", "finance"],

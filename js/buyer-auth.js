@@ -52,7 +52,24 @@ document.getElementById("buyerLoginForm").addEventListener("submit", async (e) =
       messageEl.style.color = "green";
       setTimeout(() => (window.location.href = "public-buyer-home.html"), 1000);
     } else {
-      messageEl.textContent = data.message || "Login failed.";
+      // Handle specific error cases
+      let errorMessage = data.message || "Login failed.";
+      
+      // Handle specific error codes from backend
+      if (data.code === 'EMAIL_NOT_VERIFIED') {
+        errorMessage = "Please verify your email to continue. Check your inbox for the verification link.";
+        messageEl.innerHTML = `${errorMessage}<br><a href="verify-email.html" style="color: #00cc99; text-decoration: underline;">Resend verification email</a>`;
+      } else if (res.status === 401) {
+        errorMessage = "Invalid email or password. Please check your credentials.";
+      } else if (res.status === 404) {
+        errorMessage = "Account not found. Please check your email or register for a new account.";
+      } else if (res.status === 403) {
+        errorMessage = "Account access denied. Please contact support.";
+      } else if (res.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      }
+      
+      messageEl.textContent = errorMessage;
       messageEl.style.color = "red";
     }
   } catch (err) {
