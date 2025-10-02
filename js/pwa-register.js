@@ -34,7 +34,7 @@
 
   // Handle PWA installation prompt
   window.addEventListener('beforeinstallprompt', (e) => {
-    console.log('🔔 PWA install prompt available');
+    console.log('🔔 PWA install prompt available', e);
     // Prevent the mini-infobar from appearing on mobile
     e.preventDefault();
     // Stash the event so it can be triggered later
@@ -56,17 +56,21 @@
 
   // Show install prompt (button or banner)
   function showInstallPrompt() {
+    console.log('🔍 Checking if should show install prompt...');
+    
     // Check if already installed
     if (window.matchMedia('(display-mode: standalone)').matches) {
-      console.log('PWA already installed');
+      console.log('❌ PWA already installed - not showing banner');
       return;
     }
 
     // Check if user has dismissed before
     if (localStorage.getItem('vp_install_dismissed')) {
+      console.log('❌ User previously dismissed - not showing banner');
       return;
     }
 
+    console.log('✅ Showing install banner');
     // Create install banner
     createInstallBanner();
   }
@@ -161,7 +165,8 @@
   // Install PWA
   function installPWA() {
     if (!deferredPrompt) {
-      console.log('No install prompt available');
+      console.log('No install prompt available - showing manual instructions');
+      showManualInstallInstructions();
       return;
     }
 
@@ -179,6 +184,54 @@
       deferredPrompt = null;
       hideInstallPrompt();
     });
+  }
+
+  // Show manual install instructions
+  function showManualInstallInstructions() {
+    const instructions = document.createElement('div');
+    instructions.id = 'pwa-manual-instructions';
+    instructions.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        color: #333;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        z-index: 10001;
+        max-width: 320px;
+        text-align: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      ">
+        <div style="font-size: 18px; font-weight: 600; margin-bottom: 16px;">📱 Install VendPlug</div>
+        <div style="font-size: 14px; line-height: 1.4; margin-bottom: 20px;">
+          <strong>Chrome/Edge:</strong> Look for the install icon in the address bar<br><br>
+          <strong>Safari:</strong> Tap the share button, then "Add to Home Screen"<br><br>
+          <strong>Firefox:</strong> Look for the install icon in the address bar
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          background: #00cc99;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+        ">Got it!</button>
+      </div>
+    `;
+    document.body.appendChild(instructions);
+    
+    // Auto-remove after 10 seconds
+    setTimeout(() => {
+      if (instructions.parentNode) {
+        instructions.remove();
+      }
+    }, 10000);
   }
 
   // Dismiss install prompt
@@ -201,6 +254,21 @@
   function isPWAInstalled() {
     return window.matchMedia('(display-mode: standalone)').matches || 
            window.navigator.standalone === true;
+  }
+
+  // Fallback: Check for installability after a delay
+  setTimeout(() => {
+    if (!deferredPrompt && !isPWAInstalled() && !localStorage.getItem('vp_install_dismissed')) {
+      console.log('🔄 Fallback: Checking PWA installability...');
+      // Try to show a manual install option
+      showManualInstallOption();
+    }
+  }, 5000);
+
+  // Show manual install option
+  function showManualInstallOption() {
+    console.log('📱 Showing manual install option');
+    createInstallBanner();
   }
 
   // Expose functions globally
