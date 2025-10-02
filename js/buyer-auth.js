@@ -82,7 +82,7 @@ document.getElementById("buyerRegisterForm").addEventListener("submit", async (e
     const data = await res.json();
 
     if (res.status === 201) {
-      // Store email and role for verification
+      // Store email for verification (same as vendor/agent flow)
       localStorage.setItem('pendingVerificationEmail', email);
       localStorage.setItem('pendingVerificationRole', 'buyer');
 

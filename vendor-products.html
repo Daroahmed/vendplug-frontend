@@ -331,7 +331,8 @@
 
     @media (max-width: 480px) {
       .product-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
       }
       
       .product-actions {
@@ -660,6 +661,32 @@
       };
 
       window.deleteProduct = deleteProduct;
+
+      // Add photo preview functionality
+      const productImageInput = document.getElementById('productImage');
+      if (productImageInput) {
+        productImageInput.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            // Remove existing preview
+            const existingPreview = document.getElementById('currentImagePreview');
+            if (existingPreview) {
+              existingPreview.remove();
+            }
+            
+            // Create new preview
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              const imgPreview = document.createElement('img');
+              imgPreview.id = 'currentImagePreview';
+              imgPreview.src = e.target.result;
+              imgPreview.className = 'current-image-preview';
+              document.querySelector('.file-input').insertAdjacentElement('afterend', imgPreview);
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      }
     });
   </script>
 </body>
