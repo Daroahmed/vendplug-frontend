@@ -13,19 +13,18 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/favicon.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
     },
     {
-      "src": "/favicon.png",
-      "sizes": "256x256",
+      "src": "/logo.png",
+      "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/favicon.png",
+      "src": "/logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
@@ -37,26 +36,26 @@
       "short_name": "Cart",
       "description": "View your vendor cart",
       "url": "/buyer-vendor-checkout.html",
-      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
     },
     {
       "name": "My Orders",
       "short_name": "Orders",
       "description": "View your orders",
       "url": "/buyer-vendor-orders.html",
-      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
     },
     {
       "name": "Support",
       "short_name": "Support",
       "description": "Get help and support",
       "url": "/support.html",
-      "icons": [{ "src": "/favicon.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/logo.png", "sizes": "96x96" }]
     }
   ],
   "screenshots": [
     {
-      "src": "/favicon.png",
+      "src": "/logo.png",
       "sizes": "1280x720",
       "type": "image/png",
       "form_factor": "wide"
