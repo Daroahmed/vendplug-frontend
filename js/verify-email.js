@@ -121,12 +121,17 @@ async function handleTokenVerification() {
     const data = await response.json();
     
     if (response.ok) {
+      console.log("✅ Verification successful, clearing loading state...");
+      
+      // Clear any pending verification data first
+      localStorage.removeItem('pendingVerificationEmail');
+      localStorage.removeItem('pendingVerificationRole');
+      
+      // Show success message and action buttons
       showSuccess("Email verified successfully! You can now log in to your account.");
       showActionButtons();
       
-      // Clear any pending verification data
-      localStorage.removeItem('pendingVerificationEmail');
-      localStorage.removeItem('pendingVerificationRole');
+      console.log("✅ Verification flow completed");
     } else {
       if (data.code === 'TOKEN_EXPIRED') {
         showError("Verification link has expired. Please request a new one.");
@@ -241,15 +246,27 @@ function hideLoading() {
 
 // Show success message
 function showSuccess(message) {
+  console.log("✅ Showing success message:", message);
   if (statusMessage) {
+    // Clear any existing content completely
+    statusMessage.innerHTML = '';
+    statusMessage.className = '';
+    
+    // Add the success message
     statusMessage.innerHTML = `
       <div class="message success">
         ${message}
       </div>
     `;
     statusMessage.className = "message success";
+    console.log("✅ Success message HTML set:", statusMessage.innerHTML);
   }
-  manualForm.style.display = 'none';
+  if (manualForm) {
+    manualForm.style.display = 'none';
+  }
+  if (actionButtons) {
+    actionButtons.style.display = 'none';
+  }
 }
 
 // Show error message
@@ -267,7 +284,13 @@ function showError(message) {
 
 // Show action buttons
 function showActionButtons() {
-  actionButtons.style.display = 'block';
+  console.log("✅ Showing action buttons");
+  if (actionButtons) {
+    actionButtons.style.display = 'block';
+    console.log("✅ Action buttons displayed");
+  } else {
+    console.error("❌ Action buttons element not found");
+  }
 }
 
 // Wait for config to load

@@ -74,7 +74,15 @@ document.getElementById("buyerLoginForm").addEventListener("submit", async (e) =
     }
   } catch (err) {
     console.error("❌ Login error:", err);
-    messageEl.textContent = "Error logging in.";
+    
+    // Handle network errors
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      messageEl.textContent = "Network error. Please check your connection and try again.";
+    } else if (err.name === 'SyntaxError') {
+      messageEl.textContent = "Server response error. Please try again.";
+    } else {
+      messageEl.textContent = "An unexpected error occurred. Please try again.";
+    }
     messageEl.style.color = "red";
   } finally { hideLoading && hideLoading(); }
 });
@@ -125,12 +133,34 @@ document.getElementById("buyerRegisterForm").addEventListener("submit", async (e
         messageEl.style.color = "orange";
       }
     } else {
-      messageEl.textContent = data.message || "Registration failed.";
+      // Handle specific registration error cases
+      let errorMessage = data.message || "Registration failed.";
+      
+      // Handle specific error cases
+      if (data.message && data.message.includes("already exists")) {
+        errorMessage = "An account with this email already exists. Please try logging in instead.";
+      } else if (res.status === 400) {
+        errorMessage = "Please check your information and try again.";
+      } else if (res.status === 409) {
+        errorMessage = "Account already exists. Please try logging in instead.";
+      } else if (res.status >= 500) {
+        errorMessage = "Server error. Please try again later.";
+      }
+      
+      messageEl.textContent = errorMessage;
       messageEl.style.color = "red";
     }
   } catch (err) {
     console.error("❌ Registration error:", err);
-    messageEl.textContent = "Error registering.";
+    
+    // Handle network errors
+    if (err.name === 'TypeError' && err.message.includes('fetch')) {
+      messageEl.textContent = "Network error. Please check your connection and try again.";
+    } else if (err.name === 'SyntaxError') {
+      messageEl.textContent = "Server response error. Please try again.";
+    } else {
+      messageEl.textContent = "An unexpected error occurred. Please try again.";
+    }
     messageEl.style.color = "red";
   } finally { hideLoading && hideLoading(); }
 });
