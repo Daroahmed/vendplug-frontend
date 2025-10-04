@@ -1,5 +1,5 @@
 // Basic VendPlug Service Worker
-const CACHE_NAME = 'vendplug-app-shell-v5.8';
+const CACHE_NAME = 'vendplug-app-shell-v5.9';
 const APP_SHELL = [
   '/',
   '/public-buyer-home.html',
