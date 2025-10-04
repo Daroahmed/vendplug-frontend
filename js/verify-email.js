@@ -104,7 +104,7 @@ function setupEventListeners() {
 // Handle token verification (user clicked email link)
 async function handleTokenVerification() {
   console.log("🔍 Verifying token:", token);
-  showLoading("Verifying your email...");
+  showStatus("Verifying your email...");
   
   try {
     // Wait for config to load
@@ -197,7 +197,7 @@ async function handleManualResend() {
     return;
   }
   
-  showLoading("Sending verification email...");
+  showStatus("Sending verification email...");
   
   try {
     await waitForConfig();
@@ -224,14 +224,11 @@ async function handleManualResend() {
   }
 }
 
-// Show loading state
-function showLoading(message = "Loading...") {
+// Show status message without spinner
+function showStatus(message, className = "message") {
   if (statusMessage) {
-    statusMessage.innerHTML = `
-      <div class="loader"></div>
-      <p>${message}</p>
-    `;
-    statusMessage.className = "message";
+    statusMessage.innerHTML = `<p>${message}</p>`;
+    statusMessage.className = className;
   }
   manualForm.style.display = 'none';
   actionButtons.style.display = 'none';

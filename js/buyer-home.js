@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // 👚 Fashion & Lifestyle
     { name: "Boutiques", image: "/assets/boutiques.jpg" },
-    { name: "Thrift / Okrika / Gongo", image: "/assets/thrift.jpg" },
+    { name: "Thrift / Okrika / Gonjo", image: "/assets/thrift.jpg" },
     { name: "Tokunbo / Belguim Products", image: "/assets/tokunbo.jpg" },
     { name: "Shoes and Bags", image: "/assets/shoes-bags.jpg" },
     { name: "Jewelry & Accessories", image: "/assets/jewelry.jpg" },
