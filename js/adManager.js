@@ -99,10 +99,14 @@ class AdManager {
     });
 
     try {
-      const response = await fetch(`/api/admin-ads/public/ads?userType=${this.currentUserType}&page=${this.currentPage}`);
+      // Add cache-busting parameter to ensure fresh data
+      const cacheBuster = `&_t=${Date.now()}`;
+      const response = await fetch(`/api/admin-ads/public/ads?userType=${this.currentUserType}&page=${this.currentPage}${cacheBuster}`);
       const data = await response.json();
       
       console.log('📊 Ads API response:', data);
+      console.log('🔍 Response status:', response.status);
+      console.log('🔍 Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (data.success && data.data?.length) {
         this.ads = data.data;
@@ -110,6 +114,7 @@ class AdManager {
         this.renderAds();
       } else {
         console.log('ℹ️ No ads available for this page/user type');
+        console.log('🔍 Full response data:', data);
         this.ads = [];
       }
     } catch (error) {
