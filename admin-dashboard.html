@@ -399,7 +399,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1000;
+            z-index: 1002;
             left: 0;
             top: 0;
             width: 100%;
@@ -416,6 +416,15 @@
             width: 80%;
             max-width: 1000px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            position: relative;
+        }
+        
+        /* Adjust modal positioning when sidebar is open on desktop */
+        @media (min-width: 768px) {
+            .modal.sidebar-open .modal-content {
+                margin-left: 270px; /* Account for sidebar width + margin */
+                width: calc(80% - 250px); /* Reduce width to account for sidebar */
+            }
         }
 
         .modal-header {
@@ -1454,12 +1463,6 @@
                         <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
                             <label style="display: flex; align-items: center; gap: 5px;">
                                 <input type="checkbox" name="adTargetPages" value="public-buyer-home"> Public Buyer Home
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="buyer-home"> Buyer Home
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="buyer-agent-home"> Buyer-Agent Home
                             </label>
                             <label style="display: flex; align-items: center; gap: 5px;">
                                 <input type="checkbox" name="adTargetPages" value="vendor-dashboard"> Vendor Dashboard

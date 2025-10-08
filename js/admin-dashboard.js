@@ -1,5 +1,39 @@
 // Admin Dashboard JavaScript
 
+// Token validation utility
+function validateToken() {
+    const token = localStorage.getItem('vendplug-admin-token');
+    if (!token) {
+        console.error('❌ No admin token found');
+        return false;
+    }
+    
+    try {
+        // Basic JWT structure validation
+        const parts = token.split('.');
+        if (parts.length !== 3) {
+            console.error('❌ Invalid JWT structure');
+            localStorage.removeItem('vendplug-admin-token');
+            return false;
+        }
+        
+        // Check if token is expired (basic check)
+        const payload = JSON.parse(atob(parts[1]));
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < now) {
+            console.error('❌ Token expired');
+            localStorage.removeItem('vendplug-admin-token');
+            return false;
+        }
+        
+        return true;
+    } catch (error) {
+        console.error('❌ Token validation error:', error);
+        localStorage.removeItem('vendplug-admin-token');
+        return false;
+    }
+}
+
 // Ad Type and Position Validation
 function validateAdTypePosition(adType, adPosition) {
     const validCombinations = {
@@ -1380,20 +1414,38 @@ class AdminDashboard {
 
     async viewDispute(disputeId) {
         try {
+            console.log('🔍 Fetching dispute with ID:', disputeId);
+            console.log('🔍 Admin token:', localStorage.getItem('vendplug-admin-token') ? 'Present' : 'Missing');
+            
             const response = await fetch(`/api/disputes/admin/${disputeId}`, {
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('vendplug-admin-token')}`
                 }
             });
 
-            if (!response.ok) throw new Error('Failed to fetch dispute details');
+            console.log('🔍 Response status:', response.status);
+            console.log('🔍 Response headers:', Object.fromEntries(response.headers.entries()));
 
-            const dispute = await response.json();
-            this.showDisputeModal(dispute);
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ API Error Response:', errorText);
+                throw new Error(`Failed to fetch dispute details: ${response.status} ${response.statusText}`);
+            }
+
+            const responseData = await response.json();
+            console.log('🔍 Admin dispute response:', responseData);
+            
+            if (responseData.success && responseData.data) {
+                console.log('🔍 Dispute data to display:', responseData.data);
+                this.showDisputeModal(responseData.data);
+            } else {
+                console.error('❌ Invalid response format:', responseData);
+                throw new Error('Invalid response format - missing success or data');
+            }
             
         } catch (error) {
             console.error('❌ View dispute error:', error);
-            this.showError('Failed to load dispute details');
+            this.showError(`Failed to load dispute details: ${error.message}`);
         }
     }
 
@@ -1406,18 +1458,46 @@ class AdminDashboard {
         
         // Debug: Log the populated data
         console.log('🔍 Dispute data structure:', {
+            disputeId: disputeData.disputeId,
+            title: disputeData.title,
+            status: disputeData.status,
+            priority: disputeData.priority,
+            category: disputeData.category,
             complainant: disputeData.complainant,
             respondent: disputeData.respondent,
             orderId: disputeData.orderId,
+            raisedBy: disputeData.raisedBy,
+            raisedByType: disputeData.raisedByType,
             evidence: disputeData.evidence
         });
         
+        // Ensure DataFormatter is available, create fallbacks if not
+        if (typeof DataFormatter === 'undefined') {
+            console.warn('⚠️ DataFormatter is not available, using fallback functions');
+            window.DataFormatter = {
+                formatOrderId: (id) => id ? (id._id || id).toString().substring(0, 8) : 'Unknown',
+                formatUserName: (user, fallback = 'Unknown User') => {
+                    if (!user) return fallback;
+                    return user.fullName || user.shopName || user.businessName || user.email || fallback;
+                },
+                formatUserType: (type) => type || 'Unknown',
+                formatCurrency: (amount) => amount ? `₦${Number(amount).toLocaleString()}` : '₦0',
+                formatStatus: (status) => status ? status.replace('_', ' ').toUpperCase() : 'Unknown',
+                formatCategory: (category) => category || 'Unknown'
+            };
+        }
+        
+        // Check if sidebar is open and add appropriate class
+        const sidebar = document.querySelector('.sidebar');
+        const isSidebarOpen = sidebar && sidebar.classList.contains('open');
+        const modalClass = isSidebarOpen ? 'modal sidebar-open' : 'modal';
+        
         // Create modal HTML
         const modalHTML = `
-            <div id="disputeModal" class="modal" style="display: block;">
+            <div id="disputeModal" class="${modalClass}" style="display: block;">
                 <div class="modal-content" style="max-width: 90%; max-height: 90%; overflow-y: auto;">
                     <div class="modal-header">
-                        <h2>Dispute Details - ${disputeData.disputeId}</h2>
+                        <h2>Dispute Details - ${disputeData.disputeId || disputeData._id || 'Unknown'}</h2>
                         <span class="close" onclick="this.closest('.modal').remove()">&times;</span>
                     </div>
                     <div class="modal-body">
@@ -1876,8 +1956,14 @@ class AdminDashboard {
 
             if (!response.ok) throw new Error('Failed to fetch escalated dispute details');
 
-            const dispute = await response.json();
-            this.showEscalatedDisputeModal(dispute);
+            const responseData = await response.json();
+            console.log('🔍 Admin escalated dispute response:', responseData);
+            
+            if (responseData.success && responseData.data) {
+                this.showEscalatedDisputeModal(responseData.data);
+            } else {
+                throw new Error('Invalid response format');
+            }
             
         } catch (error) {
             console.error('❌ View escalated dispute error:', error);
@@ -1888,8 +1974,13 @@ class AdminDashboard {
     showEscalatedDisputeModal(dispute) {
         const disputeData = dispute.dispute || dispute;
         
+        // Check if sidebar is open and add appropriate class
+        const sidebar = document.querySelector('.sidebar');
+        const isSidebarOpen = sidebar && sidebar.classList.contains('open');
+        const modalClass = isSidebarOpen ? 'modal sidebar-open' : 'modal';
+        
         const modalHTML = `
-            <div id="escalatedDisputeModal" class="modal" style="display: block;">
+            <div id="escalatedDisputeModal" class="${modalClass}" style="display: block;">
                 <div class="modal-content" style="max-width: 90%; max-height: 90%; overflow-y: auto;">
                     <div class="modal-header">
                         <h2>Escalated Dispute - ${disputeData.disputeId}</h2>
@@ -2723,9 +2814,15 @@ async function createAd() {
         
         const method = isEdit ? 'PUT' : 'POST';
 
+        // Validate token before making API call
+        if (!validateToken()) {
+            alert('Your session has expired. Please login again.');
+            window.location.href = '/admin-login.html';
+            return;
+        }
+        
         const token = localStorage.getItem('vendplug-admin-token');
-        console.log('🔑 Create ad token:', token ? 'Present' : 'Missing');
-        console.log('🔑 Token length:', token ? token.length : 0);
+        console.log('🔑 Create ad token validated successfully');
         
         const response = await fetch(url, {
             method: method,
@@ -2737,7 +2834,24 @@ async function createAd() {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to ${isEdit ? 'update' : 'create'} ad`);
+            const errorData = await response.json().catch(() => ({}));
+            console.error('❌ API Error:', {
+                status: response.status,
+                statusText: response.statusText,
+                errorData
+            });
+            
+            if (response.status === 401) {
+                console.error('❌ Authentication failed - token expired');
+                alert('Your session has expired. Please login again.');
+                // Clear the expired token
+                localStorage.removeItem('vendplug-admin-token');
+                window.location.href = '/admin-login.html';
+                return;
+            }
+            
+            const errorMessage = errorData.message || errorData.error || `Failed to ${isEdit ? 'update' : 'create'} ad (${response.status})`;
+            throw new Error(errorMessage);
         }
 
         alert(`Ad ${isEdit ? 'updated' : 'created'} successfully!`);
@@ -2917,6 +3031,13 @@ function filterCampaigns() {
 
 async function editAd(adId) {
     try {
+        // Validate token before making API call
+        if (!validateToken()) {
+            alert('Your session has expired. Please login again.');
+            window.location.href = '/admin-login.html';
+            return;
+        }
+        
         // Fetch the ad details
         const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin-ads/ads/${adId}`, {
             headers: {
@@ -2926,10 +3047,21 @@ async function editAd(adId) {
         });
 
         if (!response.ok) {
-            throw new Error('Failed to fetch ad details');
+            const errorData = await response.json().catch(() => ({}));
+            if (response.status === 401) {
+                console.error('❌ Authentication failed - token expired');
+                alert('Your session has expired. Please login again.');
+                localStorage.removeItem('vendplug-admin-token');
+                window.location.href = '/admin-login.html';
+                return;
+            }
+            throw new Error(errorData.message || 'Failed to fetch ad details');
         }
 
         const result = await response.json();
+        if (!result.success || !result.data) {
+            throw new Error('Invalid response format');
+        }
         const ad = result.data;
 
         // Populate the form with existing data
@@ -2983,6 +3115,13 @@ async function editAd(adId) {
 async function deleteAd(adId) {
     if (confirm('Are you sure you want to delete this ad?')) {
         try {
+            // Validate token before making API call
+            if (!validateToken()) {
+                alert('Your session has expired. Please login again.');
+                window.location.href = '/admin-login.html';
+                return;
+            }
+            
             const response = await fetch(`${window.BACKEND_URL || window.location.origin}/api/admin-ads/ads/${adId}`, {
                 method: 'DELETE',
                 headers: {
@@ -2992,7 +3131,15 @@ async function deleteAd(adId) {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to delete ad');
+                const errorData = await response.json().catch(() => ({}));
+                if (response.status === 401) {
+                    console.error('❌ Authentication failed - token expired');
+                    alert('Your session has expired. Please login again.');
+                    localStorage.removeItem('vendplug-admin-token');
+                    window.location.href = '/admin-login.html';
+                    return;
+                }
+                throw new Error(errorData.message || 'Failed to delete ad');
             }
 
             const result = await response.json();

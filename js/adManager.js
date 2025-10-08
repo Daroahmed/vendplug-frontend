@@ -589,32 +589,54 @@ class AdManager {
   }
 
   renderPopupAds(popupAds) {
-    if (!popupAds.length) return;
+    console.log('🔍 renderPopupAds called with:', popupAds);
+    if (!popupAds.length) {
+      console.log('❌ No popup ads to render');
+      return;
+    }
 
     popupAds.forEach(ad => {
+      console.log('🔍 Processing popup ad:', ad);
       if (this.shouldShowPopup(ad)) {
         this.showPopupAd(ad);
+      } else {
+        console.log('❌ Popup ad not shown due to conditions');
       }
     });
   }
 
   shouldShowPopup(ad) {
+    console.log('🔍 Checking popup ad:', ad);
+    
+    // Initialize popup settings with defaults if not present
+    const popupSettings = ad.popupSettings || {
+      showOncePerSession: false,
+      showOnFirstVisit: false,
+      showOnLogin: false,
+      showDelay: 1000,
+      autoClose: 0
+    };
+    
     // Check if already shown in this session
-    if (ad.popupSettings.showOncePerSession && sessionStorage.getItem(`ad-shown-${ad._id}`)) {
+    if (popupSettings.showOncePerSession && sessionStorage.getItem(`ad-shown-${ad._id}`)) {
+      console.log('❌ Popup already shown in this session');
       return false;
     }
 
     // Check if popup should be shown based on settings
-    if (ad.popupSettings.showOnFirstVisit && !localStorage.getItem('hasVisited')) {
+    if (popupSettings.showOnFirstVisit && !localStorage.getItem('hasVisited')) {
+      console.log('✅ Showing popup on first visit');
       return true;
     }
     
-    if (ad.popupSettings.showOnLogin && this.isLoginPage()) {
+    if (popupSettings.showOnLogin && this.isLoginPage()) {
+      console.log('✅ Showing popup on login page');
       return true;
     }
 
     // If none of the specific conditions are met, show the popup by default
     // (since it has popup position, it should be displayed)
+    console.log('✅ Showing popup by default');
     return true;
   }
 
@@ -624,6 +646,17 @@ class AdManager {
   }
 
   showPopupAd(ad) {
+    console.log('🎯 Showing popup ad:', ad);
+    
+    // Initialize popup settings with defaults if not present
+    const popupSettings = ad.popupSettings || {
+      showOncePerSession: false,
+      showOnFirstVisit: false,
+      showOnLogin: false,
+      showDelay: 1000,
+      autoClose: 0
+    };
+    
     // Add a small delay to make popup more visible
     setTimeout(() => {
       const popup = document.createElement('div');
@@ -639,18 +672,25 @@ class AdManager {
 
       document.body.appendChild(popup);
       
+      // Make popup visible with animation
+      setTimeout(() => {
+        popup.style.opacity = '1';
+      }, 100);
+      
       // Mark as shown in session if needed
-      if (ad.popupSettings.showOncePerSession) {
+      if (popupSettings.showOncePerSession) {
         sessionStorage.setItem(`ad-shown-${ad._id}`, 'true');
       }
 
       // Auto close if specified
-      if (ad.popupSettings.autoClose > 0) {
+      if (popupSettings.autoClose > 0) {
         setTimeout(() => {
           this.closePopup(popup);
-        }, ad.popupSettings.autoClose);
+        }, popupSettings.autoClose);
       }
-    }, ad.popupSettings.showDelay || 1000);
+      
+      console.log('✅ Popup ad displayed successfully');
+    }, popupSettings.showDelay || 1000);
   }
 
   closePopup(popup) {
