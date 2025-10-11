@@ -1778,18 +1778,38 @@ class AdminDashboard {
     }
 
     resolveDispute(disputeId) {
-        const decision = prompt('Enter decision (refund, no_refund, partial_refund):');
+        const decision = prompt('Enter decision (Refund Buyer, Fund Vendor/Agent, Partial Refund, No Action, Escalated):');
         if (!decision) return;
 
         const reason = prompt('Enter reason for decision:');
         if (!reason) return;
 
-        const refundAmount = prompt('Enter refund amount (if applicable, 0 for no refund):');
-        const amount = refundAmount ? parseFloat(refundAmount) : 0;
-
         const notes = prompt('Enter additional notes (optional):') || '';
 
-        this.performResolveDispute(disputeId, decision, reason, amount, notes);
+        // Map user-friendly terms to backend values
+        let backendDecision;
+        switch(decision.toLowerCase()) {
+            case 'refund buyer':
+                backendDecision = 'favor_complainant';
+                break;
+            case 'fund vendor/agent':
+                backendDecision = 'favor_respondent';
+                break;
+            case 'partial refund':
+                backendDecision = 'partial_refund';
+                break;
+            case 'no action':
+                backendDecision = 'no_action';
+                break;
+            case 'escalated':
+                backendDecision = 'escalated';
+                break;
+            default:
+                alert('Invalid decision. Please use: Refund Buyer, Fund Vendor/Agent, Partial Refund, No Action, or Escalated');
+                return;
+        }
+
+        this.performResolveDispute(disputeId, backendDecision, reason, 0, notes);
     }
 
     async performResolveDispute(disputeId, decision, reason, refundAmount, notes) {
@@ -2261,8 +2281,8 @@ class AdminDashboard {
                                 <label for="resolutionDecision">Resolution Decision *</label>
                                 <select class="form-control" id="resolutionDecision" required>
                                     <option value="">Select decision</option>
-                                    <option value="refund">Full Refund (Favor Complainant)</option>
-                                    <option value="no_refund">No Refund (Favor Respondent)</option>
+                                    <option value="favor_complainant">Refund Buyer</option>
+                                    <option value="favor_respondent">Fund Vendor/Agent</option>
                                     <option value="partial_refund">Partial Refund</option>
                                 </select>
                             </div>
@@ -2270,11 +2290,6 @@ class AdminDashboard {
                                 <label for="resolutionReason">Resolution Reason *</label>
                                 <input type="text" class="form-control" id="resolutionReason" required 
                                        placeholder="Brief reason for the decision">
-                            </div>
-                            <div class="form-group mb-3">
-                                <label for="refundAmount">Refund Amount (₦)</label>
-                                <input type="number" class="form-control" id="refundAmount" 
-                                       placeholder="Enter amount if refund is applicable" min="0" step="0.01">
                             </div>
                             <div class="form-group mb-3">
                                 <label for="resolutionNotes">Resolution Notes</label>
@@ -2309,7 +2324,6 @@ class AdminDashboard {
     async performResolveEscalatedDispute(disputeId) {
         const resolution = document.getElementById('resolutionDecision').value;
         const reason = document.getElementById('resolutionReason').value;
-        const refundAmount = document.getElementById('refundAmount').value;
         const notes = document.getElementById('resolutionNotes').value;
 
         if (!resolution || !reason) {
@@ -2331,7 +2345,6 @@ class AdminDashboard {
                 body: JSON.stringify({
                     decision: resolution, // Map to backend expected field
                     reason,
-                    refundAmount: refundAmount ? parseFloat(refundAmount) : 0,
                     notes
                 })
             });

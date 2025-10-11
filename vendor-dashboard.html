@@ -581,7 +581,21 @@
       }
       
       .grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+      
+      .card {
+        min-height: 120px;
+        padding: 1rem;
+      }
+      
+      .card h3 {
+        font-size: 1rem;
+      }
+      
+      .card p {
+        font-size: 0.8rem;
       }
       
       .dashboard {
