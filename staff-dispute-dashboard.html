@@ -941,18 +941,14 @@
                         <label class="form-label">Resolution Decision</label>
                         <select class="form-select" id="resolutionDecision" required>
                             <option value="">Select decision</option>
-                            <option value="refund">Full Refund</option>
+                            <option value="favor_complainant">Refund Buyer</option>
+                            <option value="favor_respondent">Fund Vendor/Agent</option>
                             <option value="partial_refund">Partial Refund</option>
-                            <option value="no_refund">No Refund</option>
                         </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Reason</label>
                         <textarea class="form-control" id="resolutionReason" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Refund Amount (if applicable)</label>
-                        <input type="number" class="form-control" id="refundAmount" step="0.01" min="0">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Additional Notes</label>

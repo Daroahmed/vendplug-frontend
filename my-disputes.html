@@ -613,13 +613,45 @@
             text-transform: uppercase;
         }
 
-        .decision-favor_complainant { background: #66bb6a; color: #fff; }
-        .decision-favor_respondent { background: #42a5f5; color: #fff; }
-        .decision-partial_refund { background: #ffa726; color: #000; }
-        .decision-full_refund { background: #66bb6a; color: #fff; }
-        .decision-no_action { background: #78909c; color: #fff; }
-        .decision-no_refund { background: #ef5350; color: #fff; }
-        .decision-escalated { background: #ab47bc; color: #fff; }
+        .decision-favor_complainant {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .decision-favor_respondent {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .decision-partial_refund {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .decision-full_refund {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .decision-no_action {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .decision-no_refund {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .decision-escalated {
+            background: #fce4ec;
+            color: #880e4f;
+        }
+
+        .decision-pending {
+            background: #e9ecef;
+            color: #495057;
+        }
 
         @media (max-width: 768px) {
             .dispute-modal {
@@ -916,6 +948,10 @@
 
         // Dispute Details Modal
         function showDisputeDetailsModal(dispute) {
+            console.log('🔍 showDisputeDetailsModal called with dispute:', dispute);
+            console.log('🔍 dispute.resolution:', dispute.resolution);
+            console.log('🔍 dispute.resolution?.decision:', dispute.resolution?.decision);
+            
             const modal = document.getElementById('disputeDetailsModal');
             if (!modal) {
                 createDisputeDetailsModal();
@@ -1088,8 +1124,8 @@
                             <div class="resolution-details">
                                 <div class="info-item">
                                     <label>Decision:</label>
-                                    <span class="decision-badge decision-${dispute.resolution.decision}">
-                                        ${formatDecision(dispute.resolution.decision)}
+                                    <span class="decision-badge decision-${dispute.resolution?.decision || 'pending'}">
+                                        ${formatDecision(dispute.resolution?.decision)}
                                     </span>
                                 </div>
                                 <div class="info-item">
@@ -1167,15 +1203,20 @@
         }
 
         function formatDecision(decision) {
+            if (!decision || decision === 'undefined' || decision === 'null') {
+                return 'Pending Decision';
+            }
+            
             const decisions = {
-                'favor_complainant': 'Favor Complainant',
-                'favor_respondent': 'Favor Respondent',
+                'favor_complainant': 'Refund Buyer',
+                'favor_respondent': 'Fund Vendor/Agent', 
                 'partial_refund': 'Partial Refund',
-                'full_refund': 'Full Refund',
+                'full_refund': 'Refund Buyer',
                 'no_action': 'No Action',
-                'no_refund': 'No Refund',
+                'no_refund': 'Fund Vendor/Agent',
                 'escalated': 'Escalated'
             };
+            
             return decisions[decision] || decision;
         }
 

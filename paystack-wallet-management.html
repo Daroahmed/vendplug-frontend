@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paystack Wallet Management - VendPlug Admin</title>
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/wallet-management.css">
+    <style>
+        .wallet-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .balance-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 1rem 0;
+        }
+        
+        .capacity-indicator {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .status-good {
+            background: #10b981;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .status-critical {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .topup-section {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .instructions {
+            background: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 10px 10px 0;
+        }
+        
+        .payout-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .refresh-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            background: #2563eb;
+            transform: translateY(-2px);
+        }
+        
+        .refresh-btn.loading {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        
+        .alert-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            display: none;
+        }
+        
+        .alert-banner.show {
+            display: block;
+        }
+        
+        .alert-critical {
+            background: #fee2e2;
+            border-color: #ef4444;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <header class="admin-header">
+            <h1>💰 Paystack Wallet Management</h1>
+            <button class="refresh-btn" onclick="refreshWalletData()">
+                <span class="refresh-text">🔄 Refresh</span>
+            </button>
+        </header>
+
+        <!-- Alert Banner -->
+        <div id="alertBanner" class="alert-banner">
+            <strong>⚠️ Low Balance Alert:</strong> <span id="alertMessage"></span>
+        </div>
+
+        <!-- Wallet Balance Card -->
+        <div class="wallet-card">
+            <h2>🏦 Paystack Wallet Balance</h2>
+            <div class="balance-display" id="walletBalance">₦0.00</div>
+            <div class="capacity-indicator">
+                <span>Instant Payout Capacity:</span>
+                <span class="status-badge" id="capacityStatus">Checking...</span>
+            </div>
+            <p id="lastUpdated">Last updated: Never</p>
+        </div>
+
+        <!-- Payout Statistics -->
+        <div class="payout-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="instantCapacity">₦0</div>
+                <div class="stat-label">Instant Payout Capacity</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pendingPayouts">0</div>
+                <div class="stat-label">Pending Payouts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="canProcessInstant">No</div>
+                <div class="stat-label">Can Process Instant</div>
+            </div>
+        </div>
+
+        <!-- Top-up Recommendations -->
+        <div class="topup-section">
+            <h3>🎯 Smart Top-up Recommendations</h3>
+            <div id="topupRecommendations">
+                <div class="stat-card">
+                    <h4>📈 Recommended Actions</h4>
+                    <div id="recommendationContent">
+                        <p>Loading recommendations...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top-up Instructions -->
+        <div class="topup-section">
+            <h3>💳 Wallet Top-up Instructions</h3>
+            <div class="instructions">
+                <h4>📋 How to Top Up Your Paystack Wallet:</h4>
+                <ol>
+                    <li><strong>Contact Paystack Support:</strong> Reach out to Paystack support team</li>
+                    <li><strong>Request Wallet Top-up:</strong> Specify the amount you want to add</li>
+                    <li><strong>Bank Transfer:</strong> Transfer the amount to your Paystack bank account</li>
+                    <li><strong>Confirmation:</strong> Wait for Paystack to confirm the top-up</li>
+                    <li><strong>Verification:</strong> Use the refresh button above to verify the new balance</li>
+                </ol>
+                
+                <div style="margin-top: 1rem; padding: 1rem; background: #e0f2fe; border-radius: 8px;">
+                    <strong>💡 Pro Tip:</strong> Maintain a balance of at least ₦100,000 for optimal instant payout capacity.
+                </div>
+            </div>
+        </div>
+
+        <!-- Payout Capacity Details -->
+        <div class="topup-section">
+            <h3>📊 Payout Capacity Analysis</h3>
+            <div id="capacityDetails">
+                <p>Loading capacity details...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let walletData = null;
+
+        // Load wallet data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                refreshWalletData();
+            }
+        });
+
+        async function refreshWalletData() {
+            const refreshBtn = document.querySelector('.refresh-btn');
+            const refreshText = refreshBtn.querySelector('.refresh-text');
+            
+            // Show loading state
+            refreshBtn.classList.add('loading');
+            refreshText.textContent = '⏳ Loading...';
+
+            try {
+                const token = getAuthToken();
+                
+                // Fetch wallet balance (using authenticated route)
+                const balanceResponse = await fetch('/api/paystack-wallet/balance', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!balanceResponse.ok) {
+                    throw new Error('Failed to fetch wallet balance');
+                }
+
+                const balanceData = await balanceResponse.json();
+                console.log('🔍 Balance API Response:', balanceData);
+                
+                // Fetch payout capacity (using authenticated route)
+                const capacityResponse = await fetch('/api/paystack-wallet/payout-capacity', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!capacityResponse.ok) {
+                    throw new Error('Failed to fetch payout capacity');
+                }
+
+                const capacityData = await capacityResponse.json();
+                console.log('🔍 Capacity API Response:', capacityData);
+
+                // Update UI with data
+                updateWalletDisplay(balanceData.data, capacityData.data);
+                
+                // Check for low balance alerts
+                checkBalanceAlerts(balanceData.data.balance || 0);
+
+            } catch (error) {
+                console.error('Error fetching wallet data:', error);
+                
+                // Check if it's an authentication error
+                if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+                    showError('Authentication failed. Please log in as admin and try again.');
+                    setTimeout(() => {
+                        window.location.href = '/admin-login.html';
+                    }, 2000);
+                } else {
+                    showError('Failed to load wallet data. Please try again.');
+                }
+            } finally {
+                // Reset button state
+                refreshBtn.classList.remove('loading');
+                refreshText.textContent = '🔄 Refresh';
+            }
+        }
+
+        function updateWalletDisplay(balanceData, capacityData) {
+            console.log('🔍 updateWalletDisplay called with:', { balanceData, capacityData });
+            
+            // Check if data exists
+            if (!balanceData || !capacityData) {
+                console.error('❌ Missing data:', { balanceData, capacityData });
+                showError('Invalid data received from server');
+                return;
+            }
+            
+            // Update balance
+            const balance = balanceData.balance || 0;
+            document.getElementById('walletBalance').textContent = `₦${balance.toLocaleString()}`;
+            
+            // Update last updated time
+            document.getElementById('lastUpdated').textContent = 
+                `Last updated: ${new Date(balanceData.lastUpdated || new Date()).toLocaleString()}`;
+
+            // Update capacity status
+            const capacityStatus = document.getElementById('capacityStatus');
+            const canProcessInstant = capacityData.canProcessInstantPayouts || false;
+            
+            if (canProcessInstant) {
+                capacityStatus.textContent = '✅ Instant Payouts Available';
+                capacityStatus.className = 'status-badge status-good';
+            } else {
+                capacityStatus.textContent = '⚠️ Limited Capacity';
+                capacityStatus.className = 'status-badge status-warning';
+            }
+
+            // Update statistics
+            const instantCapacity = capacityData.instantPayoutCapacity || 0;
+            const pendingPayouts = capacityData.pendingPayouts || 0;
+            const recommendation = capacityData.recommendation || 'No recommendation available';
+            
+            document.getElementById('instantCapacity').textContent = `₦${instantCapacity.toLocaleString()}`;
+            document.getElementById('pendingPayouts').textContent = pendingPayouts;
+            document.getElementById('canProcessInstant').textContent = canProcessInstant ? 'Yes' : 'No';
+
+            // Update capacity details
+            const capacityDetails = document.getElementById('capacityDetails');
+            capacityDetails.innerHTML = `
+                <div class="stat-card">
+                    <h4>Current Status</h4>
+                    <p><strong>Balance:</strong> ₦${balance.toLocaleString()}</p>
+                    <p><strong>Instant Capacity:</strong> ₦${instantCapacity.toLocaleString()}</p>
+                    <p><strong>Pending Payouts:</strong> ${pendingPayouts}</p>
+                    <p><strong>Recommendation:</strong> ${recommendation}</p>
+                </div>
+            `;
+
+            // Update top-up recommendations
+            updateTopupRecommendations(balance, capacityData);
+
+            // Store data for alerts
+            walletData = { balanceData, capacityData };
+        }
+
+        function updateTopupRecommendations(currentBalance, capacityData) {
+            const recommendationContent = document.getElementById('recommendationContent');
+            
+            let recommendations = [];
+            let priority = 'low';
+            
+            if (currentBalance < 50000) {
+                recommendations.push('🚨 <strong>URGENT:</strong> Top up immediately with ₦200,000+');
+                recommendations.push('⚡ Current balance too low for reliable instant payouts');
+                priority = 'critical';
+            } else if (currentBalance < 100000) {
+                recommendations.push('⚠️ <strong>RECOMMENDED:</strong> Top up with ₦150,000');
+                recommendations.push('📈 This will ensure consistent instant payout capacity');
+                priority = 'high';
+            } else if (currentBalance < 200000) {
+                recommendations.push('✅ <strong>OPTIONAL:</strong> Consider topping up with ₦100,000');
+                recommendations.push('🎯 Good capacity, but more buffer recommended for peak times');
+                priority = 'medium';
+            } else {
+                recommendations.push('🎉 <strong>EXCELLENT:</strong> Balance is optimal for instant payouts');
+                recommendations.push('💡 Monitor daily and top up when below ₦150,000');
+                priority = 'low';
+            }
+            
+            // Add specific recommendations based on pending payouts
+            if (capacityData.pendingPayouts > 0) {
+                recommendations.push(`📋 ${capacityData.pendingPayouts} pending payout(s) - ensure sufficient balance`);
+            }
+            
+            // Add weekly maintenance tip
+            recommendations.push('📅 <strong>Weekly Tip:</strong> Top up ₦200,000 every Monday for consistent capacity');
+            
+            const priorityClass = `alert-${priority}`;
+            const priorityIcon = priority === 'critical' ? '🚨' : priority === 'high' ? '⚠️' : priority === 'medium' ? '✅' : '🎉';
+            
+            recommendationContent.innerHTML = `
+                <div class="alert-banner ${priorityClass} show">
+                    <strong>${priorityIcon} Priority: ${priority.toUpperCase()}</strong>
+                </div>
+                <ul style="margin-top: 1rem;">
+                    ${recommendations.map(rec => `<li style="margin: 0.5rem 0;">${rec}</li>`).join('')}
+                </ul>
+                <div style="margin-top: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px;">
+                    <strong>💡 Pro Strategy:</strong> Maintain ₦100,000-₦500,000 for optimal instant payout service. 
+                    Top up weekly or when balance drops below ₦75,000.
+                </div>
+            `;
+        }
+
+        function checkBalanceAlerts(currentBalance) {
+            const alertBanner = document.getElementById('alertBanner');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            // Clear any existing alerts
+            alertBanner.classList.remove('show', 'alert-critical');
+            
+            if (currentBalance < 50000) {
+                // Critical alert
+                alertBanner.classList.add('show', 'alert-critical');
+                alertMessage.textContent = `Balance is critically low (₦${currentBalance.toLocaleString()}). Top up immediately to maintain instant payout service.`;
+            } else if (currentBalance < 100000) {
+                // Warning alert
+                alertBanner.classList.add('show');
+                alertMessage.textContent = `Balance is getting low (₦${currentBalance.toLocaleString()}). Consider topping up for better payout capacity.`;
+            }
+        }
+
+        function showError(message) {
+            // You can implement a toast notification here
+            console.error(message);
+            alert(message);
+        }
+
+        // Helper function to get auth token (implement based on your auth system)
+        function getAuthToken() {
+            // Try multiple sources for admin token - check the correct key first
+            return localStorage.getItem('vendplug-admin-token') ||
+                   localStorage.getItem('adminToken') || 
+                   sessionStorage.getItem('adminToken') ||
+                   localStorage.getItem('token') ||
+                   sessionStorage.getItem('token') ||
+                   getCookie('adminToken') ||
+                   getCookie('token');
+        }
+
+        // Helper function to get cookie value
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+
+        // Check if user is authenticated
+        function checkAuth() {
+            const token = getAuthToken();
+            console.log('🔍 Checking authentication...');
+            console.log('🔍 Token found:', token ? 'Yes' : 'No');
+            console.log('🔍 Token preview:', token ? token.substring(0, 20) + '...' : 'None');
+            
+            if (!token) {
+                console.log('❌ No admin token found');
+                alert('Please log in as admin to access this page.');
+                window.location.href = '/admin-login.html';
+                return false;
+            }
+            console.log('✅ Admin token found, proceeding...');
+            return true;
+        }
+    </script>
+</body>
+</html>
