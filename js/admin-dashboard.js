@@ -76,8 +76,14 @@ class AdminDashboard {
     }
 
     init() {
+        console.log('🚀 Initializing admin dashboard...');
         this.setupEventListeners();
         this.checkAuth();
+        
+        // Show dashboard section by default
+        this.showSection('dashboard');
+        
+        // Load dashboard data
         this.loadDashboardData();
     }
 
@@ -158,13 +164,18 @@ class AdminDashboard {
     }
 
     checkAuth() {
+        console.log('🔐 Checking authentication...');
+        
         if (!isAuthenticated()) {
+            console.log('❌ User not authenticated - redirecting to login');
             redirectToLogin();
             return;
         }
 
         // Check if user is admin
         const userType = getCurrentUserType();
+        console.log('👤 User type:', userType);
+        
         if (userType !== 'admin') {
             console.error('❌ Access denied: User is not admin, userType:', userType);
             alert('Access denied. This page is only for administrators.');
@@ -183,6 +194,8 @@ class AdminDashboard {
             return;
         }
 
+        console.log('✅ Admin authentication successful');
+
         // Clean up conflicting tokens after successful admin authentication
         if (typeof cleanupAfterLogin === 'function') {
             cleanupAfterLogin('admin');
@@ -191,6 +204,9 @@ class AdminDashboard {
 
     async loadDashboardData() {
         try {
+            console.log('📊 Loading dashboard data...');
+            console.log('🔑 Admin token:', this.adminToken ? 'Present' : 'Missing');
+            
             const response = await fetch('/api/admin/dashboard', {
                 headers: {
                     'Authorization': `Bearer ${this.adminToken}`,
@@ -198,26 +214,36 @@ class AdminDashboard {
                 }
             });
 
+            console.log('📡 Response status:', response.status);
+            console.log('📡 Response ok:', response.ok);
+
             if (!response.ok) {
                 if (response.status === 401) {
+                    console.log('❌ Unauthorized - redirecting to login');
                     this.logout();
                     return;
                 }
-                throw new Error('Failed to load dashboard data');
+                throw new Error(`Failed to load dashboard data: ${response.status} ${response.statusText}`);
             }
 
             const data = await response.json();
             console.log('📊 Dashboard data received:', data);
             console.log('📊 Counts data:', data.data?.counts);
             console.log('📊 Financial data:', data.data?.financial);
-            this.updateDashboardCards(data.data.counts);
-            this.updateFinancialSummary(data.data.financial);
-            this.updateRecentOrders(data.data.recentOrders);
-            this.updateRecentTransactions(data.data.recentTransactions);
+            
+            if (data.data) {
+                this.updateDashboardCards(data.data.counts);
+                this.updateFinancialSummary(data.data.financial);
+                this.updateRecentOrders(data.data.recentOrders);
+                this.updateRecentTransactions(data.data.recentTransactions);
+                console.log('✅ Dashboard data updated successfully');
+            } else {
+                console.warn('⚠️ No data in response');
+            }
 
         } catch (error) {
             console.error('❌ Dashboard data error:', error);
-            this.showError('Failed to load dashboard data');
+            this.showError('Failed to load dashboard data: ' + error.message);
         }
     }
 
@@ -372,25 +398,41 @@ class AdminDashboard {
     }
 
     updateRecentOrders(orders) {
+        console.log('📋 Updating recent orders:', orders);
         const container = document.getElementById('recentOrders');
+        
+        if (!container) {
+            console.error('❌ Recent orders container not found');
+            return;
+        }
+        
         if (!orders || orders.length === 0) {
+            console.log('📋 No recent orders to display');
             container.innerHTML = '<p>No recent orders</p>';
             return;
         }
 
-        const ordersHTML = orders.map(order => `
-            <div style="padding: 10px; border-bottom: 1px solid #eee;">
-                <div style="font-weight: 600;">${DataFormatter.formatOrderId(order.orderId)}</div>
-                <div style="font-size: 0.9rem; color: #666;">
-                    ${DataFormatter.formatUserName(order.buyer)} → ${DataFormatter.formatUserName(order.vendor, 'Unknown Vendor')}
+        console.log('📋 Rendering recent orders:', orders.length);
+        
+        try {
+            const ordersHTML = orders.map(order => `
+                <div style="padding: 10px; border-bottom: 1px solid #eee;">
+                    <div style="font-weight: 600;">${DataFormatter.formatOrderId(order.orderId)}</div>
+                    <div style="font-size: 0.9rem; color: #666;">
+                        ${DataFormatter.formatUserName(order.buyer)} → ${DataFormatter.formatUserName(order.vendor, 'Unknown Vendor')}
+                    </div>
+                    <div style="font-size: 0.8rem; color: #999;">
+                        ${DataFormatter.formatDate(order.createdAt)} - ${DataFormatter.formatStatus(order.status)}
+                    </div>
                 </div>
-                <div style="font-size: 0.8rem; color: #999;">
-                    ${DataFormatter.formatDate(order.createdAt)} - ${DataFormatter.formatStatus(order.status)}
-                </div>
-            </div>
-        `).join('');
+            `).join('');
 
-        container.innerHTML = ordersHTML;
+            container.innerHTML = ordersHTML;
+            console.log('✅ Recent orders updated successfully');
+        } catch (error) {
+            console.error('❌ Error rendering recent orders:', error);
+            container.innerHTML = '<p>Error loading recent orders</p>';
+        }
     }
 
     updateRecentTransactions(transactions) {
@@ -416,13 +458,37 @@ class AdminDashboard {
     }
 
     showSection(section) {
+        console.log('🔄 Showing section:', section);
+        
         // Hide all sections
-        document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+        document.querySelectorAll('.content-section').forEach(s => {
+            console.log('🔍 Hiding section:', s.id, 'current display:', s.style.display);
+            s.style.display = 'none';
+        });
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
         // Show selected section
-        document.getElementById(`${section}-section`).style.display = 'block';
-        document.querySelector(`[data-section="${section}"]`).classList.add('active');
+        const sectionElement = document.getElementById(`${section}-section`);
+        const navLink = document.querySelector(`[data-section="${section}"]`);
+        
+        console.log('🔍 Looking for section element:', `${section}-section`);
+        console.log('🔍 Found section element:', sectionElement);
+        
+        if (sectionElement) {
+            sectionElement.style.display = 'block';
+            console.log('✅ Section element found and shown:', section);
+            console.log('🔍 Section element display after setting:', sectionElement.style.display);
+            console.log('🔍 Section element computed style:', window.getComputedStyle(sectionElement).display);
+        } else {
+            console.error('❌ Section element not found:', `${section}-section`);
+        }
+        
+        if (navLink) {
+            navLink.classList.add('active');
+            console.log('✅ Nav link found and activated:', section);
+        } else {
+            console.error('❌ Nav link not found:', `[data-section="${section}"]`);
+        }
 
         this.currentSection = section;
 
@@ -454,6 +520,9 @@ class AdminDashboard {
                 break;
             case 'notification-campaigns':
                 this.loadCampaigns();
+                break;
+            case 'wallet-management':
+                this.loadWalletManagement();
                 break;
         }
     }
@@ -727,12 +796,7 @@ class AdminDashboard {
 
     async loadPayouts() {
         try {
-            const response = await fetch(`/api/admin/payouts?page=${this.currentPage.payouts}&limit=${this.currentLimit}`, {
-                headers: {
-                    'Authorization': `Bearer ${this.adminToken}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+            const response = await window.tokenManager.authenticatedFetch(`/api/admin/payouts?page=${this.currentPage.payouts}&limit=${this.currentLimit}`);
 
             if (!response.ok) throw new Error('Failed to load payouts');
 
@@ -742,6 +806,28 @@ class AdminDashboard {
         } catch (error) {
             console.error('❌ Load payouts error:', error);
             this.showError('Failed to load payouts');
+        }
+    }
+
+    async fixStuckProcessingPayouts() {
+        if (!confirm('This will fix all stuck processing payouts. Continue?')) {
+            return;
+        }
+
+        try {
+            const response = await window.tokenManager.authenticatedFetch('/api/payouts/fix-stuck-processing', {
+                method: 'POST'
+            });
+
+            if (!response.ok) throw new Error('Failed to fix stuck processing payouts');
+
+            const result = await response.json();
+            this.showSuccess(result.message);
+            this.loadPayouts(); // Refresh the payouts list
+
+        } catch (error) {
+            console.error('❌ Fix stuck processing payouts error:', error);
+            this.showError('Failed to fix stuck processing payouts');
         }
     }
 
@@ -782,6 +868,11 @@ class AdminDashboard {
         }
 
         const payoutsHTML = `
+            <div style="margin-bottom: 20px;">
+                <button class="btn btn-danger" onclick="adminDashboard.fixStuckProcessingPayouts()" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                    🔧 Fix Stuck Processing Payouts
+                </button>
+            </div>
             <div class="table-container">
                 <table>
                     <thead>
@@ -2629,6 +2720,248 @@ class AdminDashboard {
     filterCampaigns() {
         // Implementation for filtering campaigns
         console.log('Filtering campaigns...');
+    }
+
+    // Wallet Management Methods
+    async loadWalletManagement() {
+        try {
+            console.log('🏦 Loading wallet management data...');
+            
+            // Load wallet balance and capacity
+            await this.loadWalletBalance();
+            
+            // Load pending payouts
+            await this.loadPendingPayouts();
+            
+            // Load recent transactions
+            await this.loadRecentWalletTransactions();
+            
+            // Setup wallet management event listeners
+            this.setupWalletEventListeners();
+            
+        } catch (error) {
+            console.error('❌ Error loading wallet management:', error);
+            this.showError('Failed to load wallet management data');
+        }
+    }
+
+    async loadWalletBalance() {
+        try {
+            const response = await fetch('/api/paystack-wallet/balance', {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load wallet balance');
+            }
+
+            const data = await response.json();
+            console.log('💰 Wallet balance data:', data);
+            
+            this.updateWalletDisplay(data.data);
+            
+        } catch (error) {
+            console.error('❌ Error loading wallet balance:', error);
+            this.showWalletError('Failed to load wallet balance');
+        }
+    }
+
+    async loadPendingPayouts() {
+        try {
+            const response = await fetch('/api/admin/payouts?status=pending&limit=10', {
+                headers: {
+                    'Authorization': `Bearer ${this.adminToken}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to load pending payouts');
+            }
+
+            const data = await response.json();
+            const pendingAmount = data.data?.payouts?.reduce((total, payout) => total + (payout.amount || 0), 0) || 0;
+            
+            document.getElementById('pendingPayouts').textContent = `₦${pendingAmount.toLocaleString()}`;
+            
+        } catch (error) {
+            console.error('❌ Error loading pending payouts:', error);
+            document.getElementById('pendingPayouts').textContent = 'Error';
+        }
+    }
+
+    async loadRecentWalletTransactions() {
+        // Remove this functionality since there's no proper endpoint
+        const container = document.getElementById('walletRecentTransactions');
+        if (container) {
+            container.innerHTML = '<p>Recent wallet transactions not available</p>';
+        }
+    }
+
+    updateWalletDisplay(data) {
+        if (!data) {
+            console.warn('⚠️ No wallet data received');
+            return;
+        }
+
+        const balance = data.balance || 0;
+        const payoutCapacity = data.payoutCapacity || 0;
+        const capacityPercentage = data.capacityPercentage || 0;
+        
+        // Update balance display
+        document.getElementById('walletBalance').textContent = balance.toLocaleString();
+        
+        // Update payout capacity
+        document.getElementById('payoutCapacity').textContent = `₦${payoutCapacity.toLocaleString()}`;
+        
+        // Update capacity indicator
+        const capacityFill = document.getElementById('capacityFill');
+        const capacityText = document.getElementById('capacityText');
+        
+        if (capacityFill && capacityText) {
+            capacityFill.style.width = `${capacityPercentage}%`;
+            capacityText.textContent = `${capacityPercentage.toFixed(1)}% capacity`;
+        }
+        
+        // Update last updated time
+        document.getElementById('lastUpdated').textContent = new Date().toLocaleTimeString();
+        
+        // Update recommendations
+        this.updateRecommendations(data);
+        
+        // Update alerts
+        this.updateAlerts(data);
+    }
+
+    updateRecommendations(data) {
+        const recommendationContent = document.getElementById('recommendationContent');
+        if (!recommendationContent) return;
+        
+        const balance = data.balance || 0;
+        const payoutCapacity = data.payoutCapacity || 0;
+        
+        let recommendations = [];
+        
+        if (balance < 50000) {
+            recommendations.push('💡 Consider topping up your wallet - low balance detected');
+        }
+        
+        if (payoutCapacity < 10000) {
+            recommendations.push('⚠️ Payout capacity is low - may affect instant payouts');
+        }
+        
+        if (balance > 500000) {
+            recommendations.push('✅ Wallet balance is healthy - good for high-volume operations');
+        }
+        
+        if (recommendations.length === 0) {
+            recommendations.push('✅ Your wallet is in good condition');
+        }
+        
+        recommendationContent.innerHTML = recommendations.map(rec => `<div style="margin: 0.5rem 0;">${rec}</div>`).join('');
+    }
+
+    updateAlerts(data) {
+        const alertsContainer = document.getElementById('alerts');
+        if (!alertsContainer) return;
+        
+        const balance = data.balance || 0;
+        const payoutCapacity = data.payoutCapacity || 0;
+        
+        let alerts = [];
+        
+        if (balance < 10000) {
+            alerts.push({
+                type: 'danger',
+                message: '🚨 Critical: Wallet balance is very low! Top up immediately to avoid payout failures.'
+            });
+        } else if (balance < 50000) {
+            alerts.push({
+                type: 'warning',
+                message: '⚠️ Warning: Wallet balance is low. Consider topping up soon.'
+            });
+        }
+        
+        if (payoutCapacity < 5000) {
+            alerts.push({
+                type: 'warning',
+                message: '⚠️ Payout capacity is very low. This may cause delays in vendor payouts.'
+            });
+        }
+        
+        if (alerts.length === 0) {
+            alertsContainer.innerHTML = '';
+            return;
+        }
+        
+        alertsContainer.innerHTML = alerts.map(alert => `
+            <div class="alert alert-${alert.type}" style="padding: 1rem; margin: 0.5rem 0; border-radius: 5px; background: ${alert.type === 'danger' ? '#f8d7da' : '#fff3cd'}; color: ${alert.type === 'danger' ? '#721c24' : '#856404'}; border: 1px solid ${alert.type === 'danger' ? '#f5c6cb' : '#ffeaa7'};">
+                ${alert.message}
+            </div>
+        `).join('');
+    }
+
+    renderRecentTransactions(transactions) {
+        const container = document.getElementById('recentTransactions');
+        
+        if (transactions.length === 0) {
+            container.innerHTML = '<div class="loading">No recent transactions</div>';
+            return;
+        }
+        
+        const transactionsHTML = transactions.map(transaction => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #eee;">
+                <div>
+                    <div style="font-weight: bold;">${transaction.type || 'Transaction'}</div>
+                    <div style="color: #666; font-size: 0.9rem;">
+                        ${transaction.initiatedBy?.fullName || transaction.initiatedBy?.shopName || 'System'} • 
+                        ${new Date(transaction.createdAt).toLocaleString()}
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <div style="font-weight: bold; color: ${transaction.type === 'commission' ? '#28a745' : '#007bff'};">
+                        ${transaction.type === 'commission' ? '+' : ''}₦${(transaction.amount || 0).toLocaleString()}
+                    </div>
+                    <div style="color: #666; font-size: 0.9rem;">
+                        <span class="status-badge status-${transaction.status}">${transaction.status}</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        container.innerHTML = transactionsHTML;
+    }
+
+    setupWalletEventListeners() {
+        // Refresh balance button
+        const refreshBtn = document.getElementById('refreshBalance');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.loadWalletBalance();
+            });
+        }
+        
+        // Top up button
+        const topUpBtn = document.getElementById('topUpBtn');
+        if (topUpBtn) {
+            topUpBtn.addEventListener('click', () => {
+                alert('Top-up functionality will be implemented soon. Please use the Paystack dashboard for now.');
+            });
+        }
+    }
+
+    showWalletError(message) {
+        document.getElementById('walletBalance').textContent = 'Error';
+        document.getElementById('payoutCapacity').textContent = 'Error';
+        document.getElementById('capacityText').textContent = 'Error loading data';
+        
+        const recommendationContent = document.getElementById('recommendationContent');
+        if (recommendationContent) {
+            recommendationContent.innerHTML = `<div style="color: #dc3545;">❌ ${message}</div>`;
+        }
     }
 }
 

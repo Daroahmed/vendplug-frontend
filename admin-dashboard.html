@@ -107,6 +107,18 @@
             margin-bottom: 30px;
         }
 
+        /* Recent Orders and Transactions Grid */
+        .dashboard-grid:last-of-type {
+            grid-template-columns: 1fr 1fr;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid:last-of-type {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .card {
             background: white;
             padding: 25px;
@@ -693,7 +705,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="/admin/wallet-management" class="nav-link">
+                    <a href="#wallet-management" class="nav-link" data-section="wallet-management">
                         <i>🏦</i> Paystack Wallet
                     </a>
                 </li>
@@ -1364,8 +1376,67 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+
+            <!-- Wallet Management Section -->
+            <div id="wallet-management-section" class="content-section" style="display: none;">
+                <div class="section-header">
+                    <h3>Paystack Wallet Management</h3>
+                    <p>Monitor and manage your Paystack wallet balance</p>
+                </div>
+                <div class="section-content">
+                    <!-- Wallet Balance Card -->
+                    <div class="wallet-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+                        <div class="balance-display" style="font-size: 2.5rem; font-weight: bold; margin: 1rem 0;">
+                            ₦<span id="walletBalance">0.00</span>
+                        </div>
+                        <div class="capacity-indicator" style="display: flex; align-items: center; gap: 1rem; margin: 1rem 0;">
+                            <div class="capacity-bar" style="flex: 1; height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden;">
+                                <div id="capacityFill" style="height: 100%; background: #4CAF50; width: 0%; transition: width 0.3s ease;"></div>
+                            </div>
+                            <span id="capacityText">Loading...</span>
+                        </div>
+                        <div class="wallet-actions" style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                            <button id="refreshBalance" class="btn btn-light" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                                <i>🔄</i> Refresh
+                            </button>
+                            <button id="topUpBtn" class="btn btn-success" style="background: #4CAF50; color: white; border: none;">
+                                <i>💰</i> Top Up
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Wallet Stats -->
+                    <div class="row" style="display: flex; gap: 1rem; margin-bottom: 2rem;">
+                        <div class="stat-card" style="flex: 1; background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Payout Capacity</h4>
+                            <div id="payoutCapacity" style="font-size: 1.5rem; font-weight: bold; color: #4CAF50;">₦0.00</div>
+                            <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9rem;">Available for instant payouts</p>
+                        </div>
+                        <div class="stat-card" style="flex: 1; background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Pending Payouts</h4>
+                            <div id="pendingPayouts" style="font-size: 1.5rem; font-weight: bold; color: #FF9800;">₦0.00</div>
+                            <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9rem;">Awaiting processing</p>
+                        </div>
+                        <div class="stat-card" style="flex: 1; background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #333;">Last Updated</h4>
+                            <div id="lastUpdated" style="font-size: 1.2rem; font-weight: bold; color: #2196F3;">Just now</div>
+                            <p style="margin: 0.5rem 0 0 0; color: #666; font-size: 0.9rem;">Balance refresh time</p>
+                        </div>
+                    </div>
+
+                    <!-- Recommendations -->
+                    <div id="recommendations" style="background: #f8f9fa; padding: 1.5rem; border-radius: 10px; margin-bottom: 2rem; border-left: 4px solid #007bff;">
+                        <h4 style="margin: 0 0 1rem 0; color: #333;">💡 Smart Recommendations</h4>
+                        <div id="recommendationContent">
+                            <div class="spinner" style="display: inline-block; width: 20px; height: 20px; border: 2px solid #f3f3f3; border-top: 2px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                            <span style="margin-left: 10px;">Loading recommendations...</span>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div id="alerts" style="margin-bottom: 2rem;">
+                        <!-- Alerts will be dynamically inserted here -->
+                    </div>
 
     <!-- Create Ad Modal -->
     <div id="createAdModal" class="modal">
@@ -1652,6 +1723,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/config.js"></script>
     <script src="js/dataFormatter.js"></script>
+    <script src="js/tokenManager.js"></script>
     <script src="js/auth-utils.js"></script>
     <script src="js/notifications.js"></script>
     <script src="js/adManager.js"></script>
