@@ -217,7 +217,22 @@ document.addEventListener('DOMContentLoaded', () => {
         throw new Error(paymentData.message || 'Payment initialization failed');
       }
 
-      const { authorizationUrl, reference } = paymentData.data;
+      const { authorizationUrl, reference, requestedAmount, paystackFee, totalAmountToPay } = paymentData.data;
+
+      // Show fee breakdown before redirecting
+      const feeCapInfo = paystackFee >= 2000 ? ' (capped at ₦2,000)' : '';
+      const confirmed = confirm(
+        `💰 Payment Summary:\n\n` +
+        `Amount to wallet: ₦${requestedAmount}\n` +
+        `Paystack fees: ₦${paystackFee} (1.5% + ₦100)${feeCapInfo}\n` +
+        `Total to pay: ₦${totalAmountToPay}\n\n` +
+        `Proceed to payment?`
+      );
+
+      if (!confirmed) {
+        fundBtn.classList.remove('loading');
+        return;
+      }
 
       // Redirect to Paystack payment page
       console.log('🚀 Redirecting to Paystack:', authorizationUrl);
