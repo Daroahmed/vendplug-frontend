@@ -4,7 +4,7 @@ const APP_SHELL = [
   '/',
   '/public-buyer-home.html',
   '/offline.html',
-  '/css/ads.css',
+  '/CSS/ads.css',
   '/js/auth-utils.js',
   '/js/cart-badge.js',
   '/js/adManager.js',
