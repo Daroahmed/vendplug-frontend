@@ -44,6 +44,98 @@
       font-weight: 600;
     }
 
+    /* Smart Navigation Styles */
+    .smart-navigation {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      border: 1px solid rgba(0, 204, 153, 0.3);
+      border-radius: 15px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 15px rgba(0, 204, 153, 0.1);
+      animation: slideDown 0.3s ease-out;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .nav-breadcrumb {
+      margin-bottom: 1rem;
+    }
+
+    .nav-text {
+      color: var(--primary);
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .breadcrumb-path {
+      margin-top: 0.5rem;
+    }
+
+    .breadcrumb-item {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .nav-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      min-width: 140px;
+      justify-content: center;
+    }
+
+    .nav-btn-primary {
+      background: linear-gradient(135deg, var(--primary) 0%, #00ffcc 100%);
+      color: #000;
+      box-shadow: 0 4px 15px rgba(0, 204, 153, 0.3);
+    }
+
+    .nav-btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 204, 153, 0.4);
+    }
+
+    .nav-btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text-light);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .nav-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .nav-btn i {
+      font-size: 1rem;
+    }
+
     /* Modern Wallet Card */
     .wallet-card {
       background: var(--wallet-gradient);
@@ -425,6 +517,22 @@
         padding: 0.5rem;
       }
 
+      .smart-navigation {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .nav-buttons {
+        flex-direction: column;
+        gap: 0.8rem;
+      }
+
+      .nav-btn {
+        width: 100%;
+        min-width: auto;
+        padding: 1rem;
+      }
+
       .wallet-card {
         padding: 1.5rem;
         border-radius: 15px;
@@ -481,6 +589,25 @@
 </head>
 <body>
   <div class="container">
+    <!-- Smart Navigation -->
+    <div class="smart-navigation" id="smartNavigation" style="display: none;">
+      <div class="nav-breadcrumb">
+        <div class="breadcrumb-trail" id="breadcrumbTrail">
+          <span class="nav-text">Quick Navigation</span>
+        </div>
+      </div>
+      <div class="nav-buttons">
+        <button class="nav-btn nav-btn-primary" id="backToCheckout" onclick="goBackToCheckout()">
+          <i class="fas fa-arrow-left"></i>
+          <span id="checkoutButtonText">Back to Checkout</span>
+        </button>
+        <button class="nav-btn nav-btn-secondary" onclick="goToHome()">
+          <i class="fas fa-home"></i>
+          <span>Home</span>
+        </button>
+      </div>
+    </div>
+
     <h1 class="page-title">VendPlug Wallet</h1>
 
     <!-- Modern Wallet Card -->
@@ -556,6 +683,90 @@
   </div>
 
   <script>
+    // Smart Navigation System
+    let checkoutContext = null;
+
+    function initializeSmartNavigation() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const referrer = document.referrer;
+      const smartNav = document.getElementById('smartNavigation');
+      const checkoutButton = document.getElementById('backToCheckout');
+      const checkoutButtonText = document.getElementById('checkoutButtonText');
+      const breadcrumbTrail = document.getElementById('breadcrumbTrail');
+
+      // Check URL parameters first (more reliable)
+      const source = urlParams.get('from');
+      if (source) {
+        if (source === 'vendor-checkout') {
+          checkoutContext = 'vendor';
+          checkoutButtonText.textContent = 'Back to Vendor Checkout';
+          updateBreadcrumb('Home → Vendor Checkout → Wallet');
+          smartNav.style.display = 'block';
+        } else if (source === 'agent-checkout') {
+          checkoutContext = 'agent';
+          checkoutButtonText.textContent = 'Back to Agent Checkout';
+          updateBreadcrumb('Home → Agent Checkout → Wallet');
+          smartNav.style.display = 'block';
+        } else if (source === 'payment-success') {
+          checkoutContext = 'payment-success';
+          checkoutButtonText.textContent = 'Continue Shopping';
+          updateBreadcrumb('Home → Checkout → Payment → Wallet');
+          smartNav.style.display = 'block';
+        }
+      }
+      // Fallback to referrer detection
+      else if (referrer.includes('buyer-vendor-checkout')) {
+        checkoutContext = 'vendor';
+        checkoutButtonText.textContent = 'Back to Vendor Checkout';
+        updateBreadcrumb('Home → Vendor Checkout → Wallet');
+        smartNav.style.display = 'block';
+      } else if (referrer.includes('buyer-agent-checkout')) {
+        checkoutContext = 'agent';
+        checkoutButtonText.textContent = 'Back to Agent Checkout';
+        updateBreadcrumb('Home → Agent Checkout → Wallet');
+        smartNav.style.display = 'block';
+      } else if (referrer.includes('payment-success')) {
+        checkoutContext = 'payment-success';
+        checkoutButtonText.textContent = 'Continue Shopping';
+        updateBreadcrumb('Home → Checkout → Payment → Wallet');
+        smartNav.style.display = 'block';
+      } else {
+        // User came from menu or direct link, show home button only
+        checkoutContext = 'direct';
+        checkoutButton.style.display = 'none';
+        updateBreadcrumb('Home → Wallet');
+        smartNav.style.display = 'block';
+      }
+    }
+
+    function updateBreadcrumb(trail) {
+      const breadcrumbTrail = document.getElementById('breadcrumbTrail');
+      breadcrumbTrail.innerHTML = `
+        <span class="nav-text">Quick Navigation</span>
+        <div class="breadcrumb-path">
+          <span class="breadcrumb-item">${trail}</span>
+        </div>
+      `;
+    }
+
+    // Initialize smart navigation when page loads
+    document.addEventListener('DOMContentLoaded', initializeSmartNavigation);
+
+    function goBackToCheckout() {
+      if (checkoutContext === 'vendor') {
+        window.location.href = 'buyer-vendor-checkout.html';
+      } else if (checkoutContext === 'agent') {
+        window.location.href = 'buyer-agent-checkout.html';
+      } else if (checkoutContext === 'payment-success') {
+        // Go to home page to continue shopping
+        window.location.href = 'public-buyer-home.html';
+      }
+    }
+
+    function goToHome() {
+      window.location.href = 'public-buyer-home.html';
+    }
+
     function copyAccount() {
       const acct = document.getElementById('accountNumber').textContent.trim();
       navigator.clipboard.writeText(acct).then(() => {

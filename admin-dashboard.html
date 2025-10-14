@@ -411,7 +411,7 @@
         .modal {
             display: none;
             position: fixed;
-            z-index: 1002;
+            z-index: 9999;
             left: 0;
             top: 0;
             width: 100%;
@@ -429,6 +429,11 @@
             max-width: 1000px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
             position: relative;
+        }
+
+        /* Ensure modals are always visible */
+        .modal[style*="display: block"] {
+            display: block !important;
         }
         
         /* Adjust modal positioning when sidebar is open on desktop */
@@ -1328,6 +1333,158 @@
                         Loading ads...
                     </div>
                 </div>
+
+                <!-- Create Ad Modal -->
+                <div id="createAdModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Create New Ad</h2>
+                            <span class="close" onclick="closeCreateAdModal()">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <form id="createAdForm">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Ad Title *</label>
+                                        <input type="text" id="adTitle" required>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Ad Type *</label>
+                                        <select id="adType" required>
+                                            <option value="">Select Type</option>
+                                            <option value="banner">Banner Ad</option>
+                                            <option value="popup">Popup Ad</option>
+                                            <option value="inline">Inline Ad</option>
+                                            <option value="carousel">Carousel Ad</option>
+                                        </select>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Position *</label>
+                                        <select id="adPosition" required>
+                                            <option value="">Select Position</option>
+                                            <option value="hero">Hero Section</option>
+                                            <option value="top">Top</option>
+                                            <option value="middle">Middle</option>
+                                            <option value="bottom">Bottom</option>
+                                            <option value="sidebar">Sidebar</option>
+                                            <option value="popup">Popup</option>
+                                        </select>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Status *</label>
+                                        <select id="adStatus" required>
+                                            <option value="draft">Draft</option>
+                                            <option value="active" selected>Active</option>
+                                            <option value="paused">Paused</option>
+                                            <option value="archived">Archived</option>
+                                        </select>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Priority</label>
+                                        <select id="adPriority">
+                                            <option value="1">Low (1)</option>
+                                            <option value="5" selected>Medium (5)</option>
+                                            <option value="10">High (10)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Description</label>
+                                    <textarea id="adDescription" rows="3" placeholder="Ad description or call-to-action"></textarea>
+                                </div>
+                                
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Ad Image *</label>
+                                    <div class="image-upload-section">
+                                        <input type="file" id="adImageFile" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
+                                        <div class="image-upload-area" onclick="document.getElementById('adImageFile').click()">
+                                            <div id="imageUploadPlaceholder">
+                                                <i style="font-size: 2rem; color: #666;">📷</i>
+                                                <p>Click to upload image</p>
+                                                <small>JPEG, PNG, GIF, WebP (Max 5MB)</small>
+                                            </div>
+                                            <div id="imagePreview" style="display: none;">
+                                                <img id="previewImg" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
+                                                <button type="button" onclick="removeImage()" style="position: absolute; top: 5px; right: 5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer;">×</button>
+                                            </div>
+                                        </div>
+                                        <input type="hidden" id="adImageUrl" required>
+                                        <div id="imageUploadStatus" style="margin-top: 10px; font-size: 0.9rem;"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Click URL</label>
+                                    <input type="url" id="adClickUrl" placeholder="https://example.com/landing-page">
+                                </div>
+                                
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Start Date</label>
+                                        <input type="datetime-local" id="adStartDate">
+                                    </div>
+                                    <div class="info-item">
+                                        <label>End Date</label>
+                                        <input type="datetime-local" id="adEndDate">
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Target Pages</label>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="public-buyer-home"> Public Buyer Home
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="vendor-dashboard"> Vendor Dashboard
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="agent-dashboard"> Agent Dashboard
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="vendor-shop"> Vendor Shop
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="agent-shop"> Agent Shop
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="view-shop"> View Shop
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="view-business"> View Business
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetPages" value="all"> All Pages
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Target User Types</label>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetUserTypes" value="buyer"> Buyer
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetUserTypes" value="vendor"> Vendor
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetUserTypes" value="agent"> Agent
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" name="adTargetUserTypes" value="all"> All Users
+                                        </label>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeCreateAdModal()">Cancel</button>
+                            <button class="btn btn-success" id="createAdBtn" onclick="createAd()">Create Ad</button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Notification Campaigns Section -->
@@ -1373,6 +1530,136 @@
                     <div id="campaignsTable" class="loading">
                         <div class="spinner"></div>
                         Loading campaigns...
+                    </div>
+                </div>
+
+                <!-- Create Campaign Modal -->
+                <div id="createCampaignModal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Create Notification Campaign</h2>
+                            <span class="close" onclick="closeCreateCampaignModal()">&times;</span>
+                        </div>
+                        <div class="modal-body">
+                            <form id="createCampaignForm">
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Campaign Name *</label>
+                                        <input type="text" id="campaignName" required>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Status *</label>
+                                        <select id="campaignStatus" required>
+                                            <option value="draft">Draft</option>
+                                            <option value="scheduled">Scheduled</option>
+                                            <option value="active">Active</option>
+                                        </select>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Priority</label>
+                                        <select id="campaignPriority">
+                                            <option value="low">Low</option>
+                                            <option value="medium" selected>Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Target Audience *</label>
+                                        <select id="campaignTarget" required>
+                                            <option value="">Select Target</option>
+                                            <option value="all">All Users</option>
+                                            <option value="buyers">Buyers Only</option>
+                                            <option value="vendors">Vendors Only</option>
+                                            <option value="agents">Agents Only</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Notification Title *</label>
+                                    <input type="text" id="campaignTitle" required>
+                                </div>
+                                
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Notification Message *</label>
+                                    <textarea id="campaignMessage" rows="4" required placeholder="Enter your notification message"></textarea>
+                                </div>
+                                
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Send Date</label>
+                                        <input type="datetime-local" id="campaignSendDate">
+                                        <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+                                            <label style="display:flex; align-items:center; gap:6px; font-size:0.9rem; color:#555;">
+                                                <input type="checkbox" id="campaignSendNow" onchange="setCampaignSendNow(this.checked)"> Send now
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Expiry Date</label>
+                                        <input type="datetime-local" id="campaignExpiryDate">
+                                        <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
+                                            <button type="button" class="btn btn-primary" onclick="setCampaignExpiry(1)">+1 day</button>
+                                            <button type="button" class="btn btn-primary" onclick="setCampaignExpiry(7)">+7 days</button>
+                                            <button type="button" class="btn btn-primary" onclick="setCampaignExpiry(30)">+30 days</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Notification Type</label>
+                                        <select id="campaignType">
+                                            <option value="announcement" selected>Announcement</option>
+                                            <option value="promotion">Promotion</option>
+                                            <option value="update">Update</option>
+                                            <option value="event">Event</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="celebration">Celebration</option>
+                                        </select>
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Delivery Method</label>
+                                        <select id="campaignDelivery">
+                                            <option value="in_app" selected>In App</option>
+                                            <option value="push">Push</option>
+                                            <option value="email">Email</option>
+                                            <option value="sms">SMS</option>
+                                            <option value="popup">Popup</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="info-grid">
+                                    <div class="info-item">
+                                        <label>Image URL (optional)</label>
+                                        <input type="url" id="campaignImageUrl" placeholder="https://...">
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Link URL (optional)</label>
+                                        <input type="url" id="campaignLinkUrl" placeholder="https://...">
+                                    </div>
+                                    <div class="info-item">
+                                        <label>Link Text</label>
+                                        <input type="text" id="campaignLinkText" placeholder="Learn More">
+                                    </div>
+                                </div>
+
+                                <div class="info-item" style="margin: 20px 0;">
+                                    <label>Additional Data (JSON)</label>
+                                    <textarea id="campaignData" rows="3" placeholder='{"popup": {"showDelay": 2000, "autoClose": 0}}'></textarea>
+                                    <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                                        <button type="button" class="btn btn-primary" onclick="setCampaignDataTemplate('popup')">Popup template</button>
+                                        <button type="button" class="btn btn-primary" onclick="setCampaignDataTemplate('email')">Email template</button>
+                                        <button type="button" class="btn btn-primary" onclick="setCampaignDataTemplate('sms')">SMS template</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" onclick="closeCreateCampaignModal()">Cancel</button>
+                            <button class="btn btn-success" onclick="createCampaign()">Create Campaign</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1437,288 +1724,8 @@
                     <div id="alerts" style="margin-bottom: 2rem;">
                         <!-- Alerts will be dynamically inserted here -->
                     </div>
-
-    <!-- Create Ad Modal -->
-    <div id="createAdModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Create New Ad</h2>
-                <span class="close" onclick="closeCreateAdModal()">&times;</span>
+                </div>
             </div>
-            <div class="modal-body">
-                <form id="createAdForm">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Ad Title *</label>
-                            <input type="text" id="adTitle" required>
-                        </div>
-                        <div class="info-item">
-                            <label>Ad Type *</label>
-                            <select id="adType" required>
-                                <option value="">Select Type</option>
-                                <option value="banner">Banner Ad</option>
-                                <option value="popup">Popup Ad</option>
-                                <option value="inline">Inline Ad</option>
-                                <option value="carousel">Carousel Ad</option>
-                            </select>
-                        </div>
-                        <div class="info-item">
-                            <label>Position *</label>
-                            <select id="adPosition" required>
-                                <option value="">Select Position</option>
-                                <option value="hero">Hero Section</option>
-                                <option value="top">Top</option>
-                                <option value="middle">Middle</option>
-                                <option value="bottom">Bottom</option>
-                                <option value="sidebar">Sidebar</option>
-                                <option value="popup">Popup</option>
-                            </select>
-                        </div>
-                        <div class="info-item">
-                            <label>Status *</label>
-                            <select id="adStatus" required>
-                                <option value="draft">Draft</option>
-                                <option value="active" selected>Active</option>
-                                <option value="paused">Paused</option>
-                                <option value="archived">Archived</option>
-                            </select>
-                        </div>
-                        <div class="info-item">
-                            <label>Priority</label>
-                            <select id="adPriority">
-                                <option value="1">Low (1)</option>
-                                <option value="5" selected>Medium (5)</option>
-                                <option value="10">High (10)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Description</label>
-                        <textarea id="adDescription" rows="3" placeholder="Ad description or call-to-action"></textarea>
-                    </div>
-                    
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Ad Image *</label>
-                        <div class="image-upload-section">
-                            <input type="file" id="adImageFile" accept="image/*" style="display: none;" onchange="handleImageUpload(this)">
-                            <div class="image-upload-area" onclick="document.getElementById('adImageFile').click()">
-                                <div id="imageUploadPlaceholder">
-                                    <i style="font-size: 2rem; color: #666;">📷</i>
-                                    <p>Click to upload image</p>
-                                    <small>JPEG, PNG, GIF, WebP (Max 5MB)</small>
-                                </div>
-                                <div id="imagePreview" style="display: none;">
-                                    <img id="previewImg" style="max-width: 100%; max-height: 200px; border-radius: 4px;">
-                                    <button type="button" onclick="removeImage()" style="position: absolute; top: 5px; right: 5px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 25px; height: 25px; cursor: pointer;">×</button>
-                                </div>
-                            </div>
-                            <input type="hidden" id="adImageUrl" required>
-                            <div id="imageUploadStatus" style="margin-top: 10px; font-size: 0.9rem;"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Click URL</label>
-                        <input type="url" id="adClickUrl" placeholder="https://example.com/landing-page">
-                    </div>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Start Date</label>
-                            <input type="datetime-local" id="adStartDate">
-                        </div>
-                        <div class="info-item">
-                            <label>End Date</label>
-                            <input type="datetime-local" id="adEndDate">
-                        </div>
-                    </div>
-                    
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Target Pages</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="public-buyer-home"> Public Buyer Home
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="vendor-dashboard"> Vendor Dashboard
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="agent-dashboard"> Agent Dashboard
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="vendor-shop"> Vendor Shop
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="agent-shop"> Agent Shop
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="view-shop"> View Shop
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="view-business"> View Business
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetPages" value="all"> All Pages
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Target User Types</label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetUserTypes" value="buyer"> Buyer
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetUserTypes" value="vendor"> Vendor
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetUserTypes" value="agent"> Agent
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" name="adTargetUserTypes" value="all"> All Users
-                            </label>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeCreateAdModal()">Cancel</button>
-                <button class="btn btn-success" id="createAdBtn" onclick="createAd()">Create Ad</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Campaign Modal -->
-    <div id="createCampaignModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Create Notification Campaign</h2>
-                <span class="close" onclick="closeCreateCampaignModal()">&times;</span>
-            </div>
-            <div class="modal-body">
-                <form id="createCampaignForm">
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Campaign Name *</label>
-                            <input type="text" id="campaignName" required>
-                        </div>
-                        <div class="info-item">
-                            <label>Status *</label>
-                            <select id="campaignStatus" required>
-                                <option value="draft">Draft</option>
-                                <option value="scheduled">Scheduled</option>
-                                <option value="active">Active</option>
-                            </select>
-                        </div>
-                        <div class="info-item">
-                            <label>Priority</label>
-                            <select id="campaignPriority">
-                                <option value="low">Low</option>
-                                <option value="medium" selected>Medium</option>
-                                <option value="high">High</option>
-                            </select>
-                        </div>
-                        <div class="info-item">
-                            <label>Target Audience *</label>
-                            <select id="campaignTarget" required>
-                                <option value="">Select Target</option>
-                                <option value="all">All Users</option>
-                                <option value="buyers">Buyers Only</option>
-                                <option value="vendors">Vendors Only</option>
-                                <option value="agents">Agents Only</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Notification Title *</label>
-                        <input type="text" id="campaignTitle" required>
-                    </div>
-                    
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Notification Message *</label>
-                        <textarea id="campaignMessage" rows="4" required placeholder="Enter your notification message"></textarea>
-                    </div>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Send Date</label>
-                            <input type="datetime-local" id="campaignSendDate">
-                            <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
-                                <label style="display:flex; align-items:center; gap:6px; font-size:0.9rem; color:#555;">
-                                    <input type="checkbox" id="campaignSendNow" onchange="setCampaignSendNow(this.checked)"> Send now
-                                </label>
-                            </div>
-                        </div>
-                        <div class="info-item">
-                            <label>Expiry Date</label>
-                            <input type="datetime-local" id="campaignExpiryDate">
-                            <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
-                                <button type="button" class="btn btn-primary" onclick="setCampaignExpiry(1)">+1 day</button>
-                                <button type="button" class="btn btn-primary" onclick="setCampaignExpiry(7)">+7 days</button>
-                                <button type="button" class="btn btn-primary" onclick="setCampaignExpiry(30)">+30 days</button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Notification Type</label>
-                            <select id="campaignType">
-                                <option value="announcement" selected>Announcement</option>
-                                <option value="promotion">Promotion</option>
-                                <option value="update">Update</option>
-                                <option value="event">Event</option>
-                                <option value="maintenance">Maintenance</option>
-                                <option value="celebration">Celebration</option>
-                            </select>
-                        </div>
-                        <div class="info-item">
-                            <label>Delivery Method</label>
-                            <select id="campaignDelivery">
-                                <option value="in_app" selected>In App</option>
-                                <option value="push">Push</option>
-                                <option value="email">Email</option>
-                                <option value="sms">SMS</option>
-                                <option value="popup">Popup</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <label>Image URL (optional)</label>
-                            <input type="url" id="campaignImageUrl" placeholder="https://...">
-                        </div>
-                        <div class="info-item">
-                            <label>Link URL (optional)</label>
-                            <input type="url" id="campaignLinkUrl" placeholder="https://...">
-                        </div>
-                        <div class="info-item">
-                            <label>Link Text</label>
-                            <input type="text" id="campaignLinkText" placeholder="Learn More">
-                        </div>
-                    </div>
-
-                    <div class="info-item" style="margin: 20px 0;">
-                        <label>Additional Data (JSON)</label>
-                        <textarea id="campaignData" rows="3" placeholder='{"popup": {"showDelay": 2000, "autoClose": 0}}'></textarea>
-                        <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                            <button type="button" class="btn btn-primary" onclick="setCampaignDataTemplate('popup')">Popup template</button>
-                            <button type="button" class="btn btn-primary" onclick="setCampaignDataTemplate('email')">Email template</button>
-                            <button type="button" class="btn btn-primary" onclick="setCampaignDataTemplate('sms')">SMS template</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" onclick="closeCreateCampaignModal()">Cancel</button>
-                <button class="btn btn-success" onclick="createCampaign()">Create Campaign</button>
-            </div>
-        </div>
-    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="js/config.js"></script>

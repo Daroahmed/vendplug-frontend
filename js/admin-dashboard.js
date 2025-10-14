@@ -815,7 +815,7 @@ class AdminDashboard {
         }
 
         try {
-            const response = await window.tokenManager.authenticatedFetch('/api/payouts/fix-stuck-processing', {
+            const response = await window.tokenManager.authenticatedFetch('/api/admin/payouts/fix-stuck-processing', {
                 method: 'POST'
             });
 
@@ -828,6 +828,24 @@ class AdminDashboard {
         } catch (error) {
             console.error('❌ Fix stuck processing payouts error:', error);
             this.showError('Failed to fix stuck processing payouts');
+        }
+    }
+
+    async checkPayoutStatuses() {
+        try {
+            const response = await window.tokenManager.authenticatedFetch('/api/admin/payouts/check-statuses', {
+                method: 'POST'
+            });
+
+            if (!response.ok) throw new Error('Failed to check payout statuses');
+
+            const result = await response.json();
+            this.showSuccess(result.message);
+            this.loadPayouts(); // Refresh the payouts list
+
+        } catch (error) {
+            console.error('❌ Check payout statuses error:', error);
+            this.showError('Failed to check payout statuses');
         }
     }
 
@@ -868,9 +886,12 @@ class AdminDashboard {
         }
 
         const payoutsHTML = `
-            <div style="margin-bottom: 20px;">
+            <div style="margin-bottom: 20px; display: flex; gap: 10px;">
                 <button class="btn btn-danger" onclick="adminDashboard.fixStuckProcessingPayouts()" style="background: #dc3545; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
                     🔧 Fix Stuck Processing Payouts
+                </button>
+                <button class="btn btn-info" onclick="adminDashboard.checkPayoutStatuses()" style="background: #17a2b8; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                    🔄 Check Payout Statuses
                 </button>
             </div>
             <div class="table-container">
