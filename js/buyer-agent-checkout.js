@@ -7,7 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const totalEl = document.getElementById('total-amount');
   const walletEl = document.getElementById('wallet-balance');
   const checkoutBtn = document.getElementById('checkout-btn');
-  const locationInput = document.getElementById('pickup-location');
+  const stateInput = document.getElementById('pickup-state');
+  const addressInput = document.getElementById('pickup-address');
 
   // =========================
   // CONFIG & STATE
@@ -223,8 +224,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   checkoutBtn.addEventListener('click', async () => {
     if (checkoutBtn && checkoutBtn.disabled) return;
-    const location = locationInput.value.trim();
-    if (!location) return (window.showOverlay && showOverlay({ type:'error', title:'Pickup location', message:'Please enter pickup location' }));
+    const state = stateInput.value.trim();
+    const address = addressInput.value.trim();
+    
+    if (!state) return (window.showOverlay && showOverlay({ type:'error', title:'Pickup location', message:'Please select your state' }));
+    
+    // Combine state and address details
+    const location = address ? `${state}, ${address}` : state;
 
     const totalAmount = cart.reduce((sum, item) => {
       const qty = item.quantity || 1;

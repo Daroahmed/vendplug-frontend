@@ -180,15 +180,6 @@
       color: var(--text-light);
     }
 
-    /* Account Number Section */
-    .account-section {
-      background: var(--bg-card);
-      padding: 1.5rem;
-      border-radius: 12px;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
     .section-title {
       font-size: 1.2rem;
       color: var(--primary);
@@ -197,83 +188,9 @@
       border-bottom: 1px solid rgba(255,255,255,0.1);
     }
 
-    .account-number {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--bg-secondary);
-      padding: 1rem;
-      border-radius: 8px;
-    }
+    /* Removed CSS for non-functional sections: Account Number and Vendor Products */
 
-    .account-text {
-      font-weight: bold;
-    }
-
-    .copy-btn {
-      background: var(--primary);
-      color: #000;
-      border: none;
-      padding: 0.5rem 1rem;
-      border-radius: 6px;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-    }
-
-    .copy-btn:hover {
-      opacity: 0.9;
-    }
-
-    /* Vendor Products */
-    .vendor-products-section {
-      margin-bottom: 1.5rem;
-    }
-
-    .vendor-products {
-      display: flex;
-      overflow-x: auto;
-      gap: 1rem;
-      padding: 0.5rem 0.5rem 1.5rem;
-    }
-
-    .vendor-card {
-      background: var(--bg-card);
-      border-radius: 12px;
-      width: 160px;
-      flex: 0 0 auto;
-      overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      transition: transform 0.3s;
-      cursor: pointer;
-    }
-
-    .vendor-card:hover {
-      transform: translateY(-5px);
-    }
-
-    .vendor-card img {
-      width: 100%;
-      height: 120px;
-      object-fit: cover;
-    }
-
-    .vendor-card-content {
-      padding: 1rem;
-    }
-
-    .vendor-card h4 {
-      font-size: 0.9rem;
-      margin: 0 0 0.5rem;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .vendor-card .price {
-      font-size: 1rem;
-      margin: 0;
-    }
+    /* Removed vendor card CSS - no longer needed */
 
     /* Reviews Section */
     .reviews-section {
@@ -307,6 +224,23 @@
 
     .review-rating {
       color: #ffcc00;
+    }
+
+    .no-reviews {
+      text-align: center;
+      padding: 2rem;
+      color: var(--muted);
+    }
+
+    .no-reviews h4 {
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+    }
+
+    .review p {
+      margin: 0.5rem 0 0 0;
+      color: var(--text-color);
+      line-height: 1.5;
     }
 
     .load-more-btn {
@@ -391,9 +325,7 @@
         height: 200px;
       }
       
-      .vendor-card {
-        width: 140px;
-      }
+      /* Removed vendor card responsive CSS */
     }
   </style>
 </head>
@@ -432,22 +364,7 @@
       </div>
     </div>
 
-    <!-- Account Number Section -->
-    <div class="account-section">
-      <h2 class="section-title">Vendor Account Details</h2>
-      <div class="account-number">
-        <span class="account-text" id="accountNumber"></span>
-        <button class="copy-btn" onclick="copyAccountNumber()">
-          <i class="fas fa-copy"></i> Copy
-        </button>
-      </div>
-    </div>
-
-    <!-- Vendor's Other Products -->
-    <div class="vendor-products-section">
-      <h2 class="section-title">Vendor's Other Products</h2>
-      <div class="vendor-products" id="vendorProductsContainer"></div>
-    </div>
+    <!-- Removed non-functional sections: Vendor Account Details and Related Products -->
 
     <!-- Reviews Section -->
     <div class="reviews-section">
@@ -485,51 +402,9 @@
   <script>
 
 
-    // Copy account number function
-    function copyAccountNumber() {
-      const accountNumber = document.getElementById('accountNumber').textContent;
-      navigator.clipboard.writeText(accountNumber).then(() => {
-        window.showOverlay && showOverlay({ type:'success', title:'Copied', message:'Account number copied to clipboard!' });
-      }).catch(err => {
-        console.error('Failed to copy: ', err);
-        window.showOverlay && showOverlay({ type:'error', title:'Clipboard', message:'Failed to copy account number' });
-      });
-    }
+    // Removed copyAccountNumber function - no longer needed
 
-    // Check if user is logged in
-    function checkUserStatus() {
-      const buyerToken = localStorage.getItem('vendplug-buyer-token');
-      const publicActions = document.getElementById('publicActions');
-      
-      if (buyerToken) {
-        // User is logged in - hide login buttons
-        publicActions.style.display = 'none';
-      } else {
-        // User is not logged in - show login buttons
-        publicActions.style.display = 'flex';
-      }
-    }
-
-    // Add to cart functionality
-    document.getElementById('addToCartBtn').addEventListener('click', function() {
-      const buyerToken = localStorage.getItem('vendplug-buyer-token');
-      
-      if (!buyerToken) {
-        // User is not logged in - show login prompt
-        window.showOverlay && showOverlay({ type:'info', title:'Sign in required', message:'Please sign in to add items to your cart.' });
-        return;
-      }
-      
-      // User is logged in - add to cart
-      window.showOverlay && showOverlay({ type:'success', title:'Added', message:'Product added to cart!' });
-      // Add your actual cart logic here
-    });
-
-    // Initialize user status check
-    document.addEventListener('DOMContentLoaded', checkUserStatus);
-        
-        // Load reviews
-        const reviewsContainer = document.getElementById('reviewsContainer');
+    // Removed checkUserStatus function and inline addToCart - handled by view-shop-view.js
   </script>
   <script src="js/config.js"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>

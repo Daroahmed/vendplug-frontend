@@ -51,7 +51,6 @@ function loadProductDetails(product) {
     addBtn.innerHTML = '<i class="fas fa-ban"></i> Out of Stock';
   }
   document.getElementById('productDescription').textContent = product.description;
-  document.getElementById('accountNumber').textContent = product.agent?.virtualAccount || '';
 }
 
 async function loadAgentDetails(agentId) {

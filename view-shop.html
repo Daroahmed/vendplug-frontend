@@ -716,9 +716,7 @@
         vendorProfileEl.innerHTML = `
           <div class="vendor-details">
             <div class="vendor-info">
-              <h2>${vendor.fullName}</h2>
-              <p><strong>Phone:</strong> <span>${vendor.phoneNumber || 'Not provided'}</span></p>
-              <p><strong>Address:</strong> ${vendor.businessAddress || 'Not provided'}</p>
+              <h2>${vendor.fullName || vendor.businessName || 'Vendor'}</h2>
               <p><strong>State:</strong> ${vendor.state || 'Not specified'}</p>
               <p><strong>Total Transactions:</strong> ${vendor.totalTransactions || 0}</p>
               <div style="margin-top: 15px;" id="messageButtonContainer">
