@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Add to Cart
     document.getElementById('addToCartBtn').addEventListener('click', () => {
-      addToCart(product);
+      addToCart(product._id, 1);
     });
 
   } catch (err) {
@@ -51,17 +51,22 @@ function loadProductDetails(product) {
     addBtn.innerHTML = '<i class="fas fa-ban"></i> Out of Stock';
   }
   document.getElementById('productDescription').textContent = product.description;
-  document.getElementById('accountNumber').textContent = product.vendor?.virtualAccount || '';
 }
 
 async function loadVendorDetails(vendorId) {
   try {
+    console.log('Loading vendor details for:', vendorId);
     const res = await fetch(`/api/vendors/${vendorId}`);
-    if (!res.ok) throw new Error("Failed to fetch vendor");
+    if (!res.ok) {
+      console.error('Failed to fetch vendor:', res.status, res.statusText);
+      throw new Error("Failed to fetch vendor");
+    }
     const vendor = await res.json();
+    console.log('Vendor data:', vendor);
 
     // Store all reviews
     allReviews = vendor.reviews || [];
+    console.log('Reviews found:', allReviews.length);
 
     // Show average rating
     const reviewsContainer = document.getElementById('reviewsContainer');
@@ -119,10 +124,14 @@ async function loadVendorDetails(vendorId) {
 }
 
 function displayMoreReviews() {
+  console.log('displayMoreReviews called, currentReviewIndex:', currentReviewIndex, 'allReviews.length:', allReviews.length);
   const container = document.getElementById('reviewsContainer');
   const endIndex = currentReviewIndex + reviewsPerPage;
 
-  allReviews.slice(currentReviewIndex, endIndex).forEach(r => {
+  const reviewsToShow = allReviews.slice(currentReviewIndex, endIndex);
+  console.log('Reviews to show:', reviewsToShow);
+
+  reviewsToShow.forEach(r => {
     const div = document.createElement('div');
     div.className = 'review';
     div.innerHTML = `<strong>${r.buyer?.fullName || 'Anonymous'}</strong> - ${r.rating} ★<p>${r.comment}</p>`;
@@ -138,7 +147,6 @@ function displayMoreReviews() {
 }
 
 // Add to Cart Logic
-// Assuming you have BACKEND_URL and token already
 async function addToCart(productId, quantity = 1) {
   const token = getAuthToken();
 
@@ -148,7 +156,7 @@ async function addToCart(productId, quantity = 1) {
   }
 
   try {
-      const response = await fetch(`${window.BACKEND_URL}/api/vendor-cart`, {
+      const response = await fetch('/api/vendor-cart', {
           method: "POST",
           headers: {
               "Content-Type": "application/json",
