@@ -465,6 +465,78 @@
       margin-bottom: 2rem;
     }
 
+    /* Horizontal scroll for active categories */
+    .active-categories-scroll {
+      display: flex;
+      gap: 1rem;
+      overflow-x: auto;
+      padding: 1rem 0;
+      margin-bottom: 2rem;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .active-categories-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .active-categories-scroll::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+      border-radius: 3px;
+    }
+
+    .active-categories-scroll::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 3px;
+    }
+
+    .active-categories-scroll::-webkit-scrollbar-thumb:hover {
+      background: #00b894;
+    }
+
+    .active-category-card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 2px solid transparent;
+      min-width: 200px;
+      max-width: 200px;
+      flex-shrink: 0;
+    }
+
+    .active-category-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--primary);
+      box-shadow: 0 8px 25px rgba(0, 204, 153, 0.2);
+    }
+
+    .active-category-image {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      background: var(--bg-secondary);
+    }
+
+    .active-category-info {
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .active-category-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-light);
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+
+    .active-category-description {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
     .category-card {
       background: var(--bg-card);
       border-radius: 12px;
@@ -523,17 +595,31 @@
       }
 
       .categories-grid {
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.5rem;
       }
-      @media (max-width: 768px) {
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr); /* exactly 3 columns */
-    gap: 0.5rem; /* optional: tighter spacing for small screens */
-  }
-}
 
+      /* Mobile adjustments for active categories horizontal scroll */
+      .active-category-card {
+        min-width: 160px;
+        max-width: 160px;
+      }
 
+      .active-category-image {
+        height: 100px;
+      }
+
+      .active-category-info {
+        padding: 0.8rem;
+      }
+
+      .active-category-name {
+        font-size: 0.8rem;
+      }
+
+      .active-category-description {
+        font-size: 0.7rem;
+      }
     }
   </style>
 </head>
@@ -646,7 +732,7 @@
     <!-- Category Sections will be dynamically added here -->
     <div id="activeCategoriesSection" class="category-group" style="display:none;">
       <h3 class="group-title">Active Categories Near You</h3>
-      <div id="activeCategoriesGrid" class="categories-grid"></div>
+      <div id="activeCategoriesGrid" class="active-categories-scroll"></div>
     </div>
     <div id="categorySections"></div>
     </main>
@@ -1059,11 +1145,11 @@
 
         wrapper.style.display = '';
         grid.innerHTML = activeCards.slice(0, 12).map(category => `
-          <div class="category-card" onclick="selectCategory('${category.name}')">
-            <img src="${category.image}" alt="${category.name}" class="category-image" onerror="this.src='https://via.placeholder.com/300x150?text=${encodeURIComponent(category.name)}'">
-            <div class="category-info">
-              <h4 class="category-name">${category.name}</h4>
-              <p class="category-description">${currentMode === 'agent' ? 'Agents' : 'Vendors'} available</p>
+          <div class="active-category-card" onclick="selectCategory('${category.name}')">
+            <img src="${category.image}" alt="${category.name}" class="active-category-image" onerror="this.src='https://via.placeholder.com/300x150?text=${encodeURIComponent(category.name)}'">
+            <div class="active-category-info">
+              <h4 class="active-category-name">${category.name}</h4>
+              <p class="active-category-description">${currentMode === 'agent' ? 'Agents' : 'Vendors'} available</p>
             </div>
           </div>
         `).join('');
