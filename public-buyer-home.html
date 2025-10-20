@@ -875,13 +875,41 @@
     }
     // Grouped categories - exact match with buyer-home.html
     const groupedCategories = [
+
+    {
+        groupName: "Electronics & Gadgets",
+        categories: [
+          { name: "Phones & Accessories / Laptops & Computers", image: "/assets/phones.jpg" },
+          { name: "Game Consoles & Accessories", image: "/assets/games.jpg" },
+          { name: "Solar & Inverters", image: "/assets/solar.jpg" },
+          { name: "CCTV & Security Devices", image: "/assets/cctv.jpg" },
+        
+        ]
+      },
+
       {
+        groupName: "Fashion & Lifestyle",
+        categories: [
+        { name: "Textiles & Fabrics", image: "/assets/textiles.jpg" },
+          { name: "Boutiques", image: "/assets/boutiques.jpg" },
+          { name: "Shoes and Bags", image: "/assets/shoes-bags.jpg" },
+          { name: "Thrift / Okrika / Gonjo", image: "/assets/thrift.jpg" },
+          { name: "Perfumes, Incense & Fragrances", image: "/assets/perfumes.jpg" },
+          { name: "Jewelry & Accessories", image: "/assets/jewelry.jpg" },
+          { name: "Cosmetics & Skincare", image: "/assets/cosmetics.jpg" },
+          { name: "Tailoring & Fashion Design", image: "/assets/tailoring.jpg" },
+          { name: "Nigerian Caps e.g. Zana", image: "/assets/caps.jpg" },
+          { name: "Wigs & Hair", image: "/assets/wigs.jpg" },
+        ]
+      },
+      {
+        
         groupName: "Everyday Essentials",
         categories: [
           { name: "Supermarkets/Groceries and Provisions", image: "/assets/groceries.jpg" },
           { name: "Soft Drinks & Water", image: "/assets/soft-drinks.jpg" },
           { name: "Kitchen Utensils & Plastics", image: "/assets/kitchen-utensils.jpg" },
-          { name: "Gas Plants", image: "/assets/gas.jpg" },
+          { name: "Tea & Spices", image: "/assets/tea.jpg" },
           { name: "Fruits & Vegetables", image: "/assets/fruits-vegetables.jpg" },
           { name: "Grains", image: "/assets/grains.jpg" }
         ]
@@ -889,38 +917,36 @@
       {
         groupName: "Meat & Animal Products",
         categories: [
-          { name: "Suya & Balango", image: "/assets/suya.jpg" },
           { name: "Raw Meat Sellers", image: "/assets/meat.jpg" },
           { name: "Poultry (Chicken, Eggs, Turkey)", image: "/assets/poultry.jpg" },
           { name: "Livestock (Goat, Ram, Cow)", image: "/assets/livestock.jpg" },
           { name: "Fish & Seafood", image: "/assets/fish.jpg" }
         ]
       },
+
+   
       {
         groupName: "Food & Hospitality",
         categories: [
           { name: "Restaurants", image: "/assets/restaurants.jpg" },
           { name: "Catering & Small Chops", image: "/assets/catering.jpg" },
+          { name: "Suya, Kebabs & Balango", image: "/assets/suya.jpg" },
           { name: "Hotels & Apartments", image: "/assets/hotels.jpg" },
           { name: "Event Rentals (Canopies, Chairs)", image: "/assets/event-rentals.jpg" }
         ]
       },
+
       {
-        groupName: "Fashion & Lifestyle",
+        groupName: "Health & Beauty",
         categories: [
-          { name: "Boutiques", image: "/assets/boutiques.jpg" },
-          { name: "Thrift / Okrika / Gonjo", image: "/assets/thrift.jpg" },
-          { name: "Tokunbo / Belgium Products", image: "/assets/tokunbo.jpg" },
-          { name: "Shoes and Bags", image: "/assets/shoes-bags.jpg" },
-          { name: "Jewelry & Accessories", image: "/assets/jewelry.jpg" },
-          { name: "Tailoring & Fashion Design", image: "/assets/tailoring.jpg" },
-          { name: "Textiles & Fabrics", image: "/assets/textiles.jpg" },
-          { name: "Wigs & Hair", image: "/assets/wigs.jpg" },
-          { name: "Cosmetics & Skincare", image: "/assets/cosmetics.jpg" },
-          { name: "Perfumes & Fragrances", image: "/assets/perfumes.jpg" },
-          { name: "Nigerian Caps e.g. Zana", image: "/assets/caps.jpg" }
+          { name: "Pharmacy & Patent Stores", image: "/assets/pharmacy.jpg" },
+          { name: "Hospital & Medical Equipment", image: "/assets/medical-equipment.jpg" },
+          { name: "Herbal Medicine", image: "/assets/herbal.jpg" },
+          { name: "Maternity & Clinics", image: "/assets/maternity.jpg" },
+          { name: "Fitness & Supplements", image: "/assets/fitness.jpg" }
         ]
       },
+ 
       {
         groupName: "Home & Living",
         categories: [
@@ -928,7 +954,19 @@
           { name: "Home Appliances", image: "/assets/home-appliances.jpg" },
           { name: "Interior Decor & Curtains", image: "/assets/interior.jpg" },
           { name: "Cleaning Services", image: "/assets/cleaning.jpg" },
-          { name: "Flowers & Gardens", image: "/assets/flowers.jpg" }
+          { name: "Flowers & Gardens", image: "/assets/flowers.jpg" },
+          { name: "Tokunbo / Belgium Products", image: "/assets/tokunbo.jpg" },
+        ]
+      },
+
+      {
+        groupName: "Auto & Transport",
+        categories: [
+          { name: "Car Dealers / New, Tokunbo $ Used Cars ", image: "/assets/cars.jpg" },
+          { name: "Car Spare Parts", image: "/assets/spare-parts.jpg" },
+          { name: "Auto Mechanics", image: "/assets/mechanics.jpg" },
+          { name: "Tyres, Batteries & Accessories", image: "/assets/tyres.jpg" },
+          { name: "Car Wash & Detailing", image: "/assets/car-wash.jpg" }
         ]
       },
       {
@@ -945,77 +983,7 @@
           { name: "Carpenters & Artisans", image: "/assets/carpenters.jpg" }
         ]
       },
-      {
-        groupName: "Health & Beauty",
-        categories: [
-          { name: "Pharmacy & Patent Stores", image: "/assets/pharmacy.jpg" },
-          { name: "Hospital & Medical Equipment", image: "/assets/medical-equipment.jpg" },
-          { name: "Herbal Medicine", image: "/assets/herbal.jpg" },
-          { name: "Maternity & Clinics", image: "/assets/maternity.jpg" },
-          { name: "Fitness & Supplements", image: "/assets/fitness.jpg" }
-        ]
-      },
-      {
-        groupName: "Electronics & Gadgets",
-        categories: [
-          { name: "Phones & Accessories / Laptops & Computers", image: "/assets/phones.jpg" },
-          { name: "Solar & Inverters", image: "/assets/solar.jpg" },
-          { name: "CCTV & Security Devices", image: "/assets/cctv.jpg" },
-          { name: "Game Consoles & Accessories", image: "/assets/games.jpg" }
-        ]
-      },
-      {
-        groupName: "Office & Services",
-        categories: [
-          { name: "Printing Press", image: "/assets/printing.jpg" },
-          { name: "Stationery & Office Supplies", image: "/assets/stationery.jpg" },
-          { name: "Internet & Data Services", image: "/assets/internet.jpg" },
-          { name: "Freelancers & Digital Services", image: "/assets/freelancers.jpg" }
-        ]
-      },
-      {
-        groupName: "Auto & Transport",
-        categories: [
-          { name: "Car Dealers / Tokunbo Cars", image: "/assets/cars.jpg" },
-          { name: "Car Spare Parts", image: "/assets/spare-parts.jpg" },
-          { name: "Auto Mechanics", image: "/assets/mechanics.jpg" },
-          { name: "Tyres, Batteries & Accessories", image: "/assets/tyres.jpg" },
-          { name: "Car Wash & Detailing", image: "/assets/car-wash.jpg" }
-        ]
-      },
-      {
-        groupName: "Laundry & Cleaning",
-        categories: [
-          { name: "Laundry Services", image: "/assets/laundry.jpg" },
-          { name: "Dry Cleaning", image: "/assets/dry-cleaning.jpg" },
-          { name: "House Cleaning", image: "/assets/house-cleaning.jpg" }
-        ]
-      },
-      {
-        groupName: "Agriculture",
-        categories: [
-          { name: "Animal Feed & Supplements", image: "/assets/animal-feed.jpg" },
-          { name: "Fish Farming", image: "/assets/fish-farming.jpg" }
-        ]
-      },
-      {
-        groupName: "Pets",
-        categories: [
-          { name: "Pets (Dogs, Cats, Birds)", image: "/assets/pets.jpg" },
-          { name: "Pet Food & Accessories", image: "/assets/pet-food.jpg" },
-          { name: "Veterinary Clinics", image: "/assets/veterinary.jpg" },
-          { name: "Pet Grooming", image: "/assets/pet-grooming.jpg" }
-        ]
-      },
-      {
-        groupName: "Real Estate",
-        categories: [
-          { name: "Real Estate Agents", image: "/assets/real-estate.jpg" },
-          { name: "Rentals & Sales", image: "/assets/rentals.jpg" },
-          { name: "Facility Management", image: "/assets/facility.jpg" },
-          { name: "Movers & Packers", image: "/assets/movers.jpg" }
-        ]
-      },
+
       {
         groupName: "Professional Services",
         categories: [
@@ -1027,6 +995,57 @@
           { name: "Tech Repairs", image: "/assets/tech-repairs.jpg" }
         ]
       },
+     
+  
+      {
+        groupName: "Office & Stationery",
+        categories: [
+          { name: "Printing Press", image: "/assets/printing.jpg" },
+          { name: "Stationery & Office Supplies", image: "/assets/stationery.jpg" },
+          { name: "Internet & Data Services", image: "/assets/internet.jpg" },
+          { name: "Freelancers & Digital Services", image: "/assets/freelancers.jpg" }
+        ]
+      },
+
+      
+      {
+        groupName: "Real Estate",
+        categories: [
+          { name: "Real Estate Agents", image: "/assets/real-estate.jpg" },
+          { name: "Rentals & Sales", image: "/assets/rentals.jpg" },
+          { name: "Facility Management", image: "/assets/facility.jpg" },
+          { name: "Movers & Packers", image: "/assets/movers.jpg" }
+        ]
+      },
+
+      {
+        groupName: "Agriculture",
+        categories: [
+          { name: "Animal Feed & Supplements", image: "/assets/animal-feed.jpg" },
+          { name: "Fish Farming", image: "/assets/fish-farming.jpg" }
+        ]
+      },
+      
+   
+      {
+        groupName: "Pets",
+        categories: [
+          { name: "Pets (Dogs, Cats, Birds)", image: "/assets/pets.jpg" },
+          { name: "Pet Food & Accessories", image: "/assets/pet-food.jpg" },
+          { name: "Veterinary Clinics", image: "/assets/veterinary.jpg" },
+          { name: "Pet Grooming", image: "/assets/pet-grooming.jpg" }
+        ]
+      },
+
+      {
+        groupName: "Laundry & Cleaning",
+        categories: [
+          { name: "Laundry Services", image: "/assets/laundry.jpg" },
+          { name: "Dry Cleaning", image: "/assets/dry-cleaning.jpg" },
+          { name: "House Cleaning", image: "/assets/house-cleaning.jpg" }
+        ]
+      },
+
       {
         groupName: "Other",
         categories: [
