@@ -9,6 +9,7 @@ if (!token) {
 const ordersContainer = document.getElementById("orders-container");
 const orderModal = document.getElementById("orderModal");
 const orderDetails = document.getElementById("orderDetails");
+const processFlow = document.getElementById("processFlow");
 
 let currentOrderId = null;
 let cachedOrders = [];
@@ -92,6 +93,149 @@ function renderOrders(orders) {
 }
 
 /* ---------------------------
+   Render Process Flow
+---------------------------- */
+function renderProcessFlow(currentStatus) {
+  const steps = [
+    {
+      id: 'pending',
+      title: 'Order Received',
+      description: 'Order is pending your review',
+      icon: '📋'
+    },
+    {
+      id: 'accepted',
+      title: 'Order Accepted',
+      description: 'You have accepted the order',
+      icon: '✅'
+    },
+    {
+      id: 'preparing',
+      title: 'Preparing Order',
+      description: 'Getting items ready for delivery',
+      icon: '📦'
+    },
+    {
+      id: 'out_for_delivery',
+      title: 'Out for Delivery',
+      description: 'Order is on its way to buyer',
+      icon: '🚚'
+    },
+    {
+      id: 'delivered',
+      title: 'Delivered',
+      description: 'Order successfully delivered',
+      icon: '🎉'
+    }
+  ];
+
+  const statusOrder = ['pending', 'accepted', 'preparing', 'out_for_delivery', 'delivered'];
+  const currentIndex = statusOrder.indexOf(currentStatus);
+  
+  // Handle rejected status
+  if (currentStatus === 'rejected') {
+    processFlow.innerHTML = `
+      <div class="process-flow">
+        <h3>Order Status</h3>
+        <div class="process-step completed">
+          <div class="step-icon completed">📋</div>
+          <div class="step-content">
+            <div class="step-title">Order Received</div>
+            <div class="step-description">Order was received and reviewed</div>
+          </div>
+        </div>
+        <div class="process-step current">
+          <div class="step-icon current">❌</div>
+          <div class="step-content">
+            <div class="step-title">Order Rejected</div>
+            <div class="step-description">This order has been rejected and refunded</div>
+          </div>
+        </div>
+        <div class="next-action-hint">
+          <h4>Order Closed</h4>
+          <p>This order has been rejected and is no longer active</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+  
+  let processFlowHTML = `
+    <div class="process-flow">
+      <h3>Order Progress</h3>
+  `;
+
+  steps.forEach((step, index) => {
+    let stepClass = 'pending';
+    let iconClass = 'pending';
+    
+    if (index < currentIndex) {
+      stepClass = 'completed';
+      iconClass = 'completed';
+    } else if (index === currentIndex) {
+      stepClass = 'current';
+      iconClass = 'current';
+    } else if (index === currentIndex + 1) {
+      stepClass = 'next';
+      iconClass = 'next';
+    }
+
+    processFlowHTML += `
+      <div class="process-step ${stepClass}">
+        <div class="step-icon ${iconClass}">${step.icon}</div>
+        <div class="step-content">
+          <div class="step-title">${step.title}</div>
+          <div class="step-description">${step.description}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  // Add next action hint
+  let nextActionHTML = '';
+  if (currentStatus === 'pending') {
+    nextActionHTML = `
+      <div class="next-action-hint">
+        <h4>Next Action</h4>
+        <p>Review the order and click "Accept" or "Reject"</p>
+      </div>
+    `;
+  } else if (currentStatus === 'accepted') {
+    nextActionHTML = `
+      <div class="next-action-hint">
+        <h4>Next Action</h4>
+        <p>Click "Mark as Preparing" when you start preparing the order</p>
+      </div>
+    `;
+  } else if (currentStatus === 'preparing') {
+    nextActionHTML = `
+      <div class="next-action-hint">
+        <h4>Next Action</h4>
+        <p>Click "Mark as Out for Delivery" when the order is ready for pickup</p>
+      </div>
+    `;
+  } else if (currentStatus === 'out_for_delivery') {
+    nextActionHTML = `
+      <div class="next-action-hint">
+        <h4>Next Action</h4>
+        <p>Click "Mark as Delivered" when the buyer receives the order</p>
+      </div>
+    `;
+  } else if (currentStatus === 'delivered') {
+    nextActionHTML = `
+      <div class="next-action-hint">
+        <h4>Order Complete</h4>
+        <p>This order has been successfully delivered!</p>
+      </div>
+    `;
+  }
+
+  processFlowHTML += nextActionHTML + '</div>';
+  
+  processFlow.innerHTML = processFlowHTML;
+}
+
+/* ---------------------------
    Open Order Modal
 ---------------------------- */
 function openOrderModal(orderId) {
@@ -165,6 +309,9 @@ function openOrderModal(orderId) {
     </div>
   `;
 
+  // Render process flow
+  renderProcessFlow(order.status);
+
   orderModal.style.display = "flex";
 
   // Attach dynamic listeners
@@ -217,19 +364,22 @@ async function acceptOrder() {
     if (!res.ok) throw new Error(await res.text());
 
     window.showOverlay && showOverlay({ type:'success', title:'Accepted', message:'Order accepted!' });
-    // Disable buttons after action
-    const aBtn = document.getElementById('acceptBtn');
-    const rBtn = document.getElementById('rejectBtn');
-    [aBtn, rBtn].forEach((btn) => {
-      if (btn) {
-        btn.disabled = true;
-        btn.style.background = '#444';
-        btn.style.color = '#777';
-        btn.style.borderColor = '#555';
-        btn.style.cursor = 'not-allowed';
-      }
-    });
-    orderModal.style.display = "none";
+    
+    // Update the cached order status
+    const orderIndex = cachedOrders.findIndex(o => o._id === currentOrderId);
+    if (orderIndex !== -1) {
+      cachedOrders[orderIndex].status = 'accepted';
+    }
+    
+    // Update the process flow
+    renderProcessFlow('accepted');
+    
+    // Refresh the order details to show updated status
+    const updatedOrder = cachedOrders.find(o => o._id === currentOrderId);
+    if (updatedOrder) {
+      openOrderModal(currentOrderId);
+    }
+    
     fetchOrders();
   } catch (err) {
     console.error("Accept error:", err);
@@ -251,19 +401,22 @@ async function rejectOrder(reason) {
     if (!res.ok) throw new Error(await res.text());
 
     window.showOverlay && showOverlay({ type:'success', title:'Rejected', message:'Order rejected and refunded!' });
-    // Disable buttons after action
-    const aBtn2 = document.getElementById('acceptBtn');
-    const rBtn2 = document.getElementById('rejectBtn');
-    [aBtn2, rBtn2].forEach((btn) => {
-      if (btn) {
-        btn.disabled = true;
-        btn.style.background = '#444';
-        btn.style.color = '#777';
-        btn.style.borderColor = '#555';
-        btn.style.cursor = 'not-allowed';
-      }
-    });
-    orderModal.style.display = "none";
+    
+    // Update the cached order status
+    const orderIndex = cachedOrders.findIndex(o => o._id === currentOrderId);
+    if (orderIndex !== -1) {
+      cachedOrders[orderIndex].status = 'rejected';
+    }
+    
+    // Update the process flow
+    renderProcessFlow('rejected');
+    
+    // Refresh the order details to show updated status
+    const updatedOrder = cachedOrders.find(o => o._id === currentOrderId);
+    if (updatedOrder) {
+      openOrderModal(currentOrderId);
+    }
+    
     fetchOrders();
   } catch (err) {
     console.error("Reject error:", err);
@@ -285,7 +438,22 @@ async function updateOrderStatus(status) {
     if (!res.ok) throw new Error(await res.text());
 
     window.showOverlay && showOverlay({ type:'success', title:'Updated', message:`Order marked as ${status}!` });
-    orderModal.style.display = "none";
+    
+    // Update the cached order status
+    const orderIndex = cachedOrders.findIndex(o => o._id === currentOrderId);
+    if (orderIndex !== -1) {
+      cachedOrders[orderIndex].status = status;
+    }
+    
+    // Update the process flow without closing the modal
+    renderProcessFlow(status);
+    
+    // Refresh the order details to show updated status
+    const updatedOrder = cachedOrders.find(o => o._id === currentOrderId);
+    if (updatedOrder) {
+      openOrderModal(currentOrderId);
+    }
+    
     fetchOrders();
   } catch (err) {
     console.error("Update status error:", err);
