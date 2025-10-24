@@ -9,6 +9,7 @@ if (!token) {
 const ordersContainer = document.getElementById("orders-container");
 const orderModal = document.getElementById("orderModal");
 const orderDetails = document.getElementById("orderDetails");
+const processFlow = document.getElementById("processFlow");
 
 let currentOrderId = null;
 let cachedOrders = [];
@@ -92,6 +93,94 @@ function renderOrders(orders) {
 }
 
 /* ---------------------------
+   Render Process Flow
+---------------------------- */
+function renderProcessFlow(currentStatus) {
+  const steps = [
+    {
+      id: 'pending',
+      title: 'Order Received',
+      description: 'Order is pending your review',
+      icon: '📋'
+    },
+    {
+      id: 'accepted',
+      title: 'Order Accepted',
+      description: 'You have accepted this order',
+      icon: '✅'
+    },
+    {
+      id: 'preparing',
+      title: 'Preparing Order',
+      description: 'Order is being prepared for delivery',
+      icon: '📦'
+    },
+    {
+      id: 'out_for_delivery',
+      title: 'Out for Delivery',
+      description: 'Order is on its way to buyer',
+      icon: '🚚'
+    },
+    {
+      id: 'delivered',
+      title: 'Delivered',
+      description: 'Order has been delivered successfully',
+      icon: '🎉'
+    }
+  ];
+
+  const statusOrder = ['pending', 'accepted', 'preparing', 'out_for_delivery', 'delivered'];
+  const currentIndex = statusOrder.indexOf(currentStatus);
+  
+  let nextActionHint = '';
+  
+  if (currentStatus === 'rejected') {
+    nextActionHint = '<div class="next-action-hint">❌ Order has been rejected and refunded</div>';
+  } else if (currentStatus === 'delivered') {
+    nextActionHint = '<div class="next-action-hint">✅ Order completed successfully!</div>';
+  } else if (currentIndex >= 0) {
+    const nextStep = steps[currentIndex + 1];
+    if (nextStep) {
+      nextActionHint = `<div class="next-action-hint">Next: ${nextStep.title}</div>`;
+    }
+  }
+
+  const processFlowHTML = `
+    <div class="process-flow">
+      <h3 style="margin: 0 0 1rem; color: #00cc99; font-size: 1rem;">Order Progress</h3>
+      ${steps.map((step, index) => {
+        let stepClass = 'pending';
+        
+        if (currentStatus === 'rejected') {
+          stepClass = index === 0 ? 'completed' : 'pending';
+        } else if (currentIndex >= 0) {
+          if (index < currentIndex) {
+            stepClass = 'completed';
+          } else if (index === currentIndex) {
+            stepClass = 'current';
+          } else if (index === currentIndex + 1) {
+            stepClass = 'next';
+          }
+        }
+        
+        return `
+          <div class="process-step ${stepClass}">
+            <div class="step-icon">${step.icon}</div>
+            <div class="step-content">
+              <div class="step-title">${step.title}</div>
+              <div class="step-description">${step.description}</div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${nextActionHint}
+    </div>
+  `;
+
+  processFlow.innerHTML = processFlowHTML;
+}
+
+/* ---------------------------
    Open Order Modal
 ---------------------------- */
 function openOrderModal(orderId) {
@@ -167,6 +256,9 @@ function openOrderModal(orderId) {
 
   orderModal.style.display = "flex";
 
+  // Render process flow
+  renderProcessFlow(order.status);
+
   // Attach dynamic listeners
   document.getElementById("acceptBtn")?.addEventListener("click", acceptOrder);
   document.getElementById("rejectBtn")?.addEventListener("click", () => {
@@ -217,19 +309,14 @@ async function acceptOrder() {
     if (!res.ok) throw new Error(await res.text());
 
     alert("✅ Order accepted!");
-    // Disable buttons after action
-    const aBtn = document.getElementById('acceptBtn');
-    const rBtn = document.getElementById('rejectBtn');
-    [aBtn, rBtn].forEach((btn) => {
-      if (btn) {
-        btn.disabled = true;
-        btn.style.background = '#444';
-        btn.style.color = '#777';
-        btn.style.borderColor = '#555';
-        btn.style.cursor = 'not-allowed';
-      }
-    });
-    orderModal.style.display = "none";
+    // Update the order status in cached orders
+    const order = cachedOrders.find(o => o._id === currentOrderId);
+    if (order) {
+      order.status = 'accepted';
+    }
+    // Refresh the modal content
+    renderProcessFlow('accepted');
+    openOrderModal(currentOrderId);
     fetchOrders();
   } catch (err) {
     console.error("Accept error:", err);
@@ -251,19 +338,14 @@ async function rejectOrder(reason) {
     if (!res.ok) throw new Error(await res.text());
 
     alert("❌ Order rejected and refunded!");
-    // Disable buttons after action
-    const aBtn2 = document.getElementById('acceptBtn');
-    const rBtn2 = document.getElementById('rejectBtn');
-    [aBtn2, rBtn2].forEach((btn) => {
-      if (btn) {
-        btn.disabled = true;
-        btn.style.background = '#444';
-        btn.style.color = '#777';
-        btn.style.borderColor = '#555';
-        btn.style.cursor = 'not-allowed';
-      }
-    });
-    orderModal.style.display = "none";
+    // Update the order status in cached orders
+    const order = cachedOrders.find(o => o._id === currentOrderId);
+    if (order) {
+      order.status = 'rejected';
+    }
+    // Refresh the modal content
+    renderProcessFlow('rejected');
+    openOrderModal(currentOrderId);
     fetchOrders();
   } catch (err) {
     console.error("Reject error:", err);
@@ -285,7 +367,14 @@ async function updateOrderStatus(status) {
     if (!res.ok) throw new Error(await res.text());
 
     alert(`📦 Order marked as ${status}!`);
-    orderModal.style.display = "none";
+    // Update the order status in cached orders
+    const order = cachedOrders.find(o => o._id === currentOrderId);
+    if (order) {
+      order.status = status;
+    }
+    // Refresh the modal content
+    renderProcessFlow(status);
+    openOrderModal(currentOrderId);
     fetchOrders();
   } catch (err) {
     console.error("Update status error:", err);

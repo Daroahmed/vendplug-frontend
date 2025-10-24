@@ -913,24 +913,24 @@
 
       const fullName = document.getElementById("vendorFullName").value;
       const email = document.getElementById("vendorEmail").value;
-      const shopName = document.getElementById("vendorShopName").value;
       const phoneNumber = document.getElementById("vendorPhoneNumber").value;
       const password = document.getElementById("vendorPassword").value;
+      const shopName = document.getElementById("vendorShopName").value;
       const businessName = document.getElementById("vendorBusinessName").value;
       const businessAddress = document.getElementById("vendorBusinessAddress").value;
       const cacNumber = document.getElementById("vendorCacNumber").value;
       const state = document.getElementById("vendorState").value;
       const shopDescription = document.getElementById("vendorShopDescription").value;
 
-      // Get the custom category if "Other" is selected
-      let finalCategory = [...selectedCategory];
+      // Handle "Other" category properly
+      let finalCategories = [...selectedCategory];
+      let otherCategory = null;
       
       if (selectedCategory.includes("Other")) {
         const customCategory = otherCategoryInput.value.trim();
         if (customCategory) {
-          // Replace "Other" with the custom category
-          finalCategory = finalCategory.filter(cat => cat !== "Other");
-          finalCategory.push(customCategory);
+          // Keep "Other" in the categories array, send custom category separately
+          otherCategory = customCategory;
         } else {
           document.getElementById("registerError").textContent = "Please specify your custom category";
           document.getElementById("registerError").style.display = "block";
@@ -939,7 +939,7 @@
       }
 
       // Validate that at least one category is selected
-      if (finalCategory.length === 0) {
+      if (finalCategories.length === 0) {
         document.getElementById("registerError").textContent = "Please select at least one category";
         document.getElementById("registerError").style.display = "block";
         return;
@@ -956,13 +956,14 @@
           body: JSON.stringify({
             fullName, 
             email, 
-            shopName, 
             phoneNumber,
             password, 
+            shopName,
             businessName, 
             businessAddress, 
             cacNumber, 
-            category: finalCategory,
+            category: finalCategories,
+            otherCategory,
             state,
             shopDescription
           }),
@@ -988,8 +989,6 @@
       } finally { try { hideLoading && hideLoading(); } catch(_) {} }
     });
   </script>
-  <script src="js/config.js"></script>
-  <script src="js/auth-utils.js"></script>
   <script>
     // Clean up any existing tokens when login page loads
     document.addEventListener('DOMContentLoaded', () => {

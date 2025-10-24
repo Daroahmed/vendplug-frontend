@@ -913,15 +913,15 @@
       const state = document.getElementById("agentState").value;
       const businessDescription = document.getElementById("agentBusinessDescription").value;
 
-      // Get the custom category if "Other" is selected
+      // Handle "Other" category properly
       let finalCategory = [...selectedCategory];
+      let otherCategory = null;
       
       if (selectedCategory.includes("Other")) {
         const customCategory = otherCategoryInput.value.trim();
         if (customCategory) {
-          // Replace "Other" with the custom category
-          finalCategory = finalCategory.filter(cat => cat !== "Other");
-          finalCategory.push(customCategory);
+          // Keep "Other" in the categories array, send custom category separately
+          otherCategory = customCategory;
         } else {
           document.getElementById("registerError").textContent = "Please specify your custom category";
           document.getElementById("registerError").style.display = "block";
@@ -953,6 +953,7 @@
             businessAddress, 
             cacNumber, 
             category: finalCategory,
+            otherCategory,
             state,
             businessDescription
           }),
@@ -980,6 +981,7 @@
   </script>
   <script src="js/config.js"></script>
   <script src="js/auth-utils.js"></script>
+  <script src="js/agent-auth.js"></script>
   <script>
     // Clean up any existing tokens when login page loads
     document.addEventListener('DOMContentLoaded', () => {
