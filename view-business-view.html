@@ -276,6 +276,188 @@
       width: 140px;
     }
     }
+
+    /* Enhanced Review Styles */
+    .reviews-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .review-controls {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-group, .sort-group, .rating-filter {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-select-small {
+      padding: 0.5rem;
+      border: 1px solid var(--bg-secondary);
+      border-radius: 4px;
+      background-color: var(--bg-card);
+      color: var(--text-light);
+      font-size: 0.9rem;
+      min-width: 120px;
+    }
+
+    .review {
+      background-color: var(--bg-card);
+      border: 1px solid var(--bg-secondary);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    .review:hover {
+      border-color: var(--primary);
+      box-shadow: 0 2px 8px rgba(0, 204, 153, 0.1);
+    }
+
+    .review-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .reviewer-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .reviewer-name {
+      color: var(--primary);
+      font-size: 1.1rem;
+    }
+
+    .verified-badge {
+      background-color: var(--primary);
+      color: var(--bg-dark);
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .review-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.25rem;
+    }
+
+    .review-rating {
+      color: #ffd700;
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    .review-date {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .review-content {
+      margin-bottom: 1rem;
+    }
+
+    .review-content p {
+      line-height: 1.6;
+      color: var(--text-light);
+    }
+
+    .review-actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .helpful-btn, .not-helpful-btn, .report-btn {
+      background: none;
+      border: 1px solid var(--bg-secondary);
+      color: var(--muted);
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .helpful-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background-color: rgba(0, 204, 153, 0.1);
+    }
+
+    .not-helpful-btn:hover {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+      background-color: rgba(255, 107, 107, 0.1);
+    }
+
+    .report-btn:hover {
+      border-color: #ffa500;
+      color: #ffa500;
+      background-color: rgba(255, 165, 0, 0.1);
+    }
+
+    .helpful-btn.active {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: var(--bg-dark);
+    }
+
+    .not-helpful-btn.active {
+      background-color: #ff6b6b;
+      border-color: #ff6b6b;
+      color: white;
+    }
+
+    @media (max-width: 768px) {
+      .reviews-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .review-controls {
+        justify-content: center;
+      }
+
+      .review-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .review-meta {
+        align-items: flex-start;
+      }
+
+      .review-actions {
+        justify-content: center;
+      }
+    }
   </style>
 </head>
 <body>
@@ -317,7 +499,40 @@
 
     <!-- Reviews Section -->
     <div class="reviews-section">
-      <h2 class="section-title">Customer Reviews</h2>
+      <div class="reviews-header">
+        <h2 class="section-title">Customer Reviews</h2>
+        <div class="review-controls">
+          <div class="filter-group">
+            <label for="reviewFilter">Filter:</label>
+            <select id="reviewFilter" class="form-select-small">
+              <option value="all">All Reviews</option>
+              <option value="verified">Verified Purchases</option>
+              <option value="unverified">Unverified</option>
+            </select>
+          </div>
+          <div class="sort-group">
+            <label for="reviewSort">Sort by:</label>
+            <select id="reviewSort" class="form-select-small">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="highest_rating">Highest Rating</option>
+              <option value="lowest_rating">Lowest Rating</option>
+              <option value="most_helpful">Most Helpful</option>
+            </select>
+          </div>
+          <div class="rating-filter">
+            <label for="ratingFilter">Rating:</label>
+            <select id="ratingFilter" class="form-select-small">
+              <option value="all">All Ratings</option>
+              <option value="5">5 Stars</option>
+              <option value="4">4 Stars</option>
+              <option value="3">3 Stars</option>
+              <option value="2">2 Stars</option>
+              <option value="1">1 Star</option>
+            </select>
+          </div>
+        </div>
+      </div>
       <div id="reviewsContainer"></div>
       <button id="loadMoreReviewsBtn" class="load-more-btn">
         Load More Reviews

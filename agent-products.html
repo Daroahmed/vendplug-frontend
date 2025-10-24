@@ -438,14 +438,37 @@
       const submitButtonText = document.getElementById('submitButtonText');
       const toggleFormButton = document.getElementById('toggleForm');
 
-      // 👇 Load category
+      // 👇 Load category (handle both array and string formats)
       if (categorySelect && agent?.category) {
-        categorySelect.innerHTML = `<option value="${agent.category}" selected>${agent.category}</option>`;
+        const categories = Array.isArray(agent.category) ? agent.category : [agent.category];
+        categorySelect.innerHTML = categories.map(cat => 
+          `<option value="${cat}" selected>${cat}</option>`
+        ).join('');
       } else {
         categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
+        // Try to refresh agent data if category is missing
+        refreshAgentData();
       }
 
       fetchAgentProducts();
+
+      // Function to refresh agent data from server
+      async function refreshAgentData() {
+        try {
+          const response = await fetch(`${BACKEND}/api/agents/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('vendplugAgent', JSON.stringify(data.agent));
+            // Reload the page to refresh the agent data
+            window.location.reload();
+          }
+        } catch (error) {
+          console.error('Failed to refresh agent data:', error);
+        }
+      }
 
       // Toggle form visibility
       toggleFormButton.addEventListener('click', () => {
@@ -467,10 +490,10 @@
         const price = Number(document.getElementById('productPrice').value);
         const description = document.getElementById('productDescription').value;
         const stock = Number(document.getElementById('productStock').value);
-        const category = agent?.category;
+        const category = Array.isArray(agent?.category) ? agent.category[0] : agent?.category;
         const imageFile = document.getElementById('productImage').files[0];
 
-        if (!category) return showOverlay && showOverlay({ type:'error', title:'Missing Category', message:'Agent category is missing' });
+        if (!category) return showOverlay && showOverlay({ type:'error', title:'Missing Category', message:'Agent category is missing. Please sign out and sign in again to refresh your profile data.' });
 
         const formData = new FormData();
         formData.append('name', name);
