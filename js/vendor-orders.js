@@ -249,13 +249,13 @@ function openOrderModal(orderId) {
     <button id="rejectBtn" class="btn-danger">Reject</button>
   `;
 
-  // Conditional status buttons
+  // Conditional status buttons with glowing animation
   if (order.status === "accepted") {
-    actionButtons += `<button id="markPreparingBtn" class="btn-secondary">Mark as Preparing</button>`;
+    actionButtons += `<button id="markPreparingBtn" class="btn-secondary status-action">Mark as Preparing</button>`;
   } else if (order.status === "preparing") {
-    actionButtons += `<button id="markOutBtn" class="btn-secondary">Mark as Out for Delivery</button>`;
+    actionButtons += `<button id="markOutBtn" class="btn-secondary status-action">Mark as Out for Delivery</button>`;
   } else if (order.status === "out_for_delivery") {
-    actionButtons += `<button id="markDeliveredBtn" class="btn-secondary">Mark as Delivered</button>`;
+    actionButtons += `<button id="markDeliveredBtn" class="btn-secondary status-action">Mark as Delivered</button>`;
   }
 
   orderDetails.innerHTML = `
@@ -331,6 +331,14 @@ function openOrderModal(orderId) {
   );
 
   document.getElementById("closeModalBtn")?.addEventListener("click", closeOrderModal);
+  document.getElementById("closeModalHeaderBtn")?.addEventListener("click", closeOrderModal);
+  
+  // Close modal when clicking outside of it
+  orderModal.addEventListener("click", (e) => {
+    if (e.target === orderModal) {
+      closeOrderModal();
+    }
+  });
 
   document.getElementById("openDisputeBtn")?.addEventListener("click", () => showDisputeModal(order));
 
@@ -518,12 +526,14 @@ document.getElementById("markDeliveredBtn")?.addEventListener("click", () => {
 
 function closeOrderModal() {
   orderModal.style.display = "none";
+  // Clear the order details to prevent stale data
+  orderDetails.innerHTML = "";
+  processFlow.innerHTML = "";
+  currentOrderId = null;
 }
 
 
-document.getElementById("closeModalBtn")?.addEventListener("click", () => {
-  orderModal.style.display = "none";
-});
+// Removed duplicate event listener - close button is handled in openOrderModal function
 
 /* ---------------------------
    Filters
