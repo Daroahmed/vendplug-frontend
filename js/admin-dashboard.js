@@ -3615,6 +3615,55 @@ function sendCampaign(campaignId) {
     });
 }
 
+// Global wrapper functions for HTML onclick handlers
+function searchUsers() {
+    if (window.adminDashboard) {
+        window.adminDashboard.searchUsers();
+    }
+}
+
+function searchOrders() {
+    if (window.adminDashboard) {
+        window.adminDashboard.searchOrders();
+    }
+}
+
+function searchPayouts() {
+    if (window.adminDashboard) {
+        window.adminDashboard.searchPayouts();
+    }
+}
+
+function searchDisputes() {
+    if (window.adminDashboard) {
+        window.adminDashboard.searchDisputes();
+    }
+}
+
+function searchEscalatedDisputes() {
+    if (window.adminDashboard) {
+        window.adminDashboard.searchEscalatedDisputes();
+    }
+}
+
+function searchStaffActivity() {
+    if (window.adminDashboard) {
+        window.adminDashboard.searchStaffActivity();
+    }
+}
+
+function searchSupportTickets() {
+    if (window.adminDashboard) {
+        window.adminDashboard.searchSupportTickets();
+    }
+}
+
+function clearSupportFilters() {
+    if (window.adminDashboard) {
+        window.adminDashboard.clearSupportFilters();
+    }
+}
+
 // Initialize admin dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.adminDashboard = new AdminDashboard();

@@ -437,8 +437,9 @@
           headers: { Authorization: `Bearer ${token}` }
         });
         
-        if (!testResponse.ok) {
-          console.error('❌ Token validation failed:', testResponse.status);
+        if (testResponse.status === 401) {
+          // Unauthorized - token is invalid
+          console.error('❌ Token validation failed: 401 Unauthorized');
           // Try to refresh token first
           const refreshResponse = await fetch(`${BACKEND}/api/auth/refresh`, {
             method: 'POST',
@@ -450,20 +451,36 @@
             if (refreshData.token) {
               localStorage.setItem('vendplug-vendor-token', refreshData.token);
               console.log('✅ Token refreshed successfully');
-              // Continue with the page load
+              // Reload the page to retry with new token
+              window.location.reload();
+              return;
             } else {
               throw new Error('No token in refresh response');
             }
           } else {
             throw new Error('Token refresh failed');
           }
+        } else if (testResponse.status === 500) {
+          // Server error - profile endpoint might not exist yet, but continue
+          console.warn('⚠️ Profile endpoint returned 500, continuing with cached data');
+        } else if (testResponse.ok) {
+          // Update vendor data if successful
+          const data = await testResponse.json();
+          if (data.vendor) {
+            localStorage.setItem('vendplugVendor', JSON.stringify(data.vendor));
+          }
         }
       } catch (error) {
-        console.error('❌ Token validation/refresh error:', error);
-        showOverlay && showOverlay({ type:'error', title:'Session Expired', message:'Your session has expired. Please log in again.' });
-        clearAuth();
-        redirectToLogin();
-        return;
+        // Only show error if it's a 401, otherwise continue
+        if (error.message && error.message.includes('Token refresh failed')) {
+          console.error('❌ Token validation/refresh error:', error);
+          showOverlay && showOverlay({ type:'error', title:'Session Expired', message:'Your session has expired. Please log in again.' });
+          clearAuth();
+          redirectToLogin();
+          return;
+        } else {
+          console.warn('⚠️ Token validation warning, continuing with cached data:', error);
+        }
       }
 
       const addProductForm = document.getElementById('addProductForm');
@@ -521,7 +538,8 @@
       } else {
         categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
         // Try to refresh vendor data if category is missing
-        refreshVendorData();
+        await refreshVendorData();
+        return; // Stop execution to prevent further issues
       }
 
       fetchVendorProducts();

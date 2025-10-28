@@ -420,7 +420,7 @@
   <script src="/js/back-button.js"></script>
   <script>
     
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const agent = getCurrentUser();
       const token = getAuthToken();
       const BACKEND = window.BACKEND_URL || "";
@@ -447,7 +447,8 @@
       } else {
         categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
         // Try to refresh agent data if category is missing
-        refreshAgentData();
+        await refreshAgentData();
+        return; // Stop execution to prevent further issues
       }
 
       fetchAgentProducts();
