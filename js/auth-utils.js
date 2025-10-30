@@ -38,27 +38,42 @@ function getAuthToken() {
 function getCurrentUserType() {
   // Check higher privilege tokens first (admin, staff)
   if (localStorage.getItem("vendplug-admin-token")) {
-    console.log("🔍 Detected admin token");
+    // Only log if we also have valid user data (indicates active session)
+    const hasValidSession = localStorage.getItem('vendplugAdmin');
+    if (hasValidSession) {
+      console.log("🔍 Detected admin token");
+    }
     return "admin";
   }
   if (localStorage.getItem("vendplug-staff-token")) {
-    console.log("🔍 Detected staff token");
+    const hasValidSession = localStorage.getItem('staff-info');
+    if (hasValidSession) {
+      console.log("🔍 Detected staff token");
+    }
     return "staff";
   }
   // Then check regular user tokens
   if (localStorage.getItem("vendplug-buyer-token")) {
-    console.log("🔍 Detected buyer token");
+    const hasValidSession = localStorage.getItem('vendplugBuyer');
+    if (hasValidSession) {
+      console.log("🔍 Detected buyer token");
+    }
     return "buyer";
   }
   if (localStorage.getItem("vendplug-agent-token")) {
-    console.log("🔍 Detected agent token");
+    const hasValidSession = localStorage.getItem('vendplugAgent');
+    if (hasValidSession) {
+      console.log("🔍 Detected agent token");
+    }
     return "agent";
   }
   if (localStorage.getItem("vendplug-vendor-token")) {
-    console.log("🔍 Detected vendor token");
+    const hasValidSession = localStorage.getItem('vendplugVendor');
+    if (hasValidSession) {
+      console.log("🔍 Detected vendor token");
+    }
     return "vendor";
   }
-  console.log("🔍 No tokens detected");
   return null;
 }
 

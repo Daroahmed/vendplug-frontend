@@ -79,7 +79,12 @@ class NotificationManager {
       dropdown.innerHTML = `
         <div class="notification-header">
           <h3>Notifications</h3>
-          <button id="mark-all-read">Mark all as read</button>
+          <div class="notification-header-actions">
+            <button id="mark-all-read">Mark all as read</button>
+            <button id="close-notifications" class="close-btn" aria-label="Close notifications">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
         </div>
         <div class="notification-list" id="notification-list"></div>
       `;
@@ -117,6 +122,12 @@ class NotificationManager {
           font-size: 1.1rem;
         }
 
+        .notification-header-actions {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
         #mark-all-read {
           background: var(--primary, #00cc99);
           color: white;
@@ -129,6 +140,39 @@ class NotificationManager {
 
         #mark-all-read:hover {
           opacity: 0.9;
+        }
+
+        .close-btn {
+          background: transparent;
+          color: var(--text-light, #fff);
+          border: none;
+          padding: 0.5rem;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 1.2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          transition: background-color 0.2s, opacity 0.2s;
+        }
+
+        .close-btn:hover {
+          background-color: rgba(255, 255, 255, 0.1);
+          opacity: 0.8;
+        }
+
+        .close-btn:active {
+          opacity: 0.6;
+        }
+
+        @media (max-width: 768px) {
+          .close-btn {
+            width: 36px;
+            height: 36px;
+            font-size: 1.3rem;
+          }
         }
 
         .notification-list {
@@ -193,6 +237,7 @@ class NotificationManager {
     const icon = document.getElementById('notification-icon');
     const dropdown = document.getElementById('notification-dropdown');
     const markAllRead = document.getElementById('mark-all-read');
+    const closeBtn = document.getElementById('close-notifications');
 
     if (icon && dropdown && markAllRead) {
       icon.addEventListener('click', () => {
@@ -202,6 +247,14 @@ class NotificationManager {
       markAllRead.addEventListener('click', () => {
         this.markAllAsRead();
       });
+
+      // Close button functionality
+      if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.style.display = 'none';
+        });
+      }
 
       // Close dropdown when clicking outside
       document.addEventListener('click', (e) => {
