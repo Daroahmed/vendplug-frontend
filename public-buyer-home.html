@@ -1138,21 +1138,30 @@
         const allCards = groupedCategories.flatMap(g => g.categories);
         const uniqueNames = Array.from(new Set(allCards.map(c => c.name)));
 
-        // Choose endpoint based on current mode
-        const base = currentMode === 'agent' ? '/api/agents/shop-agents' : '/api/vendors/shop-vendors';
-
-        // Probe each category for availability (in parallel)
-        const checks = await Promise.all(uniqueNames.map(async (name) => {
-          const url = `${base}?category=${encodeURIComponent(name)}${state ? `&state=${encodeURIComponent(state)}` : ''}`;
-          try {
-            const res = await fetch(url);
-            const data = await res.json().catch(() => ([]));
-            const count = Array.isArray(data) ? data.length : Array.isArray(data?.vendors) ? data.vendors.length : Array.isArray(data?.agents) ? data.agents.length : 0;
-            return { name, count };
-          } catch (_) {
-            return { name, count: 0 };
-          }
-        }));
+        // Use new optimized endpoint to get all category counts in a single request
+        const params = new URLSearchParams();
+        if (state) params.append('state', state);
+        if (currentMode === 'agent') params.append('mode', 'agent');
+        else if (currentMode === 'vendor') params.append('mode', 'vendor');
+        const url = `/api/categories/active-counts?${params.toString()}`;
+        
+        const res = await fetch(url);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch category counts: ${res.status}`);
+        }
+        
+        const result = await res.json();
+        if (!result.success) {
+          throw new Error(result.message || 'Failed to fetch category counts');
+        }
+        
+        // Convert the response to the format expected by the rest of the code
+        const countsMap = result.counts || {};
+        const checks = uniqueNames.map(name => {
+          const counts = countsMap[name] || { vendorCount: 0, agentCount: 0 };
+          const count = currentMode === 'agent' ? counts.agentCount : counts.vendorCount;
+          return { name, count };
+        });
 
         const activeNames = checks.filter(c => c.count > 0).map(c => c.name);
         const activeCards = allCards.filter(c => activeNames.includes(c.name));

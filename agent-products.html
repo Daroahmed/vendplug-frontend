@@ -166,6 +166,93 @@
       color: var(--primary);
     }
 
+    /* Photos Container Styles - Mobile App Style */
+    .photos-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .photo-thumbnail {
+      position: relative;
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-secondary);
+      border: 2px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .photo-thumbnail img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .photo-delete-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 24px;
+      height: 24px;
+      background: rgba(220, 53, 69, 0.9);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .photo-delete-btn:hover {
+      background: #dc3545;
+      transform: scale(1.1);
+    }
+
+    .photo-add-btn {
+      width: 100px;
+      height: 100px;
+      border-radius: 8px;
+      background: var(--bg-secondary);
+      border: 2px dashed var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: var(--muted);
+      font-size: 32px;
+    }
+
+    .photo-add-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+      background: rgba(0, 204, 153, 0.1);
+    }
+
+    .photo-primary-badge {
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      background: var(--primary);
+      color: #000;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    #photoCount {
+      color: var(--muted);
+      font-weight: normal;
+      font-size: 0.9em;
+    }
+
     .submit-btn {
       background: var(--primary);
       color: #000;
@@ -393,14 +480,14 @@
         </div>
         
         <div class="form-group">
-          <div class="file-input">
-            <input type="file" id="productImage" name="productImage" accept="image/*" />
-            <label for="productImage">
-              <i class="fas fa-upload"></i>
-              <span>Upload Product Image</span>
-            </label>
+          <label>Photos <span id="photoCount">0 of 5</span></label>
+          <div id="photosContainer" class="photos-container">
+            <!-- Existing and new images will be displayed here -->
           </div>
-          <!-- Current image preview will be inserted here -->
+          <input type="file" id="productImages" name="productImages" accept="image/*" multiple style="display: none;" />
+          <small style="color: var(--muted, #aaa); margin-top: 0.5rem; display: block;">
+            Tap the + icon to add more photos (up to 5).
+          </small>
         </div>
         
         <button type="submit" class="submit-btn">
@@ -418,6 +505,7 @@
   
   <script src="/js/auth-utils.js"></script>
   <script src="/js/back-button.js"></script>
+  <script src="/js/agent-products.js"></script>
   <script>
     
     document.addEventListener('DOMContentLoaded', async () => {
@@ -492,7 +580,15 @@
         const description = document.getElementById('productDescription').value;
         const stock = Number(document.getElementById('productStock').value);
         const category = Array.isArray(agent?.category) ? agent.category[0] : agent?.category;
-        const imageFile = document.getElementById('productImage').files[0];
+        // Get selected images from external photo manager (fallback to input if needed)
+        const imageInput = document.getElementById('productImages');
+        let imageFiles = [];
+        if (window.getCurrentPhotos) {
+          const photos = window.getCurrentPhotos();
+          imageFiles = photos?.newFiles || [];
+        } else if (imageInput) {
+          imageFiles = Array.from(imageInput.files || []);
+        }
 
         if (!category) return showOverlay && showOverlay({ type:'error', title:'Missing Category', message:'Agent category is missing. Please sign out and sign in again to refresh your profile data.' });
 
@@ -502,7 +598,8 @@
         formData.append('description', description);
         formData.append('stock', stock);
         formData.append('category', category);
-        if (imageFile) formData.append('productImage', imageFile);
+        // Append all selected images (handled by backend multer array)
+        imageFiles.forEach((file) => formData.append('productImages', file));
 
         const endpoint = id
           ? `${BACKEND}/api/agent-products/update/${id}`
@@ -645,39 +742,32 @@
         if (oldPreview) oldPreview.remove();
       }
 
-      // Edit product
-      window.editProduct = function(id) {
-        // Find the product by id (in a real app, you'd fetch it from the server)
-        fetch(`${BACKEND}/api/agent-products/${id}`, {
+      // Edit product - Save reference to external editProduct before overriding
+      const externalEditProduct = window.editProduct;
+      
+      // Override to handle ID-based calls from onclick handlers
+      window.editProduct = function(productOrId) {
+        // If it's already a product object, pass directly to external function
+        if (typeof productOrId === 'object' && productOrId._id) {
+          if (externalEditProduct) {
+            externalEditProduct(productOrId);
+          }
+          return;
+        }
+        
+        // Otherwise, it's an ID string - fetch the product first
+        const productId = productOrId;
+        fetch(`${BACKEND}/api/agent-products/${productId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         })
         .then(res => res.json())
         .then(product => {
-          document.getElementById('formTitle').textContent = 'Edit Product';
-          document.getElementById('productId').value = product._id;
-          document.getElementById('productName').value = product.name;
-          document.getElementById('productPrice').value = product.price;
-          document.getElementById('productDescription').value = product.description || '';
-          document.getElementById('productStock').value = product.stock || 0;
-
-          const oldPreview = document.getElementById('currentImagePreview');
-          if (oldPreview) oldPreview.remove();
-
-          if (product.image) {
-            const imgPreview = document.createElement('img');
-            imgPreview.id = 'currentImagePreview';
-            imgPreview.src = product.image;
-            imgPreview.className = 'current-image-preview';
-            document.querySelector('.file-input').insertAdjacentElement('afterend', imgPreview);
+          // Call the external editProduct function with the product object
+          if (externalEditProduct) {
+            externalEditProduct(product);
           }
-
-          // Update button text
-          submitButtonText.textContent = 'Update Product';
-          
-          // Scroll to form
-          document.querySelector('.product-form')?.scrollIntoView({ behavior: 'smooth' });
         })
         .catch(err => {
           console.error(err);

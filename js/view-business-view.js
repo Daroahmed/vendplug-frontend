@@ -30,7 +30,47 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 function loadProductDetails(product) {
-  document.getElementById('productImage').src = product.image || '';
+  const productImageEl = document.getElementById('productImage');
+  const galleryContainer = document.getElementById('productImageGallery');
+  const thumbnailsContainer = document.getElementById('galleryThumbnails');
+  
+  // Collect all images: primary image + additional images
+  const allImages = [product.image, ...(product.images || [])].filter(Boolean);
+  
+  if (allImages.length === 0) {
+    productImageEl.src = '/assets/placeholder-product.jpg';
+    productImageEl.onerror = function() { this.src = '/assets/placeholder-product.jpg'; };
+  } else {
+    // Set primary image
+    productImageEl.src = allImages[0];
+    
+    // If there are multiple images, show gallery
+    if (allImages.length > 1) {
+      galleryContainer.style.display = 'block';
+      thumbnailsContainer.innerHTML = '';
+      
+      allImages.forEach((imgUrl, index) => {
+        const thumbnail = document.createElement('img');
+        thumbnail.src = imgUrl;
+        thumbnail.className = 'gallery-thumbnail';
+        thumbnail.alt = `Product image ${index + 1}`;
+        if (index === 0) thumbnail.classList.add('active');
+        
+        thumbnail.addEventListener('click', () => {
+          // Switch main image
+          productImageEl.src = imgUrl;
+          // Update active thumbnail
+          thumbnailsContainer.querySelectorAll('.gallery-thumbnail').forEach(t => t.classList.remove('active'));
+          thumbnail.classList.add('active');
+        });
+        
+        thumbnailsContainer.appendChild(thumbnail);
+      });
+    } else {
+      galleryContainer.style.display = 'none';
+    }
+  }
+  
   document.getElementById('productName').textContent = product.name;
   document.getElementById('productPrice').textContent = `₦${product.price}`;
   const stock = Number(product.stock || 0);
