@@ -296,8 +296,9 @@ document.addEventListener('DOMContentLoaded', () => {
       products.forEach(product => {
         const card = document.createElement('div');
         card.className = 'product-card';
+        const thumb = product.image ? (window.optimizeImage ? optimizeImage(product.image, 480) : product.image) : null;
         card.innerHTML = `
-          ${product.image ? `<img src="${product.image}" style="width:100%; border-radius:8px;" />` : ''}
+          ${thumb ? `<img src="${thumb}" loading="lazy" style="width:100%; border-radius:8px;" />` : ''}
           <h3>${product.name}</h3>
           <p>₦${product.price.toLocaleString()}</p>
           <p>Stock: ${product.stock ?? 'Not specified'}</p>

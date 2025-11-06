@@ -13,8 +13,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     const res = await fetch(`/api/agent-products/public/${productId}`);
     if (!res.ok) throw new Error("Failed to fetch product");
     const product = await res.json();
+    
+    // Validate product and agent data
+    if (!product) {
+      throw new Error("Product not found");
+    }
+    
+    if (!product.agent || !product.agent._id) {
+      console.error('Product agent data is missing:', product);
+      window.showOverlay && showOverlay({ 
+        type:'error', 
+        title:'Error', 
+        message:'Agent information is missing. Please try again later.' 
+      });
+      return;
+    }
+    
     currentProduct = product;
     agentId = product.agent._id;
+    console.log('Agent ID loaded:', agentId);
 
     loadProductDetails(product);
     loadAgentDetails(agentId);
@@ -42,7 +59,7 @@ function loadProductDetails(product) {
     productImageEl.onerror = function() { this.src = '/assets/placeholder-product.jpg'; };
   } else {
     // Set primary image
-    productImageEl.src = allImages[0];
+    productImageEl.src = (window.optimizeImage ? optimizeImage(allImages[0], 960) : allImages[0]);
     
     // If there are multiple images, show gallery
     if (allImages.length > 1) {
@@ -51,7 +68,7 @@ function loadProductDetails(product) {
       
       allImages.forEach((imgUrl, index) => {
         const thumbnail = document.createElement('img');
-        thumbnail.src = imgUrl;
+        thumbnail.src = (window.optimizeImage ? optimizeImage(imgUrl, 200) : imgUrl);
         thumbnail.className = 'gallery-thumbnail';
         thumbnail.alt = `Product image ${index + 1}`;
         if (index === 0) thumbnail.classList.add('active');
@@ -94,10 +111,32 @@ function loadProductDetails(product) {
 }
 
 async function loadAgentDetails(agentId) {
+  // Validate agentId before making request
+  if (!agentId) {
+    console.error('Cannot load agent details: agentId is null or undefined');
+    window.showOverlay && showOverlay({ 
+      type:'error', 
+      title:'Error', 
+      message:'Agent ID is missing. Please refresh the page.' 
+    });
+    return;
+  }
+
   try {
+    console.log('Loading agent details for:', agentId);
     const res = await fetch(`/api/agents/${agentId}`);
-    if (!res.ok) throw new Error("Failed to fetch agent");
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      console.error('Failed to fetch agent:', res.status, res.statusText, errorData);
+      throw new Error(errorData.message || "Failed to fetch agent");
+    }
     const agent = await res.json();
+    
+    if (!agent || !agent._id) {
+      throw new Error("Agent data is invalid");
+    }
+    
+    console.log('Agent data loaded successfully:', agent._id);
 
     // Store all reviews
     allReviews = agent.reviews || [];
@@ -123,6 +162,18 @@ async function loadAgentDetails(agentId) {
 
     // Handle review submission
     document.getElementById('submitReviewBtn').addEventListener('click', async () => {
+      // Validate agentId is set
+      if (!agentId) {
+        console.error('Agent ID not available. Reloading page...');
+        window.showOverlay && showOverlay({ 
+          type:'error', 
+          title:'Error', 
+          message:'Agent information not loaded. Please refresh the page and try again.' 
+        });
+        setTimeout(() => location.reload(), 2000);
+        return;
+      }
+
       const rating = document.getElementById('reviewRating').value;
       const comment = document.getElementById('reviewComment').value;
 
@@ -136,6 +187,7 @@ async function loadAgentDetails(agentId) {
           return (window.showOverlay && showOverlay({ type:'error', title:'Login required', message:'You must be logged in to leave a review.' }));
         }
 
+        console.log('Submitting review for agent:', agentId);
         const reviewRes = await fetch(`/api/agents/${agentId}/reviews`, {
           method: 'POST',
           headers: {
@@ -146,13 +198,16 @@ async function loadAgentDetails(agentId) {
         });
 
         if (!reviewRes.ok) {
-          const errData = await reviewRes.json();
-          throw new Error(errData.message || "Failed to submit review");
+          const errData = await reviewRes.json().catch(() => ({}));
+          const errorMessage = errData.message || `Failed to submit review (${reviewRes.status})`;
+          console.error('Review submission failed:', errorMessage, errData);
+          throw new Error(errorMessage);
         }
 
         window.showOverlay && showOverlay({ type:'success', title:'Thank you!', message:'Review submitted successfully!' });
         location.reload();
       } catch (err) {
+        console.error('Review submission error:', err);
         window.showOverlay && showOverlay({ type:'error', title:'Error', message: err.message || 'Something went wrong' });
       }
     });

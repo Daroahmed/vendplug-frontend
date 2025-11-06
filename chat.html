@@ -427,8 +427,33 @@
             font-size: 0.9rem;
             resize: none;
             outline: none;
-            max-height: 100px;
+            max-height: 120px;
             min-height: 20px;
+            line-height: 1.5;
+            padding: 0.5rem 0;
+            transition: height 0.2s ease;
+        }
+        
+        /* Better focus state for input */
+        .message-textarea textarea:focus {
+            outline: none;
+        }
+        
+        /* Draft indicator */
+        .message-input-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .message-input-container.has-draft::before {
+            opacity: 0.5;
         }
 
         .message-textarea textarea::placeholder {
@@ -657,7 +682,7 @@
             }
         }
 
-        /* Scrollbar Styling */
+        /* Scrollbar Styling - Enhanced */
         .chat-list::-webkit-scrollbar,
         .chat-messages::-webkit-scrollbar {
             width: 6px;
@@ -677,6 +702,54 @@
         .chat-list::-webkit-scrollbar-thumb:hover,
         .chat-messages::-webkit-scrollbar-thumb:hover {
             background: var(--primary);
+        }
+        
+        /* Smooth scrolling enhancement */
+        .chat-messages {
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch; /* Better iOS scrolling */
+        }
+        
+        /* Message status indicators */
+        .message-status {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 0.25rem;
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        
+        .message-status.sent {
+            color: var(--muted);
+        }
+        
+        .message-status.delivered {
+            color: var(--primary);
+        }
+        
+        .message-status.read {
+            color: var(--primary);
+        }
+        
+        /* Better loading state for messages */
+        .message-sending {
+            opacity: 0.6;
+            position: relative;
+        }
+        
+        .message-sending::after {
+            content: '⏳';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.8rem;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
@@ -892,18 +965,51 @@
             // Search functionality
             document.getElementById('chatSearch').addEventListener('input', filterChats);
 
-            // Message input
+            // Message input - enhanced with keyboard shortcuts and better handling
             const messageInput = document.getElementById('messageInput');
-            messageInput.addEventListener('keypress', function(e) {
+            
+            // Enter to send, Shift+Enter for new line
+            messageInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
                     e.preventDefault();
                     sendMessage();
                 }
+                // Ctrl/Cmd + Enter to send (alternative)
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                    e.preventDefault();
+                    sendMessage();
+                }
             });
-
+            
+            // Debounced input handler for better performance
+            let inputTimeout;
             messageInput.addEventListener('input', function() {
                 autoResizeTextarea(this);
-                handleTypingStart();
+                
+                // Debounce typing indicator
+                clearTimeout(inputTimeout);
+                inputTimeout = setTimeout(() => {
+                    handleTypingStart();
+                }, 500);
+            });
+            
+            // Handle paste events for better UX
+            messageInput.addEventListener('paste', function(e) {
+                // Allow paste, then resize
+                setTimeout(() => {
+                    autoResizeTextarea(this);
+                }, 0);
+            });
+            
+            // Focus input when chat is selected (better mobile UX)
+            messageInput.addEventListener('focus', function() {
+                // Scroll to bottom when input is focused
+                setTimeout(() => {
+                    const messagesContainer = document.getElementById('chatMessages');
+                    if (messagesContainer) {
+                        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    }
+                }, 300);
             });
 
             // File input
@@ -1105,6 +1211,18 @@
 
             // Load messages for this chat
             loadMessages(chatId);
+            
+            // Load and restore draft message
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                const draft = loadDraft(chatId);
+                if (draft) {
+                    messageInput.value = draft;
+                    autoResizeTextarea(messageInput);
+                }
+                // Focus input for quick typing
+                setTimeout(() => messageInput.focus(), 100);
+            }
         }
 
         // Load messages for a chat
@@ -1226,8 +1344,24 @@
                 messagesContainer.appendChild(messageElement);
             });
 
-            // Scroll to bottom
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            // Smooth scroll to bottom with better performance
+            scrollToBottom(messagesContainer);
+        }
+        
+        // Enhanced smooth scrolling function
+        function scrollToBottom(container, force = false) {
+            if (!container) return;
+            
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+            
+            // Only auto-scroll if user is near bottom or forced
+            if (force || isNearBottom) {
+                // Use smooth scroll for better UX
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
+            }
         }
 
         // Create message element
@@ -1373,7 +1507,7 @@
             const tempMessageElement = createMessageElement(tempMessage);
             tempMessageElement.classList.add('message-sending');
             messagesContainer.appendChild(tempMessageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            scrollToBottom(messagesContainer, true);
 
             const token = getAuthToken();
             if (!token) {
@@ -1414,14 +1548,22 @@
                     // Render actual message
                     const messageElement = createMessageElement(message);
                     messagesContainer.appendChild(messageElement);
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                    scrollToBottom(messagesContainer, true);
 
                     // Update last message in chat list
                     updateChatLastMessage(currentChatId, content);
                     
-                    // Clear input
+                    // Clear input and draft
                     messageInput.value = '';
                     messageInput.style.height = 'auto';
+                    saveDraft(currentChatId, ''); // Clear draft
+                    
+                    // Remove draft indicator
+                    const inputContainer = document.getElementById('messageInputContainer');
+                    inputContainer?.classList.remove('has-draft');
+                    
+                    // Refocus input for quick next message
+                    setTimeout(() => messageInput.focus(), 50);
                     
                     console.log('Message added to UI and chat list updated');
                 } else {
@@ -1457,11 +1599,25 @@
                 }
                 messages[message.chatId].push(message);
 
-                // Render message
+                // Render message with smooth animation
                 const messagesContainer = document.getElementById('chatMessages');
                 const messageElement = createMessageElement(message);
                 messagesContainer.appendChild(messageElement);
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                scrollToBottom(messagesContainer, true);
+                
+                // Play notification sound if not sent by current user (optional)
+                if (message.senderId !== currentUserId && 'Notification' in window && Notification.permission === 'granted') {
+                    // Subtle notification for new messages
+                    try {
+                        new Notification('New Message', {
+                            body: message.content.substring(0, 50),
+                            icon: '/assets/icon.png',
+                            silent: true // Don't play sound, just show badge
+                        });
+                    } catch (e) {
+                        // Notification failed, ignore
+                    }
+                }
             }
 
             // Update chat list
@@ -1480,15 +1636,24 @@
             }
         }
 
-        // Handle typing
+        // Enhanced typing indicator with debouncing
+        let typingTimeout;
+        let typingSent = false;
+        
         function handleTypingStart() {
             if (socket && currentChatId) {
-                socket.emit('typing', { chatId: currentChatId });
+                if (!typingSent) {
+                    socket.emit('typing', { chatId: currentChatId });
+                    typingSent = true;
+                }
                 
-                // Stop typing after 3 seconds
-                clearTimeout(window.typingTimeout);
-                window.typingTimeout = setTimeout(() => {
-                    socket.emit('stopTyping', { chatId: currentChatId });
+                // Stop typing after 3 seconds of inactivity
+                clearTimeout(typingTimeout);
+                typingTimeout = setTimeout(() => {
+                    if (socket && currentChatId) {
+                        socket.emit('stopTyping', { chatId: currentChatId });
+                        typingSent = false;
+                    }
                 }, 3000);
             }
         }
@@ -1522,9 +1687,50 @@
             return `${days}d`;
         }
 
+        // Enhanced auto-resize with better performance
         function autoResizeTextarea(textarea) {
             textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+            const newHeight = Math.min(textarea.scrollHeight, 120);
+            textarea.style.height = newHeight + 'px';
+            
+            // Save draft message
+            if (currentChatId) {
+                saveDraft(currentChatId, textarea.value);
+                
+                // Show draft indicator
+                const inputContainer = document.getElementById('messageInputContainer');
+                if (textarea.value.trim()) {
+                    inputContainer?.classList.add('has-draft');
+                } else {
+                    inputContainer?.classList.remove('has-draft');
+                }
+            }
+        }
+        
+        // Save draft messages locally
+        function saveDraft(chatId, content) {
+            if (!chatId) return;
+            try {
+                const draftKey = `chat-draft-${chatId}`;
+                if (content.trim()) {
+                    localStorage.setItem(draftKey, content);
+                } else {
+                    localStorage.removeItem(draftKey);
+                }
+            } catch (e) {
+                console.warn('Failed to save draft:', e);
+            }
+        }
+        
+        // Load draft message
+        function loadDraft(chatId) {
+            if (!chatId) return '';
+            try {
+                const draftKey = `chat-draft-${chatId}`;
+                return localStorage.getItem(draftKey) || '';
+            } catch (e) {
+                return '';
+            }
         }
 
         function filterChats() {
