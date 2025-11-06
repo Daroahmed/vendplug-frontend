@@ -6,11 +6,51 @@
   <title>VendPlug | Agent Order Status</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .header { background:#1e1e1e; padding:1rem; position:sticky; top:0; z-index:100; display:flex; align-items:center; box-shadow:0 2px 10px rgba(0,0,0,0.3); margin:-1rem -1rem 1rem -1rem; }
-    .back-button { background:none; border:none; color:#fff; font-size:1.2rem; margin-right:15px; cursor:pointer; }
-    .header-title { font-size:1.2rem; color:#00cc99; }
-    .header-actions { margin-left:auto; display:flex; align-items:center; gap:12px; }
-    .header-actions a { color:#fff; text-decoration:none; }
+    .header { 
+      background:#1e1e1e; 
+      padding:1rem; 
+      position:sticky; 
+      top:0; 
+      z-index:100; 
+      display:flex; 
+      align-items:center; 
+      box-shadow:0 2px 10px rgba(0,0,0,0.3); 
+      margin:0;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden; /* Prevent overflow */
+      box-sizing: border-box;
+    }
+    .back-button { 
+      background:none; 
+      border:none; 
+      color:#fff; 
+      font-size:1.2rem; 
+      margin-right:15px; 
+      cursor:pointer; 
+      flex-shrink: 0;
+    }
+    .header-title { 
+      font-size:1.2rem; 
+      color:#00cc99; 
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .header-actions { 
+      margin-left:auto; 
+      display:flex; 
+      align-items:center; 
+      gap:12px; 
+      flex-shrink: 0;
+    }
+    .header-actions a { 
+      color:#fff; 
+      text-decoration:none; 
+      flex-shrink: 0;
+    }
     .notification-icon { position: relative; }
     .notification-badge {
       position: absolute;
@@ -27,38 +67,63 @@
       align-items: center;
       justify-content: center;
     }
+    * {
+      box-sizing: border-box;
+    }
+    
+    html, body {
+      width: 100%;
+      overflow-x: hidden; /* Prevent horizontal scrolling */
+      position: relative;
+    }
+    
     body {
       background: #121212;
       color: #fff;
       font-family: 'Segoe UI', sans-serif;
-      padding: 1rem;
+      padding: 0;
       margin: 0;
+      min-height: 100vh;
     }
     .container {
       max-width: 800px;
       margin: 0 auto;
+      width: 100%;
+      padding: 0;
+      overflow-x: hidden; /* Prevent horizontal scrolling */
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      margin: 1rem;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
     h1 {
       color: #00cc99;
       margin: 0;
-      font-size: 1.8rem;
+      font-size: 1.5rem;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .last-updated {
       color: #888;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .details-card {
       background: #1e1e1e;
       padding: 1.5rem;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.4);
+      margin: 1rem;
       margin-bottom: 1.5rem;
+      width: calc(100% - 2rem);
+      max-width: 100%;
+      overflow-x: hidden; /* Prevent horizontal overflow */
     }
     .order-header {
       display: flex;
@@ -67,18 +132,26 @@
       margin-bottom: 1rem;
       padding-bottom: 0.5rem;
       border-bottom: 1px solid #333;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
     .order-id {
       font-weight: bold;
       color: #00cc99;
+      word-break: break-word;
+      overflow-wrap: break-word;
+      flex: 1;
+      min-width: 0;
     }
     .current-status {
       background: #00cc99;
       color: #121212;
       padding: 0.3rem 0.8rem;
       border-radius: 20px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: bold;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
     .status-timeline {
       margin: 1.5rem 0;
@@ -132,6 +205,9 @@
       border-radius: 3px;
       overflow: hidden;
       margin: 1rem 0;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
     }
     .progress-bar {
       height: 100%;
@@ -144,6 +220,8 @@
       justify-content: space-between;
       align-items: center;
       margin-top: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
     }
     button {
       background: #00cc99;
@@ -226,14 +304,16 @@
       background: #00cc99;
       color: #000;
       border: none;
-      padding: 4px 8px;
+      padding: 6px 10px;
       border-radius: 4px;
       cursor: pointer;
       font-size: 12px;
-      margin-left: 8px;
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: fit-content;
     }
     
     .copy-btn:hover {
@@ -246,12 +326,289 @@
     
     .info-row {
       display: flex;
-      align-items: center;
-      margin-bottom: 8px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+      width: 100%;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
     }
     
     .info-row strong {
       min-width: 120px;
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+    
+    .info-row span {
+      flex: 1;
+      min-width: 0; /* Allow text to wrap */
+      word-break: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    .info-row .copy-btn {
+      flex-shrink: 0;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+    
+    /* Products list styling */
+    h4 {
+      color: #00cc99;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+      word-wrap: break-word;
+    }
+    
+    ul {
+      list-style: none;
+      padding-left: 0;
+      margin: 0.5rem 0;
+    }
+    
+    ul li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #333;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    
+    ul li:last-child {
+      border-bottom: none;
+    }
+    
+    /* Action buttons container */
+    .action-buttons-container {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      width: 100%;
+    }
+    
+    .action-buttons-container button {
+      flex: 1;
+      min-width: 140px;
+    }
+    
+    .action-buttons-container span {
+      width: 100%;
+      font-size: 0.85rem;
+      color: #bbb;
+      word-wrap: break-word;
+    }
+    
+    /* Dispute modal mobile fixes */
+    #disputeModal {
+      padding: 1rem;
+    }
+    
+    #disputeModal > div {
+      max-width: 95%;
+      width: 100%;
+      padding: 1.5rem;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    #disputeModal input,
+    #disputeModal select,
+    #disputeModal textarea {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    
+    #disputeModal .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    #disputeModal .button-group button {
+      flex: 1;
+      min-width: 100px;
+    }
+    
+    /* Mobile-specific improvements */
+    @media (max-width: 768px) {
+      .details-card {
+        padding: 1rem;
+        margin: 0.5rem;
+        width: calc(100% - 1rem);
+      }
+      
+      h1 {
+        font-size: 1.3rem;
+      }
+      
+      .last-updated {
+        font-size: 0.75rem;
+      }
+      
+      .order-id {
+        font-size: 0.9rem;
+      }
+      
+      .current-status {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.6rem;
+      }
+      
+      .info-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+      
+      .info-row strong {
+        min-width: auto;
+        width: 100%;
+      }
+      
+      .info-row span {
+        width: 100%;
+        word-break: break-word;
+      }
+      
+      .info-row .copy-btn {
+        margin-left: 0;
+        align-self: flex-start;
+      }
+      
+      .header {
+        padding: 0.75rem;
+      }
+      
+      .back-button {
+        font-size: 1rem;
+        margin-right: 10px;
+      }
+      
+      .header-title {
+        font-size: 1rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      
+      .header-actions {
+        gap: 8px;
+      }
+      
+      .header-actions a {
+        font-size: 0.9rem;
+      }
+      
+      button {
+        padding: 10px 14px;
+        font-size: 0.9rem;
+      }
+      
+      .auto-update-toggle {
+        font-size: 0.85rem;
+      }
+      
+      .status-timeline li {
+        font-size: 0.9rem;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+      
+      h4 {
+        font-size: 1rem;
+      }
+      
+      ul li {
+        font-size: 0.9rem;
+      }
+      
+      .action-buttons-container {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .action-buttons-container button {
+        width: 100%;
+        min-width: auto;
+      }
+      
+      #disputeModal > div {
+        padding: 1rem;
+        max-height: 95vh;
+      }
+      
+      #disputeModal .button-group {
+        flex-direction: column;
+      }
+      
+      #disputeModal .button-group button {
+        width: 100%;
+        min-width: auto;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .details-card {
+        padding: 0.75rem;
+        margin: 0.5rem;
+        border-radius: 8px;
+      }
+      
+      h1 {
+        font-size: 1.2rem;
+      }
+      
+      .order-header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .current-status {
+        align-self: flex-start;
+      }
+      
+      .actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+      
+      .auto-update-toggle {
+        width: 100%;
+        justify-content: space-between;
+      }
+      
+      h4 {
+        font-size: 0.95rem;
+      }
+      
+      ul li {
+        font-size: 0.85rem;
+        padding: 0.4rem 0;
+      }
+      
+      .status-timeline li {
+        font-size: 0.85rem;
+        padding-left: 25px;
+      }
+      
+      .status-timeline:before {
+        left: 8px;
+      }
+      
+      .status-timeline li:before {
+        left: 2px;
+        width: 10px;
+        height: 10px;
+      }
     }
   </style>
 </head>
