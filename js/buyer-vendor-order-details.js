@@ -117,14 +117,14 @@ function renderOrderDetails(order) {
         </li>`).join("")}
     </ul>
     
-    <div style="margin-top: 1.5rem; display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+    <div class="action-buttons-container">
       <button id="confirmBtn" ${order.status !== "delivered" ? "disabled" : ""}>
         Confirm Delivery
       </button>
       <button id="openDisputeBtn" style="background:#ff5b5b;color:#000;">
         Open Dispute
       </button>
-      <span style="color:#bbb;font-size:12px;">Note: After confirming delivery, you can no longer open a dispute.</span>
+      <span>Note: After confirming delivery, you can no longer open a dispute.</span>
     </div>
   `;
 
@@ -205,7 +205,7 @@ function showDisputeModal(order) {
       </select>
       <textarea id="dp_description" rows="5" placeholder="Describe the issue..." style="padding:10px;border-radius:8px;border:1px solid #333;background:#121212;color:#fff;"></textarea>
       <input id="dp_files" type="file" multiple />
-      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:8px;">
+      <div class="button-group" style="margin-top:8px;">
         <button id="dp_cancel" style="background:#444;color:#fff;">Cancel</button>
         <button id="dp_submit" style="background:#00cc99;color:#000;">Submit Dispute</button>
       </div>
