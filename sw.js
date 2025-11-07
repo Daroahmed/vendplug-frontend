@@ -1,5 +1,5 @@
 // Basic VendPlug Service Worker
-const CACHE_NAME = 'vendplug-app-shell-v7.4';
+const CACHE_NAME = 'vendplug-app-shell-v7.6';
 const APP_SHELL = [
   '/',
   '/public-buyer-home.html',
@@ -102,21 +102,30 @@ self.addEventListener('fetch', (event) => {
   if (isAPI && !isGET) {
     event.respondWith(
       fetch(req).then((res) => {
-        // Purge cached API GETs (best-effort)
-        caches.open(CACHE_NAME).then(async (c) => {
-          try {
-            const keys = await c.keys();
-            await Promise.all(keys.map((k) => {
-              const u = new URL(k.url);
-              if (u.pathname.startsWith('/api/') && k.method === 'GET') {
-                return c.delete(k);
-              }
-              return Promise.resolve(false);
-            }));
-          } catch(_) {}
-        });
+        // Purge cached API GETs (best-effort) - only if request was successful
+        if (res.ok) {
+          caches.open(CACHE_NAME).then(async (c) => {
+            try {
+              const keys = await c.keys();
+              await Promise.all(keys.map((k) => {
+                const u = new URL(k.url);
+                if (u.pathname.startsWith('/api/') && k.method === 'GET') {
+                  return c.delete(k);
+                }
+                return Promise.resolve(false);
+              }));
+            } catch(_) {}
+          });
+        }
         return res;
-      }).catch(() => new Response(JSON.stringify({ error: 'Network error' }), { status: 503, headers: { 'Content-Type': 'application/json' } }))
+      }).catch((error) => {
+        // Return proper error response
+        console.error('Service worker API error:', error);
+        return new Response(JSON.stringify({ error: 'Network error', message: error.message }), { 
+          status: 503, 
+          headers: { 'Content-Type': 'application/json' } 
+        });
+      })
     );
     return;
   }
@@ -124,15 +133,33 @@ self.addEventListener('fetch', (event) => {
   // API GET: network-first (unless explicitly fresh-only), fallback to cache
   if (isAPI && isGET) {
     if (wantsFresh) {
-      event.respondWith(fetch(req));
+      event.respondWith(fetch(req).catch(() => {
+        // Return proper error response instead of undefined
+        return new Response(JSON.stringify({ error: 'Network error' }), { 
+          status: 503, 
+          headers: { 'Content-Type': 'application/json' } 
+        });
+      }));
       return;
     }
     event.respondWith(
       fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        // Only cache successful responses
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
+        }
         return res;
-      }).catch(() => caches.match(req))
+      }).catch(async () => {
+        // Try cache, but return proper error if no cache
+        const cached = await caches.match(req);
+        if (cached) return cached;
+        // Return proper error response instead of undefined
+        return new Response(JSON.stringify({ error: 'Network error' }), { 
+          status: 503, 
+          headers: { 'Content-Type': 'application/json' } 
+        });
+      })
     );
     return;
   }
