@@ -565,13 +565,54 @@
     }
 
     /* Onboarding Guide Styles */
+    /* Onboarding Modal Styles */
+    .onboarding-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      padding: 1rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
     .onboarding-guide {
       background: linear-gradient(135deg, var(--primary), #00b386);
       border-radius: 16px;
       padding: 2rem;
-      margin-bottom: 2rem;
       box-shadow: 0 8px 32px rgba(0, 204, 153, 0.3);
       color: var(--bg-dark);
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+      position: relative;
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .onboarding-header {
@@ -760,6 +801,7 @@
 
       .onboarding-guide {
         padding: 1.5rem;
+        max-height: 95vh;
       }
 
       .onboarding-header h2 {
@@ -826,16 +868,18 @@
   <!-- Dashboard Content -->
   <div class="dashboard">
     <!-- Onboarding Guide -->
-    <div id="onboardingGuide" class="onboarding-guide" style="display: none;">
-      <div class="onboarding-header">
-        <div>
-          <h2>🎉 Welcome to Vendplug!</h2>
-          <p>Let's get your business set up in just a few steps</p>
+    <!-- Onboarding Modal Overlay -->
+    <div id="onboardingOverlay" class="onboarding-overlay" style="display: none;" onclick="closeOnboardingModal()">
+      <div class="onboarding-guide" onclick="event.stopPropagation()">
+        <div class="onboarding-header">
+          <div>
+            <h2>🎉 Welcome to Vendplug!</h2>
+            <p>Let's get your business set up in just a few steps</p>
+          </div>
+          <button class="close-onboarding" onclick="dismissOnboarding()" title="Dismiss">
+            <i class="fas fa-times"></i>
+          </button>
         </div>
-        <button class="close-onboarding" onclick="dismissOnboarding()" title="Dismiss">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
       
       <div class="onboarding-progress">
         <div class="progress-bar">
@@ -902,8 +946,9 @@
         </div>
       </div>
 
-      <div class="onboarding-footer">
-        <p>💡 <strong>Tip:</strong> Complete these steps to start receiving orders and earning money!</p>
+        <div class="onboarding-footer">
+          <p>💡 <strong>Tip:</strong> Complete these steps to start receiving orders and earning money!</p>
+        </div>
       </div>
     </div>
 
@@ -1169,6 +1214,22 @@
       // Load onboarding progress
       loadOnboardingProgress();
       
+      // Refresh onboarding progress when page becomes visible (e.g., user returns from profile/product page)
+      document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+          // Page became visible, refresh progress
+          refreshOnboardingProgress();
+        }
+      });
+      
+      // Refresh progress periodically while modal is open (every 10 seconds)
+      setInterval(function() {
+        const overlay = document.getElementById('onboardingOverlay');
+        if (overlay && overlay.style.display !== 'none') {
+          refreshOnboardingProgress();
+        }
+      }, 10000);
+      
       // Load agent data for sharing
       loadAgentData();
       
@@ -1213,9 +1274,9 @@
         if (!response.ok) {
           console.error('Could not load onboarding progress:', response.status, response.statusText);
           // Show guide anyway for new agents (fallback)
-          const onboardingGuide = document.getElementById('onboardingGuide');
-          if (onboardingGuide) {
-            onboardingGuide.style.display = 'block';
+          const onboardingOverlay = document.getElementById('onboardingOverlay');
+          if (onboardingOverlay) {
+            onboardingOverlay.style.display = 'flex';
           }
           return;
         }
@@ -1269,23 +1330,23 @@
           progressText.textContent = `${Math.round(percentage)}% Complete`;
         }
 
-        // Show onboarding guide if not all steps are completed
+        // Show onboarding modal if not all steps are completed
         // For new agents, this will always be true
-        const onboardingGuide = document.getElementById('onboardingGuide');
-        if (onboardingGuide && completedCount < steps.length) {
+        const onboardingOverlay = document.getElementById('onboardingOverlay');
+        if (onboardingOverlay && completedCount < steps.length) {
           console.log('Showing onboarding guide');
-          onboardingGuide.style.display = 'block';
-        } else if (onboardingGuide) {
+          onboardingOverlay.style.display = 'flex';
+        } else if (onboardingOverlay) {
           console.log('All steps completed, hiding guide');
-          onboardingGuide.style.display = 'none';
+          onboardingOverlay.style.display = 'none';
         }
 
       } catch (error) {
         console.error('Error loading onboarding progress:', error);
         // Show guide anyway as fallback for new agents
-        const onboardingGuide = document.getElementById('onboardingGuide');
-        if (onboardingGuide) {
-          onboardingGuide.style.display = 'block';
+        const onboardingOverlay = document.getElementById('onboardingOverlay');
+        if (onboardingOverlay) {
+          onboardingOverlay.style.display = 'flex';
         }
       }
     }
@@ -1308,11 +1369,22 @@
       }
     }
 
-    // Dismiss onboarding guide
+    // Close onboarding modal (without dismissing)
+    function closeOnboardingModal() {
+      const overlay = document.getElementById('onboardingOverlay');
+      if (overlay) {
+        overlay.style.display = 'none';
+      }
+    }
+
+    // Dismiss onboarding guide (permanently)
     async function dismissOnboarding() {
       try {
         const token = localStorage.getItem('vendplug-agent-token');
-        if (!token) return;
+        if (!token) {
+          closeOnboardingModal();
+          return;
+        }
 
         const response = await fetch(`${window.BACKEND || '/api'}/api/agents/onboarding/dismiss`, {
           method: 'POST',
@@ -1323,13 +1395,21 @@
         });
 
         if (response.ok) {
-          document.getElementById('onboardingGuide').style.display = 'none';
+          closeOnboardingModal();
+        } else {
+          // Still close the modal even if API call fails
+          closeOnboardingModal();
         }
       } catch (error) {
         console.error('Error dismissing onboarding:', error);
         // Still hide it locally
-        document.getElementById('onboardingGuide').style.display = 'none';
+        closeOnboardingModal();
       }
+    }
+
+    // Refresh onboarding progress (call this after profile/product updates)
+    async function refreshOnboardingProgress() {
+      await loadOnboardingProgress();
     }
 
     // Load agent data for sharing
