@@ -564,6 +564,190 @@
       color: var(--muted);
     }
 
+    /* Onboarding Guide Styles */
+    .onboarding-guide {
+      background: linear-gradient(135deg, var(--primary), #00b386);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 32px rgba(0, 204, 153, 0.3);
+      color: var(--bg-dark);
+    }
+
+    .onboarding-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.5rem;
+    }
+
+    .onboarding-header h2 {
+      color: var(--bg-dark);
+      margin: 0 0 0.5rem 0;
+      font-size: 1.8rem;
+    }
+
+    .onboarding-header p {
+      color: rgba(0, 0, 0, 0.7);
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .close-onboarding {
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      color: var(--bg-dark);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      transition: all 0.3s ease;
+    }
+
+    .close-onboarding:hover {
+      background: rgba(255, 255, 255, 0.5);
+      transform: rotate(90deg);
+    }
+
+    .onboarding-progress {
+      margin-bottom: 2rem;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--bg-dark);
+      border-radius: 10px;
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+
+    .progress-text {
+      text-align: center;
+      color: var(--bg-dark);
+      font-weight: 600;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .onboarding-steps {
+      display: grid;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .step-item {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .step-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .step-item.completed {
+      background: rgba(255, 255, 255, 0.7);
+      opacity: 0.8;
+    }
+
+    .step-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 12px;
+      background: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--bg-dark);
+      font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+
+    .step-item.completed .step-icon {
+      background: rgba(0, 204, 153, 0.3);
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-content h3 {
+      color: var(--bg-dark);
+      margin: 0 0 0.3rem 0;
+      font-size: 1.1rem;
+    }
+
+    .step-content p {
+      color: rgba(0, 0, 0, 0.6);
+      margin: 0 0 0.5rem 0;
+      font-size: 0.9rem;
+    }
+
+    .step-action {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .step-action:hover {
+      color: var(--bg-dark);
+      text-decoration: underline;
+    }
+
+    .step-check {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0, 204, 153, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 1.2rem;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .step-item.completed .step-check {
+      opacity: 1;
+      background: var(--primary);
+      color: white;
+    }
+
+    .onboarding-footer {
+      text-align: center;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .onboarding-footer p {
+      color: var(--bg-dark);
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .dashboard-stats {
@@ -572,6 +756,24 @@
       
       .grid {
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+
+      .onboarding-guide {
+        padding: 1.5rem;
+      }
+
+      .onboarding-header h2 {
+        font-size: 1.5rem;
+      }
+
+      .step-item {
+        flex-direction: column;
+        text-align: center;
+        padding: 1rem;
+      }
+
+      .step-content {
+        text-align: center;
       }
     }
 
@@ -623,6 +825,88 @@
 
   <!-- Dashboard Content -->
   <div class="dashboard">
+    <!-- Onboarding Guide -->
+    <div id="onboardingGuide" class="onboarding-guide" style="display: none;">
+      <div class="onboarding-header">
+        <div>
+          <h2>🎉 Welcome to Vendplug!</h2>
+          <p>Let's get your business set up in just a few steps</p>
+        </div>
+        <button class="close-onboarding" onclick="dismissOnboarding()" title="Dismiss">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="onboarding-progress">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <p class="progress-text" id="progressText">0% Complete</p>
+      </div>
+
+      <div class="onboarding-steps">
+        <div class="step-item" id="step-brand">
+          <div class="step-icon">
+            <i class="fas fa-image"></i>
+          </div>
+          <div class="step-content">
+            <h3>Add Brand Image</h3>
+            <p>Upload your business logo or brand image to build trust with customers</p>
+            <a href="agent-profile.html" class="step-action">Add Brand Image →</a>
+          </div>
+          <div class="step-check">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+
+        <div class="step-item" id="step-product">
+          <div class="step-icon">
+            <i class="fas fa-box-open"></i>
+          </div>
+          <div class="step-content">
+            <h3>Add Your First Product</h3>
+            <p>Start selling by adding products to your business</p>
+            <a href="agent-products.html" class="step-action">Add Product →</a>
+          </div>
+          <div class="step-check">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+
+        <div class="step-item" id="step-description">
+          <div class="step-icon">
+            <i class="fas fa-file-alt"></i>
+          </div>
+          <div class="step-content">
+            <h3>Add Business Description</h3>
+            <p>Tell customers about your business and what makes it special</p>
+            <a href="agent-profile.html" class="step-action">Add Description →</a>
+          </div>
+          <div class="step-check">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+
+        <div class="step-item" id="step-bank">
+          <div class="step-icon">
+            <i class="fas fa-university"></i>
+          </div>
+          <div class="step-content">
+            <h3>Add Bank Account</h3>
+            <p>Set up your bank account to receive payouts from sales</p>
+            <a href="bank-accounts.html" class="step-action">Add Bank Account →</a>
+          </div>
+          <div class="step-check">
+            <i class="fas fa-check-circle"></i>
+          </div>
+        </div>
+      </div>
+
+      <div class="onboarding-footer">
+        <p>💡 <strong>Tip:</strong> Complete these steps to start receiving orders and earning money!</p>
+      </div>
+    </div>
+
     <div class="welcome-message">
       <h2>Welcome back, Agent! 👋</h2>
       <p>Here's what's happening with your store today</p>
@@ -882,6 +1166,9 @@
         cleanupAfterLogin('agent');
       }
       
+      // Load onboarding progress
+      loadOnboardingProgress();
+      
       // Load agent data for sharing
       loadAgentData();
       
@@ -900,6 +1187,150 @@
         
       }, 500);
     });
+
+    // Load and display onboarding progress
+    async function loadOnboardingProgress() {
+      try {
+        const token = localStorage.getItem('vendplug-agent-token');
+        if (!token) {
+          console.log('No agent token found');
+          return;
+        }
+
+        const agent = JSON.parse(localStorage.getItem('vendplugAgent') || 'null');
+        if (!agent || !agent._id) {
+          console.log('No agent data in localStorage');
+          return;
+        }
+
+        // Fetch agent profile with onboarding progress
+        const response = await fetch(`${window.BACKEND || '/api'}/api/agents/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          console.error('Could not load onboarding progress:', response.status, response.statusText);
+          // Show guide anyway for new agents (fallback)
+          const onboardingGuide = document.getElementById('onboardingGuide');
+          if (onboardingGuide) {
+            onboardingGuide.style.display = 'block';
+          }
+          return;
+        }
+
+        const data = await response.json();
+        console.log('Agent profile data:', data);
+        
+        const progress = data.agent?.onboardingProgress || {};
+        const agentData = data.agent || agent;
+
+        console.log('Onboarding progress:', progress);
+
+        // Check if onboarding should be shown
+        // For new agents, onboardingProgress might be undefined/null, so we show the guide
+        if (progress.onboardingCompleted === true || progress.onboardingDismissed === true) {
+          console.log('Onboarding completed or dismissed, hiding guide');
+          return; // Don't show if completed or dismissed
+        }
+
+        // Calculate progress
+        const steps = [
+          { key: 'hasBrandImage', id: 'step-brand' },
+          { key: 'hasFirstProduct', id: 'step-product' },
+          { key: 'hasBusinessDescription', id: 'step-description' },
+          { key: 'hasBankAccount', id: 'step-bank' }
+        ];
+
+        let completedCount = 0;
+        steps.forEach(step => {
+          const isCompleted = progress[step.key] === true || checkStepCompleted(step.key, agentData);
+          if (isCompleted) {
+            completedCount++;
+            const stepElement = document.getElementById(step.id);
+            if (stepElement) {
+              stepElement.classList.add('completed');
+            }
+          }
+        });
+
+        console.log(`Completed steps: ${completedCount}/${steps.length}`);
+
+        // Update progress bar
+        const percentage = (completedCount / steps.length) * 100;
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        
+        if (progressFill) {
+          progressFill.style.width = `${percentage}%`;
+        }
+        if (progressText) {
+          progressText.textContent = `${Math.round(percentage)}% Complete`;
+        }
+
+        // Show onboarding guide if not all steps are completed
+        // For new agents, this will always be true
+        const onboardingGuide = document.getElementById('onboardingGuide');
+        if (onboardingGuide && completedCount < steps.length) {
+          console.log('Showing onboarding guide');
+          onboardingGuide.style.display = 'block';
+        } else if (onboardingGuide) {
+          console.log('All steps completed, hiding guide');
+          onboardingGuide.style.display = 'none';
+        }
+
+      } catch (error) {
+        console.error('Error loading onboarding progress:', error);
+        // Show guide anyway as fallback for new agents
+        const onboardingGuide = document.getElementById('onboardingGuide');
+        if (onboardingGuide) {
+          onboardingGuide.style.display = 'block';
+        }
+      }
+    }
+
+    // Check if a step is completed based on agent data
+    function checkStepCompleted(stepKey, agentData) {
+      switch(stepKey) {
+        case 'hasBrandImage':
+          return !!(agentData.brandImage);
+        case 'hasFirstProduct':
+          // We'll check this via API call
+          return false; // Will be updated by backend
+        case 'hasBusinessDescription':
+          return !!(agentData.businessDescription && agentData.businessDescription.trim().length > 0);
+        case 'hasBankAccount':
+          // We'll check this via API call
+          return false; // Will be updated by backend
+        default:
+          return false;
+      }
+    }
+
+    // Dismiss onboarding guide
+    async function dismissOnboarding() {
+      try {
+        const token = localStorage.getItem('vendplug-agent-token');
+        if (!token) return;
+
+        const response = await fetch(`${window.BACKEND || '/api'}/api/agents/onboarding/dismiss`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          document.getElementById('onboardingGuide').style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error dismissing onboarding:', error);
+        // Still hide it locally
+        document.getElementById('onboardingGuide').style.display = 'none';
+      }
+    }
 
     // Load agent data for sharing
     async function loadAgentData() {
