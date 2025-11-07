@@ -1222,13 +1222,18 @@
         }
       });
       
-      // Refresh progress periodically while modal is open (every 10 seconds)
+      // Refresh progress periodically while modal is open (every 30 seconds)
+      // Use a flag to prevent multiple simultaneous requests
+      let isRefreshing = false;
       setInterval(function() {
         const overlay = document.getElementById('onboardingOverlay');
-        if (overlay && overlay.style.display !== 'none') {
-          refreshOnboardingProgress();
+        if (overlay && overlay.style.display !== 'none' && !isRefreshing) {
+          isRefreshing = true;
+          refreshOnboardingProgress().finally(() => {
+            isRefreshing = false;
+          });
         }
-      }, 10000);
+      }, 30000); // Increased from 10s to 30s to avoid rate limiting
       
       // Load agent data for sharing
       loadAgentData();
@@ -1265,13 +1270,31 @@
         }
 
         // Fetch agent profile with onboarding progress
-        const response = await fetch(`${window.BACKEND || '/api'}/api/agents/profile`, {
+        // Fix: Use BACKEND_URL from config.js or default to relative path
+        const backendUrl = window.BACKEND_URL || window.BACKEND || '';
+        let profileUrl;
+        if (backendUrl) {
+          // If BACKEND_URL is set, use it (it should be like http://localhost:5000)
+          profileUrl = backendUrl.endsWith('/') 
+            ? `${backendUrl}api/agents/profile`
+            : `${backendUrl}/api/agents/profile`;
+        } else {
+          // Fallback to relative path
+          profileUrl = '/api/agents/profile';
+        }
+        
+        const response = await fetch(profileUrl, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
         if (!response.ok) {
+          // Handle rate limiting gracefully
+          if (response.status === 429) {
+            console.warn('⚠️ Rate limited - skipping onboarding progress update');
+            return; // Don't show error, just skip this update
+          }
           console.error('Could not load onboarding progress:', response.status, response.statusText);
           // Show guide anyway for new agents (fallback)
           const onboardingOverlay = document.getElementById('onboardingOverlay');
@@ -1304,19 +1327,33 @@
           { key: 'hasBankAccount', id: 'step-bank' }
         ];
 
+        // Reset all steps first (remove completed class)
+        steps.forEach(step => {
+          const stepElement = document.getElementById(step.id);
+          if (stepElement) {
+            stepElement.classList.remove('completed');
+          }
+        });
+
+        // Check each step and mark as completed
         let completedCount = 0;
         steps.forEach(step => {
-          const isCompleted = progress[step.key] === true || checkStepCompleted(step.key, agentData);
+          // Use backend's onboardingProgress data (most reliable)
+          const isCompleted = progress[step.key] === true;
+          
+          console.log(`Step ${step.key}: ${isCompleted ? '✅ Completed' : '❌ Not completed'}`);
+          
           if (isCompleted) {
             completedCount++;
             const stepElement = document.getElementById(step.id);
             if (stepElement) {
               stepElement.classList.add('completed');
+              console.log(`✅ Marked ${step.id} as completed`);
             }
           }
         });
 
-        console.log(`Completed steps: ${completedCount}/${steps.length}`);
+        console.log(`📊 Progress: ${completedCount}/${steps.length} steps completed`);
 
         // Update progress bar
         const percentage = (completedCount / steps.length) * 100;
@@ -1325,6 +1362,7 @@
         
         if (progressFill) {
           progressFill.style.width = `${percentage}%`;
+          console.log(`📈 Progress bar updated to ${percentage}%`);
         }
         if (progressText) {
           progressText.textContent = `${Math.round(percentage)}% Complete`;
@@ -1386,7 +1424,18 @@
           return;
         }
 
-        const response = await fetch(`${window.BACKEND || '/api'}/api/agents/onboarding/dismiss`, {
+        // Fix: Use BACKEND_URL from config.js or default to relative path
+        const backendUrl = window.BACKEND_URL || window.BACKEND || '';
+        let dismissUrl;
+        if (backendUrl) {
+          dismissUrl = backendUrl.endsWith('/') 
+            ? `${backendUrl}api/agents/onboarding/dismiss`
+            : `${backendUrl}/api/agents/onboarding/dismiss`;
+        } else {
+          dismissUrl = '/api/agents/onboarding/dismiss';
+        }
+        
+        const response = await fetch(dismissUrl, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -1409,7 +1458,14 @@
 
     // Refresh onboarding progress (call this after profile/product updates)
     async function refreshOnboardingProgress() {
-      await loadOnboardingProgress();
+      try {
+        await loadOnboardingProgress();
+      } catch (error) {
+        // Silently handle errors to avoid console spam
+        if (error.message && !error.message.includes('429')) {
+          console.warn('Onboarding progress refresh failed:', error.message);
+        }
+      }
     }
 
     // Load agent data for sharing
