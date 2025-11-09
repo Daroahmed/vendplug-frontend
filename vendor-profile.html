@@ -199,6 +199,13 @@
         localStorage.setItem("vendplugVendor", JSON.stringify(data.vendor));
         msg.textContent = "✅ Profile updated successfully";
         msg.className = "msg success";
+
+        // Force onboarding progress refresh
+        try {
+          await fetch(`${BACKEND}/api/vendors/profile?force=1`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+        } catch (_) {}
       } catch (err) {
         document.getElementById("statusMsg").textContent = err.message;
         document.getElementById("statusMsg").className = "msg error";

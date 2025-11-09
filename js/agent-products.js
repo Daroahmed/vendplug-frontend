@@ -32,11 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchAgentProducts();
   initializePhotoInterface();
 
-  // ✅ Form submission
-  addProductForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    submitProduct();
-  });
+  // ✅ Form submission (guard against double-binding if inline script also binds)
+  if (!window.__agentProductsSubmitBound) {
+    window.__agentProductsSubmitBound = true;
+    addProductForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      submitProduct();
+    });
+  }
 
   // Initialize photo interface with + button
   function initializePhotoInterface() {
@@ -166,6 +169,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function submitProduct() {
+    if (window.__agentSubmitting) {
+      return;
+    }
+    window.__agentSubmitting = true;
     const id = document.getElementById('productId').value;
     const name = document.getElementById('productName').value;
     const price = Number(document.getElementById('productPrice').value);
@@ -254,6 +261,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       resetForm();
       await fetchAgentProducts();
+
+      // Force onboarding progress refresh (first product step)
+      try {
+        await fetch(`${BACKEND}/api/agents/profile?force=1`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (_) {}
       
       const successMsg = id ? 'Product updated' : 'Product added';
       if (typeof showOverlay === 'function') {
@@ -274,6 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submitBtn.innerHTML = originalHTML;
         submitBtn.disabled = false;
       }
+      window.__agentSubmitting = false;
     }
   }
 
@@ -289,31 +304,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
       productList.innerHTML = '';
       if (!Array.isArray(products) || !products.length) {
-        productList.innerHTML = '<p>No products found.</p>';
+        productList.innerHTML = `
+          <div class="no-products">
+            <i class="fas fa-box-open" style="font-size: 3rem; margin-bottom: 15px;"></i>
+            <p>You haven't added any products yet</p>
+            <p>Use the form above to add your first product</p>
+          </div>
+        `;
         return;
       }
 
       products.forEach(product => {
-        const card = document.createElement('div');
-        card.className = 'product-card';
-        const thumb = product.image ? (window.optimizeImage ? optimizeImage(product.image, 480) : product.image) : null;
-        card.innerHTML = `
-          ${thumb ? `<img src="${thumb}" loading="lazy" style="width:100%; border-radius:8px;" />` : ''}
-          <h3>${product.name}</h3>
-          <p>₦${product.price.toLocaleString()}</p>
-          <p>Stock: ${product.stock ?? 'Not specified'}</p>
-          <p>Category: ${product.category}</p>
-          <p>${product.description || ''}</p>
-          <div class="product-actions">
-            <button class="edit-btn" onclick='editProduct(${JSON.stringify(product)})'>Edit</button>
-            <button class="delete-btn" onclick='deleteProduct("${product._id}")'>Delete</button>
+        const productCard = document.createElement('div');
+        productCard.className = 'product-card';
+
+        const thumb = product.image ? (window.optimizeImage ? optimizeImage(product.image, 640) : product.image) : null;
+        productCard.innerHTML = `
+          <div class="card-media">
+            ${thumb ? `<img class="card-img" src="${thumb}" alt="${product.name}">` : `<div class="card-img" style="display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);">No Image</div>`}
+            <span class="price-chip">₦${Number(product.price || 0).toLocaleString()}</span>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-description">${product.description || ''}</p>
+            <div class="product-meta">
+              <span>Category: ${product.category}</span>
+              <span>Stock: ${(() => {
+                const stock = Number(product.stock ?? 0);
+                const reserved = Number(product.reserved ?? 0);
+                const available = Math.max(0, stock - reserved);
+                return available <= 0 ? 'Out of Stock' : available;
+              })()}</span>
+            </div>
+            <div class="product-actions">
+              <button class="action-btn edit-btn" data-id="${product._id}">
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button class="action-btn delete-btn" data-id="${product._id}">
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
+            </div>
           </div>
         `;
-        productList.appendChild(card);
+        productList.appendChild(productCard);
+      });
+
+      // Attach handlers after render for consistent behavior
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const id = e.currentTarget.dataset.id;
+          try {
+            const r = await fetch(`${BACKEND}/api/agent-products/${id}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const product = await r.json();
+            if (window.editProduct) {
+              window.editProduct(product);
+            }
+          } catch (err) {
+            console.error(err);
+            if (typeof showOverlay === 'function') {
+              showOverlay({ type:'error', title:'Error', message:'Error loading product details' });
+            } else {
+              alert('Error loading product details');
+            }
+          }
+        });
+      });
+
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const id = e.currentTarget.dataset.id;
+          deleteProduct(id);
+        });
       });
     } catch (err) {
       console.error(err);
-      productList.innerHTML = '<p>Error loading products.</p>';
+      productList.innerHTML = `
+        <div class="no-products">
+          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 15px;"></i>
+          <p>Error loading products</p>
+          <p>Please try again later</p>
+        </div>
+      `;
     }
   }
 

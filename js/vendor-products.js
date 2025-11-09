@@ -254,6 +254,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       resetForm();
       await fetchVendorProducts();
+
+      // Force onboarding progress refresh (first product step)
+      try {
+        await fetch(`${BACKEND}/api/vendors/profile?force=1`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (_) {}
       
       const successMsg = id ? 'Product updated' : 'Product added';
       if (typeof showOverlay === 'function') {
@@ -296,17 +303,32 @@ document.addEventListener('DOMContentLoaded', () => {
       products.forEach(product => {
         const card = document.createElement('div');
         card.className = 'product-card';
-        const thumb = product.image ? (window.optimizeImage ? optimizeImage(product.image, 480) : product.image) : null;
+        const thumb = product.image ? (window.optimizeImage ? optimizeImage(product.image, 640) : product.image) : null;
         card.innerHTML = `
-          ${thumb ? `<img src="${thumb}" loading="lazy" style="width:100%; border-radius:8px;" />` : ''}
-          <h3>${product.name}</h3>
-          <p>₦${product.price.toLocaleString()}</p>
-          <p>Stock: ${product.stock ?? 'Not specified'}</p>
-          <p>Category: ${product.category}</p>
-          <p>${product.description || ''}</p>
-          <div class="product-actions">
-            <button class="edit-btn" onclick='editProduct(${JSON.stringify(product)})'>Edit</button>
-            <button class="delete-btn" onclick='deleteProduct("${product._id}")'>Delete</button>
+          <div class="card-media">
+            ${thumb ? `<img class="card-img" src="${thumb}" alt="${product.name}">` : `<div class="card-img" style="display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--muted);">No Image</div>`}
+            <span class="price-chip">₦${Number(product.price || 0).toLocaleString()}</span>
+          </div>
+          <div class="product-info">
+            <h3 class="product-name">${product.name}</h3>
+            <p class="product-description">${product.description || ''}</p>
+            <div class="product-meta">
+              <span>Category: ${product.category}</span>
+              <span>Stock: ${(() => {
+                const stock = Number(product.stock ?? 0);
+                const reserved = Number(product.reserved ?? 0);
+                const available = Math.max(0, stock - reserved);
+                return available <= 0 ? 'Out of Stock' : available;
+              })()}</span>
+            </div>
+            <div class="product-actions">
+              <button class="action-btn edit-btn" onclick='editProduct(${JSON.stringify(product)})'>
+                <i class="fa-solid fa-pen-to-square"></i> Edit
+              </button>
+              <button class="action-btn delete-btn" onclick='deleteProduct("${product._id}")'>
+                <i class="fa-solid fa-trash"></i> Delete
+              </button>
+            </div>
           </div>
         `;
         productList.appendChild(card);
