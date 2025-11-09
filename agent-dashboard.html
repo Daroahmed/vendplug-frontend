@@ -876,7 +876,7 @@
             <h2>🎉 Welcome to Vendplug!</h2>
             <p>Let's get your business set up in just a few steps</p>
           </div>
-          <button class="close-onboarding" onclick="dismissOnboarding()" title="Dismiss">
+          <button class="close-onboarding" onclick="closeOnboardingModal()" title="Close">
             <i class="fas fa-times"></i>
           </button>
         </div>
@@ -948,6 +948,11 @@
 
         <div class="onboarding-footer">
           <p>💡 <strong>Tip:</strong> Complete these steps to start receiving orders and earning money!</p>
+          <div style="margin-top: 0.75rem; text-align: center;">
+            <button onclick="dismissOnboarding()" style="background: transparent; border: 1px solid rgba(0,0,0,0.2); color: var(--bg-dark); padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+              Don’t show again
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -955,6 +960,7 @@
     <div class="welcome-message">
       <h2>Welcome back, Agent! 👋</h2>
       <p>Here's what's happening with your store today</p>
+      <p style="margin-top:8px;"><a href="#" onclick="event.preventDefault(); resetOnboardingAndShow();">Show onboarding guide</a></p>
     </div>
 
 
@@ -1276,11 +1282,11 @@
         if (backendUrl) {
           // If BACKEND_URL is set, use it (it should be like http://localhost:5000)
           profileUrl = backendUrl.endsWith('/') 
-            ? `${backendUrl}api/agents/profile`
-            : `${backendUrl}/api/agents/profile`;
+            ? `${backendUrl}api/agents/profile?force=1`
+            : `${backendUrl}/api/agents/profile?force=1`;
         } else {
           // Fallback to relative path
-          profileUrl = '/api/agents/profile';
+          profileUrl = '/api/agents/profile?force=1';
         }
         
         const response = await fetch(profileUrl, {
@@ -1453,6 +1459,29 @@
         console.error('Error dismissing onboarding:', error);
         // Still hide it locally
         closeOnboardingModal();
+      }
+    }
+
+    // Reset onboarding dismissal and show guide
+    async function resetOnboardingAndShow() {
+      try {
+        const token = localStorage.getItem('vendplug-agent-token');
+        if (!token) return;
+
+        const backendUrl = window.BACKEND_URL || window.BACKEND || '';
+        const url = backendUrl
+          ? (backendUrl.endsWith('/') ? `${backendUrl}api/agents/onboarding/reset` : `${backendUrl}/api/agents/onboarding/reset`)
+          : '/api/agents/onboarding/reset';
+
+        await fetch(url, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const overlay = document.getElementById('onboardingOverlay');
+        if (overlay) overlay.style.display = 'flex';
+      } catch (e) {
+        const overlay = document.getElementById('onboardingOverlay');
+        if (overlay) overlay.style.display = 'flex';
       }
     }
 

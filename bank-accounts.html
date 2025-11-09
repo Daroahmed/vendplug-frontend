@@ -372,6 +372,11 @@
                     showMessage('Bank account added successfully!', 'success');
                     document.getElementById('addAccountForm').reset();
                     loadBankAccounts();
+                    // Force onboarding progress refresh
+                    try {
+                        const ep = userRole === 'agent' ? '/api/agents/profile?force=1' : '/api/vendors/profile?force=1';
+                        await fetch(`${window.BACKEND_URL}${ep}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
+                    } catch(_) {}
                 } else {
                     const errorData = await response.json();
                     showMessage(errorData.message || 'Failed to add bank account', 'error');
@@ -395,6 +400,11 @@
                 if (response.ok) {
                     showMessage('Default bank account updated!', 'success');
                     loadBankAccounts();
+                    // Force onboarding progress refresh
+                    try {
+                        const ep = userRole === 'agent' ? '/api/agents/profile?force=1' : '/api/vendors/profile?force=1';
+                        await fetch(`${window.BACKEND_URL}${ep}`, { headers: { 'Authorization': `Bearer ${userToken}` } });
+                    } catch(_) {}
                 } else {
                     const errorData = await response.json();
                     showMessage(errorData.message || 'Failed to update default account', 'error');
