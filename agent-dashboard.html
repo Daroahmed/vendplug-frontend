@@ -1261,7 +1261,7 @@
     });
 
     // Load and display onboarding progress
-    async function loadOnboardingProgress() {
+    async function loadOnboardingProgress(forceShow = false) {
       try {
         const token = localStorage.getItem('vendplug-agent-token');
         if (!token) {
@@ -1320,7 +1320,7 @@
 
         // Check if onboarding should be shown
         // For new agents, onboardingProgress might be undefined/null, so we show the guide
-        if (progress.onboardingCompleted === true || progress.onboardingDismissed === true) {
+        if (!forceShow && (progress.onboardingCompleted === true || progress.onboardingDismissed === true)) {
           console.log('Onboarding completed or dismissed, hiding guide');
           return; // Don't show if completed or dismissed
         }
@@ -1374,15 +1374,20 @@
           progressText.textContent = `${Math.round(percentage)}% Complete`;
         }
 
-        // Show onboarding modal if not all steps are completed
-        // For new agents, this will always be true
+        // Show onboarding modal
         const onboardingOverlay = document.getElementById('onboardingOverlay');
-        if (onboardingOverlay && completedCount < steps.length) {
-          console.log('Showing onboarding guide');
-          onboardingOverlay.style.display = 'flex';
-        } else if (onboardingOverlay) {
-          console.log('All steps completed, hiding guide');
-          onboardingOverlay.style.display = 'none';
+        if (onboardingOverlay) {
+          if (forceShow) {
+            onboardingOverlay.style.display = 'flex';
+          } else {
+            if (completedCount < steps.length) {
+              console.log('Showing onboarding guide');
+              onboardingOverlay.style.display = 'flex';
+            } else {
+              console.log('All steps completed, hiding guide');
+              onboardingOverlay.style.display = 'none';
+            }
+          }
         }
 
       } catch (error) {
@@ -1477,11 +1482,10 @@
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        const overlay = document.getElementById('onboardingOverlay');
-        if (overlay) overlay.style.display = 'flex';
+        // Force refresh progress and show modal
+        await loadOnboardingProgress(true);
       } catch (e) {
-        const overlay = document.getElementById('onboardingOverlay');
-        if (overlay) overlay.style.display = 'flex';
+        await loadOnboardingProgress(true);
       }
     }
 
