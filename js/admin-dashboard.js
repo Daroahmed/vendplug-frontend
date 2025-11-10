@@ -877,6 +877,22 @@ class AdminDashboard {
         }
     }
 
+    async processQueuedPayouts() {
+        try {
+            const res = await window.tokenManager.authenticatedFetch('/api/vendor-payout/admin/process-queue', {
+                method: 'POST'
+            });
+            if (!res.ok) throw new Error('Failed to process queue');
+            const data = await res.json().catch(()=>({}));
+            this.showSuccess(data.message || 'Payout queue processed');
+            // Refresh list
+            this.searchPayouts();
+        } catch (e) {
+            console.error('❌ Process queue error:', e);
+            this.showError('Failed to process payout queue');
+        }
+    }
+
     displayPayouts(data) {
         const container = document.getElementById('payoutsTable');
         
@@ -893,6 +909,9 @@ class AdminDashboard {
                 <button class="btn btn-info" onclick="adminDashboard.checkPayoutStatuses()" style="background: #17a2b8; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
                     🔄 Check Payout Statuses
                 </button>
+                <button class="btn btn-primary" onclick="adminDashboard.processQueuedPayouts()" style="background: #007bff; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">
+                    🚀 Process Queue
+                </button>
             </div>
             <div class="table-container">
                 <table>
@@ -903,6 +922,7 @@ class AdminDashboard {
                             <th>Amount</th>
                             <th>Net Amount</th>
                             <th>Status</th>
+                            <th>Queue</th>
                             <th>Date</th>
                             <th>Actions</th>
                         </tr>
@@ -924,6 +944,13 @@ class AdminDashboard {
                                     <span class="status-badge status-${payout.status}">
                                         ${payout.status}
                                     </span>
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.9rem;">
+                                        <div><strong>Ref:</strong> ${payout.transferReference || '-'}</div>
+                                        <div><strong>Attempts:</strong> ${payout.attempts ?? 0}</div>
+                                        <div><strong>Next:</strong> ${payout.nextAttemptAt ? new Date(payout.nextAttemptAt).toLocaleString() : '-'}</div>
+                                    </div>
                                 </td>
                                 <td>${new Date(payout.createdAt).toLocaleDateString()}</td>
                                 <td>

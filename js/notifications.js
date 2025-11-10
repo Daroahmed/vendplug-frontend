@@ -31,7 +31,8 @@ class NotificationManager {
     this.socket.on('new-notification', (notification) => {
       // Only process notifications for the current user
       const currentUser = this.getCurrentUserData();
-      if (currentUser && notification.userId === currentUser.id) {
+      const nid = notification.userId || notification.recipientId;
+      if (currentUser && nid && String(nid) === String(currentUser.id)) {
         this.notifications.unshift(notification);
         this.unreadCount++;
         this.updateUI();
