@@ -164,6 +164,26 @@
     .msg { margin-top: 12px; font-size: 0.95em; }
     .msg.success { color: #00ff88; }
     .msg.error { color: #ff5555; }
+
+    /* Loading state for button */
+    button.loading { position: relative; pointer-events: none; opacity: 0.85; color: transparent !important; }
+    button.loading::after {
+      content: ""; position: absolute; top: 50%; left: 50%; width: 16px; height: 16px;
+      margin: -8px 0 0 -8px; border-radius: 50%; border: 2px solid rgba(0,0,0,0.4);
+      border-top-color: #000; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast overlay */
+    .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 10px; z-index: 2000; }
+    .toast { min-width: 280px; max-width: 420px; padding: 12px 14px; border-radius: 8px; border: 1px solid #2c2c2c; box-shadow: 0 8px 24px rgba(0,0,0,0.35); color: #fff; background: #1b2a41; animation: toastIn 160ms ease-out; }
+    .toast.success { background: #163a2a; color: #9adbb3; border-left: 4px solid #28a745; }
+    .toast.error { background: #3a1e1f; color: #f5b5b9; border-left: 4px solid #dc3545; }
+    .toast.info { background: #1b2a41; color: #bfd7ff; border-left: 4px solid #0d6efd; }
+    .toast .toast-close { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 18px; line-height: 1; }
+    .toast .toast-content { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .toast.fade-out { opacity: 0; transition: opacity .25s ease-in; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-8px);} to { opacity: 1; transform: translateY(0);} }
   </style>
 </head>
 <body>
@@ -212,7 +232,7 @@
     <label for="about">About (optional)</label>
     <textarea id="about" placeholder="Tell vendors a little about yourself"></textarea>
 
-    <button onclick="updateBuyerProfile()">Save Changes</button>
+    <button id="saveBtn" onclick="updateBuyerProfile()">Save Changes</button>
 
     <div id="statusMsg" class="msg"></div>
   </div>
@@ -244,6 +264,32 @@
       document.getElementById('about').value = buyer.about || '';
     }
 
+    function showMessage(message, type) {
+      let container = document.getElementById('toastContainer');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+      }
+      const toast = document.createElement('div');
+      toast.className = `toast ${type || 'info'}`;
+      toast.setAttribute('role', 'alert');
+      toast.innerHTML = `<div class="toast-content"><div>${message}</div><button class="toast-close" aria-label="Close notification">&times;</button></div>`;
+      const remove = () => {
+        toast.classList.add('fade-out');
+        setTimeout(() => {
+          toast.remove();
+          if (container && container.childElementCount === 0) container.remove();
+        }, 250);
+      };
+      toast.querySelector('.toast-close').addEventListener('click', remove);
+      let timeout = setTimeout(remove, 5000);
+      toast.addEventListener('mouseenter', () => { clearTimeout(timeout); });
+      toast.addEventListener('mouseleave', () => { timeout = setTimeout(remove, 2000); });
+      container.appendChild(toast);
+    }
+
     async function updateBuyerProfile() {
       const payload = {
         fullName: document.getElementById('fullName').value.trim(),
@@ -255,6 +301,8 @@
       };
 
       try {
+        const btn = document.getElementById('saveBtn');
+        if (btn) { btn.disabled = true; btn.classList.add('loading'); btn.dataset._t = btn.textContent; btn.textContent = 'Saving...'; }
         const res = await fetch(API, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -274,10 +322,15 @@
         }
         msg.textContent = '✅ Profile updated successfully';
         msg.className = 'msg success';
+        showMessage('Profile updated successfully', 'success');
       } catch (err) {
         const msg = document.getElementById('statusMsg');
         msg.textContent = err.message;
         msg.className = 'msg error';
+        showMessage(err.message || 'Update failed', 'error');
+      } finally {
+        const btn = document.getElementById('saveBtn');
+        if (btn) { btn.disabled = false; btn.classList.remove('loading'); btn.textContent = btn.dataset._t || 'Save Changes'; }
       }
     }
 
