@@ -885,8 +885,9 @@ class AdminDashboard {
             if (!res.ok) throw new Error('Failed to process queue');
             const data = await res.json().catch(()=>({}));
             this.showSuccess(data.message || 'Payout queue processed');
-            // Refresh list
-            this.searchPayouts();
+            // Immediately verify processing payouts and refresh
+            await this.checkPayoutStatuses();
+            await this.searchPayouts();
         } catch (e) {
             console.error('❌ Process queue error:', e);
             this.showError('Failed to process payout queue');
@@ -955,7 +956,7 @@ class AdminDashboard {
                                 <td>${new Date(payout.createdAt).toLocaleDateString()}</td>
                                 <td>
                                     ${payout.status === 'pending' ? `
-                                        <button class="btn btn-success" onclick="adminDashboard.approvePayout('${payout._id}')">Approve</button>
+                                        <span style="font-size: 0.85rem; color: #6c757d; margin-right:8px;">Auto-queued</span>
                                         <button class="btn btn-danger" onclick="adminDashboard.rejectPayout('${payout._id}')">Reject</button>
                                     ` : '-'}
                                 </td>
