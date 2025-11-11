@@ -474,6 +474,31 @@
   </section>
 
   <script>
+    // Lightweight JSON fetch with retry/backoff for eventual consistency and flaky networks
+    async function fetchJsonWithRetry(url, options = {}, attempts = 3) {
+      let lastErr;
+      for (let i = 0; i < attempts; i++) {
+        try {
+          const res = await fetch(url, options);
+          if (res.ok) return await res.json();
+          // 404 on first read after creation can be due to replication delay; retry
+          if (res.status >= 500 || res.status === 404 || res.status === 429) {
+            lastErr = new Error(`HTTP ${res.status}`);
+          } else {
+            // Other client errors - break
+            const txt = await res.text().catch(()=>'');
+            throw new Error(`Request failed (${res.status}): ${txt}`);
+          }
+        } catch (e) {
+          lastErr = e;
+        }
+        // exponential backoff with jitter: 200ms, 500ms, 1000ms
+        const delay = [200, 500, 1000][i] || 1000;
+        await new Promise(r => setTimeout(r, delay + Math.random() * 150));
+      }
+      throw lastErr || new Error('Request failed');
+    }
+
     // Utility to determine if the current viewer is a buyer (from token or stored profile)
     function isBuyer(){
       try{
@@ -717,9 +742,8 @@
       const loadingEl = document.querySelector('.loading');
 
       try {
-        // Fetch vendor profile
-        const vendorRes = await fetch(`/api/vendors/${vendorId}`);
-        const vendor = await vendorRes.json();
+        // Fetch vendor profile with retries
+        const vendor = await fetchJsonWithRetry(`/api/vendors/${vendorId}`, {}, 3);
 
         if (!vendor || !vendor.fullName) {
           vendorProfileEl.innerHTML = '<p class="error-message">Vendor not found.</p>';
@@ -769,8 +793,7 @@
 
         // Fetch vendor products
         console.log("Loading shop for vendor:", vendorId);
-        const productsRes = await fetch(`/api/vendor-products/vendor/${vendorId}`);
-        const products = await productsRes.json();
+        const products = await fetchJsonWithRetry(`/api/vendor-products/vendor/${vendorId}`, {}, 3);
 
         // Hide loading spinner
         loadingEl.style.display = 'none';

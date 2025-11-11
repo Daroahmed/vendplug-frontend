@@ -29,13 +29,16 @@ class NotificationManager {
 
     // Listen for new notifications
     this.socket.on('new-notification', (notification) => {
-      // Only process notifications for the current user
+      // Only process notifications for the current user (strict match by ID)
       const currentUser = this.getCurrentUserData();
       const nid = notification.userId || notification.recipientId;
       const matchesId = currentUser && nid && String(nid) === String(currentUser.id);
-      const isAdminMatch = currentUser && currentUser.role === 'admin' && (notification.recipientType === 'Admin');
 
-      if (matchesId || isAdminMatch) {
+      if (matchesId) {
+        // De-dup if already present (can happen if also loaded via GET or pending replays)
+        if (this.notifications.find(n => String(n._id) === String(notification._id))) {
+          return;
+        }
         this.notifications.unshift(notification);
         this.unreadCount++;
         this.updateUI();
