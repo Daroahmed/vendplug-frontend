@@ -32,7 +32,10 @@ class NotificationManager {
       // Only process notifications for the current user
       const currentUser = this.getCurrentUserData();
       const nid = notification.userId || notification.recipientId;
-      if (currentUser && nid && String(nid) === String(currentUser.id)) {
+      const matchesId = currentUser && nid && String(nid) === String(currentUser.id);
+      const isAdminMatch = currentUser && currentUser.role === 'admin' && (notification.recipientType === 'Admin');
+
+      if (matchesId || isAdminMatch) {
         this.notifications.unshift(notification);
         this.unreadCount++;
         this.updateUI();
@@ -58,16 +61,69 @@ class NotificationManager {
       notificationIcon.href = '#';
       notificationIcon.className = 'notification-icon';
       notificationIcon.id = 'notification-icon';
+      notificationIcon.setAttribute('aria-label', 'Notifications');
+      notificationIcon.title = 'Notifications';
       notificationIcon.innerHTML = `
-        <i class="fas fa-bell"></i>
+        <span class="bell-icon" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 2C10.343 2 9 3.343 9 5V5.29C6.718 6.15 5 8.39 5 11V16L3 18V19H21V18L19 16V11C19 8.39 17.282 6.15 15 5.29V5C15 3.343 13.657 2 12 2ZM12 22C13.657 22 15 20.657 15 19H9C9 20.657 10.343 22 12 22Z"/>
+          </svg>
+        </span>
         <span class="notification-badge" id="notification-badge">0</span>
       `;
+      // Ensure it sits above other header elements
+      notificationIcon.style.position = 'relative';
+      notificationIcon.style.zIndex = '1002';
       
       // Insert before the closing div of header-actions
       headerActions.appendChild(notificationIcon);
       
       console.log('✅ Notification icon injected successfully');
       console.log('🔍 Header actions now contains:', headerActions.innerHTML);
+
+      // If the icon ends up not visible (width/height 0 or offscreen), add a floating fallback
+      setTimeout(() => {
+        const rect = notificationIcon.getBoundingClientRect();
+        const notVisible = rect.width < 10 || rect.height < 10 || rect.right < 0 || rect.bottom < 0 || rect.left > window.innerWidth;
+        if (notVisible && !document.getElementById('notification-fab')) {
+          const fab = document.createElement('button');
+          fab.id = 'notification-fab';
+          fab.setAttribute('aria-label', 'Notifications');
+          fab.title = 'Notifications';
+          fab.style.position = 'fixed';
+          fab.style.top = '16px';
+          fab.style.right = '16px';
+          fab.style.width = '44px';
+          fab.style.height = '44px';
+          fab.style.borderRadius = '50%';
+          fab.style.border = 'none';
+          fab.style.background = '#2c3e50';
+          fab.style.color = '#fff';
+          fab.style.display = 'flex';
+          fab.style.alignItems = 'center';
+          fab.style.justifyContent = 'center';
+          fab.style.boxShadow = '0 6px 16px rgba(0,0,0,0.2)';
+          fab.style.cursor = 'pointer';
+          fab.style.zIndex = '1100';
+          fab.innerHTML = `
+            <span class="bell-icon" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M12 2C10.343 2 9 3.343 9 5V5.29C6.718 6.15 5 8.39 5 11V16L3 18V19H21V18L19 16V11C19 8.39 17.282 6.15 15 5.29V5C15 3.343 13.657 2 12 2ZM12 22C13.657 22 15 20.657 15 19H9C9 20.657 10.343 22 12 22Z"/>
+              </svg>
+            </span>
+            <span id="notification-badge-fab" style="position:absolute; top:8px; right:8px; background:#ff4444; color:#fff; font-size:12px; font-weight:700; min-width:18px; height:18px; line-height:18px; border-radius:9px; display:none; padding:0 4px; text-align:center;">0</span>
+          `;
+          document.body.appendChild(fab);
+
+          // Hook up same toggle behavior
+          const dropdown = document.getElementById('notification-dropdown');
+          if (dropdown) {
+            fab.addEventListener('click', () => {
+              dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+            });
+          }
+        }
+      }, 50);
     } else {
       console.log('❌ Cannot inject notification icon - headerActions:', !!headerActions, 'icon exists:', !!document.getElementById('notification-icon'));
     }
@@ -306,7 +362,10 @@ class NotificationManager {
         }
       });
 
-      if (!res.ok) throw new Error('Failed to load notifications');
+      if (!res.ok) {
+        const text = await res.text().catch(()=>'');
+        throw new Error(`Failed to load notifications (${res.status}) ${text}`);
+      }
 
       const data = await res.json();
       this.notifications = data;
@@ -314,6 +373,7 @@ class NotificationManager {
       this.updateUI();
     } catch (error) {
       console.error('❌ Error loading notifications:', error);
+      try { if (window.showToast) showToast('Failed to load notifications'); } catch(_) {}
     }
   }
 
@@ -383,6 +443,8 @@ class NotificationManager {
   updateUI() {
     const badge = document.getElementById('notification-badge');
     const list = document.getElementById('notification-list');
+    const fabBadge = document.getElementById('notification-badge-fab');
+    const icon = document.getElementById('notification-icon');
 
     // Update badge if it exists
     if (badge) {
@@ -392,6 +454,22 @@ class NotificationManager {
       } else {
         badge.style.display = 'none';
       }
+    }
+
+    // Update floating badge if present
+    if (fabBadge) {
+      if (this.unreadCount > 0) {
+        fabBadge.style.display = 'inline-block';
+        fabBadge.textContent = this.unreadCount;
+      } else {
+        fabBadge.style.display = 'none';
+      }
+    }
+
+    // Accessible title with count
+    if (icon) {
+      icon.title = this.unreadCount > 0 ? `Notifications (${this.unreadCount} unread)` : 'Notifications';
+      icon.setAttribute('aria-label', icon.title);
     }
 
     // Update list if it exists

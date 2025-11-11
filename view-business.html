@@ -527,10 +527,31 @@
               <p><strong>Address:</strong> ${agent.businessAddress || 'Not provided'}</p>
               <p><strong>State:</strong> ${agent.state || 'Not specified'}</p>
               <p><strong>Total Transactions:</strong> ${agent.totalTransactions || 0}</p>
+              <div id="agentAbout" style="margin-top:10px; display:none;">
+                <p id="agentDescription" class="agent-description" style="color: var(--muted); line-height: 1.4; white-space: pre-line;"></p>
+              </div>
               <div style="margin-top: 15px;" id="messageButtonContainer"></div>
             </div>
           </div>
         `;
+
+        // Populate business description if present
+        (function(){
+          const descText = (agent.businessDescription || '').toString().trim();
+          const infoEl = agentProfileEl.querySelector('.agent-info');
+          const beforeEl = document.getElementById('messageButtonContainer');
+          if (descText && infoEl) {
+            const p = document.createElement('p');
+            p.className = 'agent-description';
+            p.style.cssText = 'margin-top:6px; color: var(--muted); line-height: 1.4; white-space: pre-line;';
+            p.textContent = descText;
+            try {
+              infoEl.insertBefore(p, beforeEl || null);
+            } catch (_) {
+              infoEl.appendChild(p);
+            }
+          }
+        })();
 
         // After profile render, ensure message button state
         ensureMessageButton();

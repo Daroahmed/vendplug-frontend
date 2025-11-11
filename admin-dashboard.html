@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vendplug Admin Dashboard</title>
     <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -97,6 +98,44 @@
 
         .header p {
             color: #7f8c8d;
+        }
+
+        /* Notification Icon Styles (header top-right) */
+        .notification-icon {
+            position: relative;
+            color: #2c3e50;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-icon:hover {
+            background: #ecf0f1;
+            color: #00cc99;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background-color: #ff4444;
+            color: #ffffff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: none; /* hidden until there are unread items */
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            line-height: 18px;
         }
 
         /* Dashboard Cards */

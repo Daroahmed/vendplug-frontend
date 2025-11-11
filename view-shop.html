@@ -736,12 +736,33 @@
               <h2>${vendor.fullName || vendor.businessName || 'Vendor'}</h2>
               <p><strong>State:</strong> ${vendor.state || 'Not specified'}</p>
               <p><strong>Total Transactions:</strong> ${vendor.totalTransactions || 0}</p>
+              <div id="vendorAbout" style="margin-top:10px; display:none;">
+                <p id="vendorDescription" class="vendor-description" style="color: var(--muted); line-height: 1.4; white-space: pre-line;"></p>
+              </div>
               <div style="margin-top: 15px;" id="messageButtonContainer">
                 <!-- Message button will be added here by JavaScript if user is a buyer -->
               </div>
             </div>
           </div>
         `;
+
+        // Safely populate description text if present (fallback to businessDescription for legacy data)
+        (function(){
+          const descText = (vendor.shopDescription || vendor.businessDescription || '').toString().trim();
+          const infoEl = vendorProfileEl.querySelector('.vendor-info');
+          const beforeEl = document.getElementById('messageButtonContainer');
+          if (descText && infoEl) {
+            const p = document.createElement('p');
+            p.className = 'vendor-description';
+            p.style.cssText = 'margin-top:6px; color: var(--muted); line-height: 1.4; white-space: pre-line;';
+            p.textContent = descText;
+            try {
+              infoEl.insertBefore(p, beforeEl || null);
+            } catch (_) {
+              infoEl.appendChild(p);
+            }
+          }
+        })();
 
         // Ensure message button reflects current auth state
         ensureMessageButton();
