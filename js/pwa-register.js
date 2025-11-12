@@ -5,6 +5,28 @@
   let deferredPrompt;
   
   window.addEventListener('load', () => {
+    // Optional kill-switch: append ?nocache=1 to URL to force SW reset and cache clear
+    const forceReset = location.search.includes('nocache=1') || localStorage.getItem('vp_reset_sw') === '1';
+    if (forceReset) {
+      (async () => {
+        try {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg) await reg.unregister();
+          const keys = await caches.keys();
+          await Promise.all(keys.filter(k => k.startsWith('vendplug-')).map(k => caches.delete(k)));
+          localStorage.removeItem('vp_reset_sw');
+          console.log('🧹 Service worker and caches cleared');
+        } catch(e) {
+          console.warn('SW reset failed', e);
+        } finally {
+          // Clean query param and reload
+          const u = new URL(location.href);
+          u.searchParams.delete('nocache');
+          history.replaceState({}, '', u.toString());
+        }
+      })();
+    }
+
     navigator.serviceWorker.register('/sw.js').then((reg) => {
       console.log('SW registered', reg.scope);
       // Proactively check for updates

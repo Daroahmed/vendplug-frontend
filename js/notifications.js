@@ -11,8 +11,75 @@ class NotificationManager {
     });
     this.notifications = [];
     this.unreadCount = 0;
+    // Cache for lightweight duplicate detection (title+message within time window)
+    this.recentKeys = [];
     this.setupSocketListeners();
     this.setupUIElements();
+  }
+
+  // Map current role to its token storage key
+  getRoleTokenKey(role) {
+    switch ((role || '').toLowerCase()) {
+      case 'buyer': return 'vendplug-buyer-token';
+      case 'vendor': return 'vendplug-vendor-token';
+      case 'agent': return 'vendplug-agent-token';
+      case 'admin': return 'vendplug-admin-token';
+      case 'staff': return 'vendplug-staff-token';
+      default: return null;
+    }
+  }
+
+  // Try to refresh the token via refresh endpoint and persist it
+  async attemptTokenRefresh(role) {
+    try {
+      const res = await fetch(`${BACKEND}/api/auth/refresh`, {
+        method: 'POST',
+        credentials: 'include'
+      });
+      if (!res.ok) return null;
+      const body = await res.json().catch(() => ({}));
+      const refreshed = body.token || body.accessToken || body.access_token;
+      if (!refreshed) return null;
+      const key = this.getRoleTokenKey(role);
+      if (key) {
+        localStorage.setItem(key, refreshed);
+        console.log('🔐 Refreshed token saved for', role);
+      }
+      return refreshed;
+    } catch (e) {
+      console.warn('⚠️ Token refresh failed:', e);
+      return null;
+    }
+  }
+
+  // Sort notifications newest-first
+  sortNotifications() {
+    this.notifications.sort((a, b) => {
+      const ta = new Date(a.createdAt || 0).getTime();
+      const tb = new Date(b.createdAt || 0).getTime();
+      return tb - ta;
+    });
+  }
+
+  // Build a signature to detect logical duplicates (even with different IDs)
+  buildSignature(n) {
+    const parts = [
+      (n.type || n.category || '').trim().toLowerCase(),
+      (n.title || '').trim().toLowerCase(),
+      (n.message || '').trim().toLowerCase(),
+      (n.orderId || n.transactionId || n.reference || n.contextId || '').toString()
+    ];
+    return parts.join('|');
+  }
+
+  // True if a similar notification was seen very recently (2 minutes)
+  isRecentDuplicate(n) {
+    const sig = this.buildSignature(n);
+    const now = Date.now();
+    const windowMs = 2 * 60 * 1000;
+    // Check existing list
+    const hit = this.notifications.find(x => this.buildSignature(x) === sig && Math.abs(new Date(x.createdAt).getTime() - (new Date(n.createdAt).getTime() || now)) < windowMs);
+    return !!hit;
   }
 
   setupSocketListeners() {
@@ -35,11 +102,17 @@ class NotificationManager {
       const matchesId = currentUser && nid && String(nid) === String(currentUser.id);
 
       if (matchesId) {
-        // De-dup if already present (can happen if also loaded via GET or pending replays)
+        // De-dup if already present by _id
         if (this.notifications.find(n => String(n._id) === String(notification._id))) {
           return;
         }
+        // Logical de-duplication within a short window
+        if (this.isRecentDuplicate(notification)) {
+          console.log('⚠️ Skipping logically duplicate notification (socket).');
+          return;
+        }
         this.notifications.unshift(notification);
+        this.sortNotifications();
         this.unreadCount++;
         this.updateUI();
         this.showToast(notification);
@@ -349,29 +422,52 @@ class NotificationManager {
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
-      // Get the correct token using smart auth utility
-      const token = getAuthToken();
-      
-      if (!token) {
-        console.log('❌ No token found for role:', userData.role);
-        return;
-      }
-      
-      console.log(`🔑 Using smart auth token for ${userData.role}`);
-
-      const res = await fetch(`${BACKEND}/api/notifications`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      // Prefer centralized token manager if available (handles refresh/rotation)
+      const useTokenManager = !!(window.tokenManager && window.tokenManager.authenticatedFetch);
+      let res;
+      if (useTokenManager) {
+        res = await window.tokenManager.authenticatedFetch(`${BACKEND}/api/notifications`, { method: 'GET' });
+      } else {
+        // Fallback to smart-auth utils
+        const token = getAuthToken();
+        if (!token) {
+          console.log('❌ No token found for role:', userData.role);
+          return;
         }
-      });
+        console.log(`🔑 Using smart auth token for ${userData.role}`);
+        res = await fetch(`${BACKEND}/api/notifications`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
 
       if (!res.ok) {
-        const text = await res.text().catch(()=>'');
-        throw new Error(`Failed to load notifications (${res.status}) ${text}`);
+        let status = res.status;
+        let text = await res.text().catch(()=>'');
+        // Try token refresh (only when not using tokenManager)
+        if ((status === 401 || status === 403) && !useTokenManager) {
+          const refreshed = await this.attemptTokenRefresh(userData.role);
+          if (refreshed) {
+            res = await fetch(`${BACKEND}/api/notifications`, {
+              headers: { 'Authorization': `Bearer ${refreshed}` }
+            });
+            status = res.status;
+            text = await (status === 200 ? Promise.resolve('') : res.text().catch(()=>''));
+          } else {
+            console.warn('⚠️ Token refresh unavailable/failed; retrying once after short delay...');
+            setTimeout(() => this.loadNotifications(), 1500);
+            return;
+          }
+        }
+        if (!res.ok) throw new Error(`Failed to load notifications (${status}) ${text}`);
       }
 
       const data = await res.json();
-      this.notifications = data;
+      // Ensure newest-first and remove accidental duplicates by _id
+      const map = new Map();
+      (Array.isArray(data) ? data : []).forEach(n => {
+        if (!map.has(String(n._id))) map.set(String(n._id), n);
+      });
+      this.notifications = Array.from(map.values()).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       this.unreadCount = data.filter(n => !n.read).length;
       this.updateUI();
     } catch (error) {
