@@ -1,5 +1,5 @@
 // Basic VendPlug Service Worker
-const CACHE_NAME = 'vendplug-app-shell-v7.9';
+const CACHE_NAME = 'vendplug-app-shell-v8.1';
 const APP_SHELL = [
   '/',
   '/public-buyer-home.html',
@@ -130,37 +130,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // API GET: network-first (unless explicitly fresh-only), fallback to cache
+  // API GET: network-only to avoid any stale authenticated state in PWA
   if (isAPI && isGET) {
-    if (wantsFresh) {
-      event.respondWith(fetch(req).catch(() => {
-        // Return proper error response instead of undefined
-        return new Response(JSON.stringify({ error: 'Network error' }), { 
-          status: 503, 
-          headers: { 'Content-Type': 'application/json' } 
-        });
-      }));
-      return;
-    }
-    event.respondWith(
-      fetch(req).then((res) => {
-        // Only cache successful responses
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((c) => c.put(req, copy));
-        }
-        return res;
-      }).catch(async () => {
-        // Try cache, but return proper error if no cache
-        const cached = await caches.match(req);
-        if (cached) return cached;
-        // Return proper error response instead of undefined
-        return new Response(JSON.stringify({ error: 'Network error' }), { 
-          status: 503, 
-          headers: { 'Content-Type': 'application/json' } 
-        });
-      })
-    );
+    event.respondWith(fetch(req).catch(() => {
+      return new Response(JSON.stringify({ error: 'Network error' }), { 
+        status: 503, 
+        headers: { 'Content-Type': 'application/json' } 
+      });
+    }));
     return;
   }
 });
