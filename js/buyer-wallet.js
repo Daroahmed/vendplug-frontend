@@ -191,6 +191,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const fundBtn = document.querySelector('.fund-button');
     fundBtn.classList.add('loading');
+    // Prevent double submissions immediately
+    try { fundBtn.disabled = true; } catch (_) {}
 
     try {
       // Initialize wallet funding with our new Paystack integration
@@ -231,16 +233,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!confirmed) {
         fundBtn.classList.remove('loading');
+        try { fundBtn.disabled = false; } catch (_) {}
         return;
       }
 
       // Redirect to Paystack payment page
       console.log('🚀 Redirecting to Paystack:', authorizationUrl);
-      window.location.href = authorizationUrl;
+      // Firefox Android sometimes blocks/bugs inline and back/forward cache. Force a top-level replace.
+      const ua = navigator.userAgent || '';
+      const isFirefoxAndroid = /Android/i.test(ua) && /Firefox/i.test(ua);
+      if (isFirefoxAndroid) {
+        window.location.replace(authorizationUrl);
+      } else {
+        window.location.href = authorizationUrl;
+      }
     } catch (error) {
       console.error('Payment initialization error:', error);
       window.showOverlay && showOverlay({ type:'error', title:'Payment', message:'Error initializing payment. Please try again.' });
       fundBtn.classList.remove('loading');
+      try { fundBtn.disabled = false; } catch (_) {}
     }
   }
 

@@ -36,6 +36,9 @@
         : (localStorage.getItem('vendplug-buyer-token') || null);
       if (!token) return 0;
 
+      // Optional: skip polling when tab is hidden to reduce noise
+      if (document.visibilityState === 'hidden') return 0;
+
       // Prefer configured backend, else use relative API path
       const endpoint = cartType === 'agent' ? '/api/agent-cart' : '/api/vendor-cart';
       const base = window.BACKEND_URL || '';
@@ -44,7 +47,11 @@
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) return 0;
+      if (!res.ok) {
+        // On auth errors, return 0 without logging to avoid console spam/rate-limit noise
+        if (res.status === 401 || res.status === 403) return 0;
+        return 0;
+      }
       const data = await res.json();
       const items = Array.isArray(data?.items) ? data.items : [];
       return items.reduce((sum, i) => sum + (i.quantity || 1), 0);
@@ -106,7 +113,7 @@
     // Initial update
     updateBadges();
     // Refresh periodically to keep in sync with actions on other tabs/pages
-    setInterval(updateBadges, 30000);
+    setInterval(updateBadges, 45000);
     // Update when storage changes (optional if some flows still use localStorage)
     window.addEventListener('storage', (e) => {
       if ((e.key || '').toLowerCase().includes('cart')) {

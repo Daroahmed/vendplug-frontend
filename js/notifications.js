@@ -13,6 +13,10 @@ class NotificationManager {
     this.unreadCount = 0;
     // Cache for lightweight duplicate detection (title+message within time window)
     this.recentKeys = [];
+    // Prevent overlapping loads and limit refresh attempts to avoid loops
+    this.isLoading = false;
+    this.refreshAttempts = 0;
+    this.authErrorLocked = false;
     this.setupSocketListeners();
     this.setupUIElements();
   }
@@ -32,6 +36,10 @@ class NotificationManager {
   // Try to refresh the token via refresh endpoint and persist it
   async attemptTokenRefresh(role) {
     try {
+      if (this.refreshAttempts >= 1) {
+        return null;
+      }
+      this.refreshAttempts += 1;
       const res = await fetch(`${BACKEND}/api/auth/refresh`, {
         method: 'POST',
         credentials: 'include'
@@ -236,7 +244,7 @@ class NotificationManager {
           border: 1px solid var(--bg-secondary, #2c2c2c);
           border-radius: 8px;
           box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-          z-index: 1000;
+          z-index: 2000;
           display: none;
           overflow: hidden;
         }
@@ -366,6 +374,16 @@ class NotificationManager {
       document.head.appendChild(styles);
     }
 
+    // If the floating FAB exists now, hook it up to the (now ensured) dropdown
+    const maybeFab = document.getElementById('notification-fab');
+    if (maybeFab && document.getElementById('notification-dropdown')) {
+      maybeFab.onclick = () => {
+        const dd = document.getElementById('notification-dropdown');
+        if (!dd) return;
+        dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+      };
+    }
+
     // Add event listeners (outside the if block to avoid scope issues)
     const icon = document.getElementById('notification-icon');
     const dropdown = document.getElementById('notification-dropdown');
@@ -419,6 +437,11 @@ class NotificationManager {
 
   async loadNotifications() {
     try {
+      // Stop if we previously hit auth errors
+      if (this.authErrorLocked) return;
+      if (this.isLoading) return;
+      this.isLoading = true;
+
       const userData = this.getCurrentUserData();
       if (!userData) return;
 
@@ -453,8 +476,9 @@ class NotificationManager {
             status = res.status;
             text = await (status === 200 ? Promise.resolve('') : res.text().catch(()=>''));
           } else {
-            console.warn('⚠️ Token refresh unavailable/failed; retrying once after short delay...');
-            setTimeout(() => this.loadNotifications(), 1500);
+            console.warn('⚠️ Token refresh failed; disabling notification polling to avoid loops.');
+            // Lock further attempts for this session to avoid rate-limit noise
+            this.authErrorLocked = true;
             return;
           }
         }
@@ -473,6 +497,8 @@ class NotificationManager {
     } catch (error) {
       console.error('❌ Error loading notifications:', error);
       try { if (window.showToast) showToast('Failed to load notifications'); } catch(_) {}
+    } finally {
+      this.isLoading = false;
     }
   }
 
