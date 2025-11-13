@@ -143,6 +143,11 @@ class MessageNotificationManager {
         }
       });
 
+      if (response.status === 401 || response.status === 403) {
+        // Auth error: do not retry to avoid loops/noise
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
         this.unreadCount = data.unreadCount || 0;
