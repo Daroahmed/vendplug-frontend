@@ -86,8 +86,10 @@
 
     .product-image {
       width: 100%;
-      height: 300px;
-      object-fit: cover;
+      height: auto;
+      max-height: 70vh;
+      object-fit: contain;
+      background: #111;
       cursor: pointer;
       transition: opacity 0.3s;
     }
@@ -352,15 +354,11 @@
         padding: 1rem;
       }
       
-      .product-image {
-        height: 250px;
-      }
+      .product-image { max-height: 60vh; }
     }
 
     @media (max-width: 480px) {
-      .product-image {
-        height: 200px;
-      }
+      .product-image { max-height: 55vh; }
       
       /* Removed vendor card responsive CSS */
     }

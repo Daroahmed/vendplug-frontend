@@ -5,6 +5,24 @@
   let deferredPrompt;
   
   window.addEventListener('load', () => {
+    // Ensure manifest and theme-color meta are present on all pages
+    try {
+      const hasManifest = !!document.querySelector('link[rel="manifest"]');
+      if (!hasManifest) {
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = '/manifest.webmanifest';
+        document.head.appendChild(link);
+      }
+      const hasTheme = !!document.querySelector('meta[name="theme-color"]');
+      if (!hasTheme) {
+        const meta = document.createElement('meta');
+        meta.name = 'theme-color';
+        meta.content = '#00cc99';
+        document.head.appendChild(meta);
+      }
+    } catch(_) {}
+
     // Optional kill-switch: append ?nocache=1 to URL to force SW reset and cache clear
     const forceReset = location.search.includes('nocache=1') || localStorage.getItem('vp_reset_sw') === '1';
     if (forceReset) {

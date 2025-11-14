@@ -647,8 +647,7 @@
     <div class="header-actions">
       <!-- Public user actions -->
       <div id="publicActions" class="auth-buttons">
-        <a href="auth-selection.html" class="btn btn-outline">Sign In</a>
-        <a href="auth-selection.html" class="btn btn-primary">Sign Up</a>
+        <a href="auth-selection.html" class="btn btn-primary">Sign In / Sign Up</a>
       </div>
       
       <!-- Logged in user actions -->
@@ -673,7 +672,7 @@
       </button>
     </div>
 
-    <div class="menu-section">
+    <div class="menu-section requires-auth" id="menuVendorSection">
       <h4>VENDORS</h4>
       <ul class="menu-links">
         <li><a href="buyer-vendor-checkout.html"><i class="fas fa-shopping-cart"></i> Cart</a></li>
@@ -681,7 +680,7 @@
       </ul>
     </div>
 
-    <div class="menu-section">
+    <div class="menu-section requires-auth" id="menuAgentSection">
       <h4>AGENTS</h4>
       <ul class="menu-links">
         <li><a href="buyer-agent-checkout.html"><i class="fas fa-shopping-cart"></i> Cart</a></li>
@@ -689,7 +688,7 @@
 
     </div>
 
-    <div class="menu-section">
+    <div class="menu-section requires-auth" id="menuCommonSection">
       <ul class="menu-links">
         <li><a href="buyer-wallet.html"><i class="fas fa-wallet"></i> Wallet</a></li>
         <li><a href="buyer-profile.html"><i class="fas fa-user"></i> Profile</a></li>
@@ -699,6 +698,12 @@
         <li><a href="#" onclick="buyerLogout(event)"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
         <li><a href="index.html"><i class="fas fa-list"></i> About Vendplug</a></li>
       </ul>
+      </ul>
+    </div>
+
+    <div class="menu-section" id="menuAuthCta" style="display:none;">
+      <ul class="menu-links">
+        <li><a href="auth-selection.html"><i class="fas fa-user"></i> Sign In / Sign Up</a></li>
       </ul>
     </div>
   </div>
@@ -1195,16 +1200,22 @@
       const buyerToken = localStorage.getItem('vendplug-buyer-token');
       const publicActions = document.getElementById('publicActions');
       const loggedInActions = document.getElementById('loggedInActions');
+      const authCta = document.getElementById('menuAuthCta');
+      const authSections = document.querySelectorAll('.requires-auth');
       
       if (buyerToken) {
         // User is logged in
         publicActions.style.display = 'none';
         loggedInActions.style.display = 'flex';
+        if (authCta) authCta.style.display = 'none';
+        authSections.forEach(el => el.style.display = '');
         updateUserCounts();
       } else {
         // User is not logged in (public user)
         publicActions.style.display = 'flex';
         loggedInActions.style.display = 'none';
+        if (authCta) authCta.style.display = '';
+        authSections.forEach(el => el.style.display = 'none');
       }
     }
 

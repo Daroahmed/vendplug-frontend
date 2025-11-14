@@ -106,9 +106,11 @@ document.addEventListener('DOMContentLoaded', () => {
           ${showHint ? `<div class="item-price" style="color: var(--muted);">${hintText}</div>` : ''}
         </div>
         <span class="item-total">₦${subtotal.toLocaleString()}</span>
-        <button class="remove-btn" data-id="${product?._id}">❌</button>
-        <button class="inc-btn" data-id="${product?._id}" ${reachedMax ? 'disabled' : ''}>+</button>
-        <button class="dec-btn" data-id="${product?._id}">-</button>
+        <div class="qty-controls">
+          <button class="dec-btn" data-id="${product?._id}" aria-label="Decrease quantity">−</button>
+          <button class="inc-btn" data-id="${product?._id}" ${reachedMax ? 'disabled' : ''} aria-label="Increase quantity">+</button>
+          <button class="remove-btn" data-id="${product?._id}" aria-label="Remove item">🗑️</button>
+        </div>
       `;
       cartContainer.appendChild(div);
     });

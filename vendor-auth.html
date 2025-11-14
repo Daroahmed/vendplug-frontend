@@ -503,13 +503,7 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label for="vendorShopName">Shop Name</label>
-        <div class="input-wrapper">
-          <i class="fas fa-store"></i>
-          <input id="vendorShopName" type="text" placeholder="Enter your shop name" required />
-        </div>
-      </div>
+      <!-- Shop Name removed: we now use Business Name as the canonical name -->
 
       <div class="form-group">
         <label for="vendorPhoneNumber">Phone Number</label>
@@ -915,7 +909,6 @@
       const email = document.getElementById("vendorEmail").value;
       const phoneNumber = document.getElementById("vendorPhoneNumber").value;
       const password = document.getElementById("vendorPassword").value;
-      const shopName = document.getElementById("vendorShopName").value;
       const businessName = document.getElementById("vendorBusinessName").value;
       const businessAddress = document.getElementById("vendorBusinessAddress").value;
       const cacNumber = document.getElementById("vendorCacNumber").value;
@@ -958,7 +951,6 @@
             email, 
             phoneNumber,
             password, 
-            shopName,
             businessName, 
             businessAddress, 
             cacNumber, 
@@ -1045,5 +1037,6 @@
       });
     }
   </script>
+  <script src="/js/pwa-register.js"></script>
 </body>
 </html>
