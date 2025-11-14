@@ -167,6 +167,38 @@
       color: var(--primary);
     }
 
+    /* Quantity controls - larger tap targets with spacing */
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-left: 10px;
+    }
+    .qty-controls .inc-btn,
+    .qty-controls .dec-btn,
+    .qty-controls .remove-btn {
+      width: 40px;
+      height: 40px;
+      min-width: 40px;
+      min-height: 40px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: var(--bg-secondary);
+      color: var(--text-light);
+      font-size: 20px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background .2s ease, transform .05s ease;
+    }
+    .qty-controls .remove-btn { width: 44px; min-width: 44px; }
+    .qty-controls .inc-btn:active,
+    .qty-controls .dec-btn:active,
+    .qty-controls .remove-btn:active { transform: scale(0.98); }
+    .qty-controls .inc-btn:disabled { opacity: .5; cursor: not-allowed; }
+
     /* Total Amount */
     .total-amount {
       text-align: right;

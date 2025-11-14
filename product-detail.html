@@ -569,22 +569,36 @@
        const vendorInitial = vendorName.charAt(0).toUpperCase();
        const vendorType = productData.vendor ? 'Vendor' : 'Agent';
       
+      // Build image list: primary first, then additional images (deduplicated)
+      const rawImages = [
+        ...(productData.image ? [productData.image] : []),
+        ...((Array.isArray(productData.images) ? productData.images : []) || [])
+      ].filter(Boolean);
+      const uniqueImages = Array.from(new Set(rawImages));
+      const mainSrc = uniqueImages[0] || '/assets/placeholder-product.jpg';
+
       productDetail.innerHTML = `
         <div class="product-detail">
           <div class="product-images">
-            <img src="${productData.image || '/assets/placeholder-product.jpg'}" 
+            <img src="${mainSrc}" 
                  alt="${productData.name}" 
                  class="main-image" 
                  id="mainImage"
                  onerror="this.src='/assets/placeholder-product.jpg'">
             
             <div class="image-gallery">
-              <img src="${productData.image || '/assets/placeholder-product.jpg'}" 
-                   alt="${productData.name}" 
-                   class="gallery-thumb active"
-                   onclick="changeMainImage(this.src)"
-                   onerror="this.src='/assets/placeholder-product.jpg'">
-              <!-- Additional images can be added here if available -->
+              ${uniqueImages.map((src, idx) => `
+                <img src="${src}" 
+                     alt="${productData.name}" 
+                     class="gallery-thumb ${idx === 0 ? 'active' : ''}"
+                     onclick="changeMainImage(this)"
+                     onerror="this.src='/assets/placeholder-product.jpg'">
+              `).join('') || `
+                <img src="/assets/placeholder-product.jpg"
+                     alt="${productData.name}"
+                     class="gallery-thumb active"
+                     onclick="changeMainImage(this)">
+              `}
             </div>
           </div>
           
@@ -661,14 +675,14 @@
     }
 
     // Change main image
-    function changeMainImage(src) {
-      document.getElementById('mainImage').src = src;
-      
-      // Update active thumbnail
-      document.querySelectorAll('.gallery-thumb').forEach(thumb => {
-        thumb.classList.remove('active');
-      });
-      event.target.classList.add('active');
+    function changeMainImage(el) {
+      try {
+        const src = el?.getAttribute('src') || el;
+        const img = document.getElementById('mainImage');
+        if (src && img) img.src = src;
+        document.querySelectorAll('.gallery-thumb').forEach(thumb => thumb.classList.remove('active'));
+        if (el && el.classList) el.classList.add('active');
+      } catch (_) {}
     }
 
      // Visit shop
@@ -893,7 +907,7 @@
         const vendorName = vendor?.shopName || 'Unknown';
         
         productCard.innerHTML = `
-          <img src="${product.image || '/assets/placeholder-product.jpg'}" 
+          <img src="${(product.image || (Array.isArray(product.images) && product.images[0]) || '/assets/placeholder-product.jpg')}" 
                alt="${product.name}" 
                onerror="this.src='/assets/placeholder-product.jpg'">
           <div class="product-card-info">
