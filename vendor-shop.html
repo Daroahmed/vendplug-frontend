@@ -6,6 +6,7 @@
   <title>VendPlug | Vendor Shops</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="CSS/ads.css">
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <style>
     /* Your CSS remains the same */
     :root {
@@ -47,7 +48,9 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      overflow: hidden;
     }
 
     .logo-container {
@@ -84,7 +87,7 @@
     }
 
     /* Global Search (header) */
-    .global-search { flex: 1; max-width: 520px; margin: 0 1rem; position: relative; }
+    .global-search { flex: 1 1 auto; min-width: 0; max-width: 100%; margin: 0 0.75rem; position: relative; }
     .global-search .search-box { display: flex; background: var(--bg-card); border: 2px solid var(--bg-secondary); border-radius: 25px; overflow: hidden; }
     .global-search .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 204, 153, 0.1); }
     .global-search .search-input { flex: 1; padding: 0.6rem 1rem; border: none; background: transparent; color: var(--text-light); font-size: 0.9rem; outline: none; }
@@ -101,6 +104,7 @@
       display: flex;
       align-items: center;
       gap: 15px;
+      flex: 0 0 auto;
     }
 
     .cart-icon {
@@ -348,6 +352,9 @@
       max-width: 100%;
     }
 
+    /* Soft fade-in when upgraded */
+    img.img-loaded { transition: opacity .35s ease; opacity: 1 !important; }
+
     .vendor-card {
       background: var(--bg-card);
       border-radius: 12px;
@@ -356,6 +363,9 @@
       transition: transform 0.3s;
       cursor: pointer;
       position: relative;
+      /* Avoid work until scrolled into view */
+      content-visibility: auto;
+      contain-intrinsic-size: 320px 280px;
     }
 
     .vendor-card:hover {
@@ -545,7 +555,12 @@
     @media (max-width: 480px) {
       .header h1 {
         font-size: 1.2rem;
+        display: none; /* save space for search + cart on very small screens */
       }
+      
+      .global-search { margin: 0 0.5rem; }
+      .global-search .search-input { padding: 0.5rem 0.75rem; font-size: 0.9rem; }
+      .global-search .search-btn { padding: 0.5rem 0.75rem; }
       
       .vendor-grid {
         grid-template-columns: 1fr;
@@ -1047,7 +1062,7 @@
     }
 
     // Vendor data loading functionality
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Check if user is logged in
       checkUserStatus();
       updateCartCount();
@@ -1063,6 +1078,9 @@
       
       stateFilter.value = state;
       categoryFilter.value = category;
+
+      // Dynamically load categories from admin-managed list (fallback to static if API empty)
+      await loadDynamicCategoryOptions('vendor', category);
       
       // Save to localStorage
       localStorage.setItem("vendplug-buyer-state", state);
@@ -1070,8 +1088,8 @@
       
       console.log(`📍 State: ${state}, 📦 Category: ${category}`);
       
-      // Load vendors after a short delay to ensure DOM is fully ready
-      setTimeout(() => loadVendors(true), 100);
+      // Load vendors after categories are ready so the initial filter applies
+      setTimeout(() => loadVendors(true), 0);
     });
 
     // Backend URL configuration 
@@ -1121,6 +1139,29 @@
       localStorage.setItem("vendplug-category", category);
       loadVendors(true);
     });
+
+    // Load dynamic categories helper
+    async function loadDynamicCategoryOptions(type, currentValue) {
+      try {
+        const select = document.getElementById('categoryFilter');
+        if (!select) return;
+        const res = await fetch(`/api/categories/public?type=${encodeURIComponent(type)}`);
+        if (!res.ok) return; // keep static
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.categories) || data.categories.length === 0) return; // keep static
+
+        // Rebuild options
+        const placeholder = '<option value="">-- All Categories --</option>';
+        const options = data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        select.innerHTML = placeholder + options;
+        // Restore selected value
+        if (typeof currentValue === 'string') {
+          select.value = currentValue;
+        }
+      } catch (_) {
+        // ignore
+      }
+    }
 
     // Back to top functionality
     window.addEventListener('scroll', () => {
@@ -1267,11 +1308,12 @@
 
     function appendVendors(vendors) {
       const vendorGrid = document.getElementById("vendorGrid");
-      const html = vendors.map(vendor => vendorCardHTML(vendor)).join("");
+      const startIndex = vendorGrid.children.length;
+      const html = vendors.map((vendor, i) => vendorCardHTML(vendor, startIndex + i)).join("");
       vendorGrid.insertAdjacentHTML('beforeend', html);
     }
 
-    function vendorCardHTML(vendor) {
+    function vendorCardHTML(vendor, idx) {
       return `
         <div class="vendor-card" onclick="viewShop('${vendor._id}')">
           <div class="quick-actions">
@@ -1285,7 +1327,16 @@
               <i class="fas fa-share-alt"></i>
             </button>
           </div>
-          <img src="${vendor.image || vendor.brandImage || 'https://placehold.co/400x300/2c2c2c/00cc99/png?text=Vendor'}" alt="${vendor.businessName || vendor.shopName}" class="vendor-image" />
+          <img 
+            src="${(window.blurPlaceholder ? blurPlaceholder(vendor.image || vendor.brandImage || '', 40) : (vendor.image || vendor.brandImage || 'https://placehold.co/40x30'))}" 
+            data-src="${(window.optimizeImage ? optimizeImage(vendor.image || vendor.brandImage || '', 400, { crop:'fill', height:300 }) : (vendor.image || vendor.brandImage || 'https://placehold.co/400x300/2c2c2c/00cc99/png?text=Vendor'))}" 
+            data-srcset="${(window.buildSrcSet ? buildSrcSet(vendor.image || vendor.brandImage || '', [320,480,640,800]) : '')}"
+            sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 400px"
+            alt="${vendor.businessName || vendor.shopName}" 
+            class="vendor-image"
+            loading="lazy" fetchpriority="${idx < 2 ? 'high' : 'auto'}" decoding="async" width="400" height="300"
+            onerror="this.src='https://placehold.co/400x300/2c2c2c/00cc99/png?text=Vendor'"
+          />
           <div class="vendor-info">
             <h3>${vendor.businessName || vendor.shopName}</h3>
             <p class="vendor-details">${vendor.state} • ${vendor.category}</p>
@@ -1508,6 +1559,14 @@
         setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
+  </script>
+  <script>
+    // Register service worker (cache images / static for faster loads)
+    try{
+      if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
+    }catch(_){}
+    // Kick lazy upgrade after DOM ready (for LQIP -> full)
+    document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
   </script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>

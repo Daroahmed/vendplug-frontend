@@ -764,6 +764,11 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="#categories" class="nav-link" data-section="categories">
+                        <i>🏷️</i> Categories
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="staff-management.html" class="nav-link">
                         <i>👨‍💼</i> Staff Management
                     </a>
@@ -1008,6 +1013,37 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Section -->
+            <div id="categories-section" class="content-section" style="display:none;">
+                <div class="section-header">
+                    <h3>Categories</h3>
+                    <p>Create and manage marketplace categories</p>
+                </div>
+                <div class="section-content">
+                    <form id="categoryForm" enctype="multipart/form-data" style="margin-bottom:20px;">
+                        <div class="row" style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <input type="text" id="catName" placeholder="Category name" required style="flex:1; min-width:220px;">
+                            <input type="text" id="catGroup" placeholder="Group name (e.g., Electronics & Gadgets)" style="flex:1; min-width:260px;">
+                            <select id="catType" style="min-width:140px;">
+                                <option value="both">Both</option>
+                                <option value="vendor">Vendor</option>
+                                <option value="agent">Agent</option>
+                            </select>
+                            <label style="display:flex; align-items:center; gap:6px;">
+                                <input type="checkbox" id="catActive" checked> Active
+                            </label>
+                            <input type="number" id="catOrder" placeholder="Order" style="width:100px;">
+                            <input type="file" id="catImage" accept="image/*">
+                            <button type="submit" class="btn btn-primary">Add Category</button>
+                        </div>
+                    </form>
+
+                    <div id="categoriesList" class="table-container">
+                        <div class="loading"><div class="spinner"></div> Loading categories...</div>
                     </div>
                 </div>
             </div>
@@ -1782,6 +1818,107 @@
         });
     </script>
     <script src="js/admin-dashboard.js"></script>
+    <script>
+      // Lightweight category management for the Categories section
+      document.addEventListener('DOMContentLoaded', () => {
+        const token = localStorage.getItem('vendplug-admin-token');
+        const form = document.getElementById('categoryForm');
+        const list = document.getElementById('categoriesList');
+        if (!form || !list) return;
+
+        async function loadCategoriesForAdmin() {
+          list.innerHTML = '<div class="loading"><div class="spinner"></div> Loading categories...</div>';
+          try {
+            const res = await fetch('/api/categories/public?type=both');
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error('Failed to load');
+
+            const rows = (data.categories || []).map(c => `
+              <tr>
+                <td>${c.name}</td>
+                <td>${c.groupName || ''}</td>
+                <td>${c.type}</td>
+                <td>${c.isActive ? 'Active' : 'Inactive'}</td>
+                <td>${c.displayOrder ?? 0}</td>
+                <td>${c.imageUrl ? `<img src="${c.imageUrl}" alt="${c.name}" style="width:60px;height:34px;object-fit:cover;border-radius:6px;">` : '-'}</td>
+                <td><button data-id="${c._id}" class="btn btn-danger btn-sm cat-del">Delete</button></td>
+              </tr>
+            `).join('');
+
+            list.innerHTML = `
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Group</th>
+                      <th>Type</th>
+                      <th>Status</th>
+                      <th>Order</th>
+                      <th>Image</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>${rows || '<tr><td colspan="7">No categories</td></tr>'}</tbody>
+                </table>
+              </div>
+            `;
+
+            list.querySelectorAll('.cat-del').forEach(btn => {
+              btn.addEventListener('click', async (e) => {
+                const id = e.currentTarget.getAttribute('data-id');
+                if (!id) return;
+                if (!confirm('Delete this category?')) return;
+                const r = await fetch(`/api/categories/${id}`, {
+                  method: 'DELETE',
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                if (!r.ok) {
+                  alert('Failed to delete category');
+                } else {
+                  loadCategoriesForAdmin();
+                }
+              });
+            });
+          } catch (err) {
+            list.innerHTML = '<p style="color:#e74c3c;">Failed to load categories</p>';
+          }
+        }
+
+        form.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const fd = new FormData();
+          fd.append('name', document.getElementById('catName').value.trim());
+          fd.append('groupName', document.getElementById('catGroup').value.trim());
+          fd.append('type', document.getElementById('catType').value);
+          fd.append('isActive', document.getElementById('catActive').checked ? 'true' : 'false');
+          fd.append('displayOrder', document.getElementById('catOrder').value || '0');
+          const file = document.getElementById('catImage').files[0];
+          if (file) fd.append('image', file);
+
+          try {
+            const res = await fetch('/api/categories', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}` },
+              body: fd
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              alert(data.message || 'Failed to create category');
+              return;
+            }
+            form.reset();
+            loadCategoriesForAdmin();
+            alert('Category created');
+          } catch (_) {
+            alert('Failed to create category');
+          }
+        });
+
+        // Expose for admin-dashboard.js to call when section is shown
+        window.loadCategoriesForAdmin = loadCategoriesForAdmin;
+      });
+    </script>
     <script src="/js/pwa-register.js"></script>
 </body>
 </html>

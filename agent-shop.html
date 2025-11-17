@@ -368,6 +368,8 @@
       object-fit: cover;
     }
 
+    img.img-loaded { transition: opacity .35s ease; opacity: 1 !important; }
+
     .agent-info {
       padding: 1.2rem;
     }
@@ -1043,7 +1045,7 @@
     }
 
     // Agent data loading functionality
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       // Check if user is logged in
       checkUserStatus();
       updateCartCount();
@@ -1059,6 +1061,9 @@
       
       stateFilter.value = state;
       categoryFilter.value = category;
+
+      // Dynamically load categories from admin-managed list (fallback to static if API empty)
+      await loadDynamicCategoryOptions('agent', category);
       
       // Save to localStorage
       localStorage.setItem("vendplug-buyer-state", state);
@@ -1066,8 +1071,8 @@
       
       console.log(`📍 State: ${state}, 📦 Category: ${category}`);
       
-      // Load agents after a short delay to ensure DOM is fully ready
-      setTimeout(() => loadAgents(true), 100);
+      // Load agents after categories are ready so the initial filter applies
+      setTimeout(() => loadAgents(true), 0);
     });
 
     // Backend URL configuration 
@@ -1117,6 +1122,29 @@
       localStorage.setItem("vendplug-category", category);
       loadAgents(true);
     });
+
+    // Load dynamic categories helper
+    async function loadDynamicCategoryOptions(type, currentValue) {
+      try {
+        const select = document.getElementById('categoryFilter');
+        if (!select) return;
+        const res = await fetch(`/api/categories/public?type=${encodeURIComponent(type)}`);
+        if (!res.ok) return; // keep static
+        const data = await res.json();
+        if (!data.success || !Array.isArray(data.categories) || data.categories.length === 0) return; // keep static
+
+        // Rebuild options
+        const placeholder = '<option value="">-- All Categories --</option>';
+        const options = data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        select.innerHTML = placeholder + options;
+        // Restore selected value
+        if (typeof currentValue === 'string') {
+          select.value = currentValue;
+        }
+      } catch (_) {
+        // ignore
+      }
+    }
 
     // Back to top functionality
     window.addEventListener('scroll', () => {
@@ -1263,11 +1291,12 @@
 
     function appendAgents(agents) {
       const agentGrid = document.getElementById("agentGrid");
-      const html = agents.map(agent => agentCardHTML(agent)).join("");
+      const startIndex = agentGrid.children.length;
+      const html = agents.map((agent, i) => agentCardHTML(agent, startIndex + i)).join("");
       agentGrid.insertAdjacentHTML('beforeend', html);
     }
 
-    function agentCardHTML(agent) {
+    function agentCardHTML(agent, idx) {
       return `
         <div class="agent-card" onclick="viewBusiness('${agent._id}')">
           <div class="quick-actions">
@@ -1281,7 +1310,16 @@
               <i class="fas fa-share-alt"></i>
             </button>
           </div>
-          <img src="${agent.image || agent.brandImage || 'https://placehold.co/400x300/2c2c2c/00cc99/png?text=Agent'}" alt="${agent.businessName || agent.businessName}" class="agent-image" />
+          <img 
+            src="${(window.blurPlaceholder ? blurPlaceholder(agent.image || agent.brandImage || '', 40, 30) : (agent.image || agent.brandImage || 'https://placehold.co/40x30'))}" 
+            data-src="${(window.optimizeImage ? optimizeImage(agent.image || agent.brandImage || '', 400, { crop:'fill', height:300 }) : (agent.image || agent.brandImage || 'https://placehold.co/400x300/2c2c2c/00cc99/png?text=Agent'))}" 
+            data-srcset="${(window.buildSrcSet ? buildSrcSet(agent.image || agent.brandImage || '', [320,480,640,800]) : '')}"
+            sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 400px"
+            alt="${agent.businessName || agent.businessName}" 
+            class="agent-image" 
+            loading="lazy" fetchpriority="${idx < 2 ? 'high' : 'auto'}" decoding="async" width="400" height="300"
+            onerror="this.src='https://placehold.co/400x300/2c2c2c/00cc99/png?text=Agent'"
+          />
           <div class="agent-info">
             <h3>${agent.businessName || agent.businessName}</h3>
             <p class="agent-details">${agent.state} • ${agent.category}</p>
@@ -1505,6 +1543,10 @@
         setTimeout(() => toast.remove(), 300);
       }, 3000);
     }
+  </script>
+  <script>
+    try{ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); }catch(_){}
+    document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
   </script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>

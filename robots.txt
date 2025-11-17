@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /staff
+Sitemap: https://vendplug.com.ng/sitemap.xml

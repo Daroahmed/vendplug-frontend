@@ -404,6 +404,16 @@ function closeRejectionModal() {
 }
 
 // Rejection modal event listeners
+document.getElementById("quickRejectReasons")?.addEventListener("click", (e) => {
+  const btn = e.target.closest(".quick-reason");
+  if (!btn) return;
+  const val = btn.getAttribute("data-reason") || btn.textContent.trim();
+  const ta = document.getElementById("rejectionReason");
+  if (!ta) return;
+  if (!ta.value.trim()) ta.value = val;
+  else ta.value = `${ta.value.trim()} ${val}`;
+  ta.focus();
+});
 document.getElementById("closeRejectionModalBtn")?.addEventListener("click", closeRejectionModal);
 document.getElementById("cancelRejectBtn")?.addEventListener("click", closeRejectionModal);
 document.getElementById("confirmRejectBtn")?.addEventListener("click", () => {

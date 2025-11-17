@@ -332,6 +332,8 @@
       object-fit: cover;
     }
 
+    img.img-loaded { transition: opacity .35s ease; opacity: 1 !important; }
+
     .product-info {
       padding: 1rem;
     }
@@ -589,9 +591,18 @@
           return;
         }
 
-        agentProductsEl.innerHTML = products.map(product => `
+        agentProductsEl.innerHTML = products.map((product, idx) => `
           <div class="product-card" onclick="window.location.href='/view-business-view.html?product=${product._id}'">
-            <img src="${product.image || '/placeholder.png'}" alt="${product.name}" class="product-image" />
+            <img 
+              src="${(window.blurPlaceholder ? blurPlaceholder(product.image || '', 40, 30) : (product.image || '/assets/placeholder-product.svg'))}" 
+              data-src="${(window.optimizeImage ? optimizeImage(product.image || '', 400, { crop:'fill', height:300 }) : (product.image || '/assets/placeholder-product.svg'))}" 
+              data-srcset="${(window.buildSrcSet ? buildSrcSet(product.image || '', [320,480,640,800]) : '')}"
+              sizes="(max-width: 480px) 100vw, (max-width: 768px) 50vw, 400px"
+              alt="${product.name}" 
+              class="product-image" 
+              loading="lazy" fetchpriority="${idx < 2 ? 'high' : 'auto'}" decoding="async" width="400" height="300"
+              onerror="this.src='/assets/placeholder-product.svg'"
+            />
             <div class="product-info">
               <h4>${product.name}</h4>
               <p>₦${product.price.toLocaleString()}</p>
@@ -601,6 +612,46 @@
             </div>
           </div>
         `).join('');
+
+        // Prefetch product details JSON as cards appear
+        try {
+          const cards = document.querySelectorAll('#agentProducts .product-card');
+          const io = 'IntersectionObserver' in window ? new IntersectionObserver((entries, obs)=>{
+            entries.forEach(entry=>{
+              if (!entry.isIntersecting) return;
+              const card = entry.target;
+              const onclick = card.getAttribute('onclick') || '';
+              const match = onclick.match(/product=([a-zA-Z0-9]+)/);
+              const id = match ? match[1] : null;
+              if (id) fetch(`/api/agent-products/public/${id}`, { credentials:'omit', cache:'force-cache' }).catch(()=>{});
+              obs.unobserve(card);
+            });
+          }, { rootMargin: '200px 0px' }) : null;
+          io && cards.forEach(c => io.observe(c));
+        } catch(_){}
+
+        // SEO: title, canonical, meta description, JSON-LD CollectionPage
+        try {
+          const PUBLIC_ORIGIN = (window.PUBLIC_URL || window.FRONTEND_URL || window.location.origin);
+          document.title = `${agent.fullName || agent.businessName || 'Agent Business'} | VendPlug`;
+          const ensureTag = (sel, create) => document.querySelector(sel) || create();
+          const canon = ensureTag('link[rel=\"canonical\"]', () => { const l=document.createElement('link'); l.rel='canonical'; document.head.appendChild(l); return l; });
+          canon.href = PUBLIC_ORIGIN + window.location.pathname + window.location.search;
+          const metaDesc = ensureTag('meta[name=\"description\"]', () => { const m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); return m; });
+          metaDesc.content = `${agent.fullName || agent.businessName || 'Agent'} on VendPlug — ${products.length} products${agent.state ? ' — ' + agent.state : ''}`.slice(0,160);
+          const ld = {
+            \"@context\":\"https://schema.org\",
+            \"@type\":\"CollectionPage\",
+            \"name\": (agent.fullName || agent.businessName || 'Agent') + ' | VendPlug',
+            \"url\": PUBLIC_ORIGIN + window.location.pathname + window.location.search,
+            \"isPartOf\": { \"@type\":\"WebSite\", \"name\":\"VendPlug\", \"url\": PUBLIC_ORIGIN },
+            \"about\": agent.fullName || agent.businessName || 'Agent',
+            \"hasPart\": (products || []).slice(0,12).map(p => ({ \"@type\":\"Product\", \"name\": p.name, \"url\": PUBLIC_ORIGIN + '/view-business-view.html?product=' + p._id }))
+          };
+          let el = document.getElementById('ld-collection');
+          if (!el) { el = document.createElement('script'); el.type='application/ld+json'; el.id='ld-collection'; document.head.appendChild(el); }
+          el.textContent = JSON.stringify(ld);
+        } catch(_) {}
 
       } catch (error) {
         console.error('Error loading agent data:', error);
@@ -896,6 +947,10 @@
     window.addEventListener('storage', (e)=>{
       if (e.key === 'vendplug-buyer-token' || e.key === 'vendplugBuyer') ensureMessageButton();
     });
+  </script>
+  <script>
+    try{ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); }catch(_){}
+    document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
   </script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>

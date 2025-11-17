@@ -55,12 +55,20 @@ function loadProductDetails(product) {
   const allImages = [product.image, ...(product.images || [])].filter(Boolean);
   
   if (allImages.length === 0) {
-    productImageEl.src = '/assets/placeholder-product.jpg';
-    productImageEl.onerror = function() { this.src = '/assets/placeholder-product.jpg'; };
+    productImageEl.src = '/assets/placeholder-product.svg';
+    productImageEl.onerror = function() { this.src = '/assets/placeholder-product.svg'; };
   } else {
-    // Set primary image
-    productImageEl.src = (window.optimizeImage ? optimizeImage(allImages[0], 960) : allImages[0]);
-    productImageEl.onerror = function() { this.src = '/assets/placeholder-product.jpg'; };
+    // LQIP first, then upgrade to optimized
+    try {
+      productImageEl.src = (window.blurPlaceholder ? blurPlaceholder(allImages[0], 60) : allImages[0]);
+      productImageEl.setAttribute('data-src', (window.optimizeImage ? optimizeImage(allImages[0], 1200, { crop:'fill' }) : allImages[0]));
+      productImageEl.setAttribute('sizes', '100vw');
+      productImageEl.setAttribute('fetchpriority','high');
+      productImageEl.setAttribute('decoding','async');
+    } catch(_) {
+      productImageEl.src = allImages[0];
+    }
+    productImageEl.onerror = function() { this.src = '/assets/placeholder-product.svg'; };
     
     // If there are multiple images, show gallery
     if (allImages.length > 1) {
@@ -69,12 +77,21 @@ function loadProductDetails(product) {
       
       allImages.forEach((imgUrl, index) => {
         const thumbnail = document.createElement('img');
-        thumbnail.src = (window.optimizeImage ? optimizeImage(imgUrl, 200) : imgUrl);
+        try {
+          thumbnail.src = (window.blurPlaceholder ? blurPlaceholder(imgUrl, 24) : imgUrl);
+          thumbnail.setAttribute('data-src', (window.optimizeImage ? optimizeImage(imgUrl, 200, { crop:'fill', height:120 }) : imgUrl));
+          thumbnail.setAttribute('data-srcset', (window.buildSrcSet ? buildSrcSet(imgUrl, [120,160,200,240]) : ''));
+          thumbnail.setAttribute('sizes','(max-width: 480px) 25vw, 120px');
+        } catch(_) {
+          thumbnail.src = imgUrl;
+        }
         thumbnail.className = 'gallery-thumbnail' + (index === 0 ? ' active' : '');
         thumbnail.alt = `Product image ${index + 1}`;
+        thumbnail.loading = 'lazy';
+        thumbnail.decoding = 'async';
         thumbnail.onclick = function() {
           // Update main image
-          productImageEl.src = imgUrl;
+          productImageEl.src = (window.optimizeImage ? optimizeImage(imgUrl, 1200, { crop:'fill' }) : imgUrl);
           
           // Update active thumbnail
           document.querySelectorAll('.gallery-thumbnail').forEach((thumb, idx) => {
@@ -88,6 +105,9 @@ function loadProductDetails(product) {
       galleryContainer.style.display = 'none';
     }
   }
+
+  // Upgrade images now (hero visible; thumbs via IO)
+  try { if (window.lazyUpgradeImages) window.lazyUpgradeImages(); } catch(_){}
   
   document.getElementById('productName').textContent = product.name;
   document.getElementById('productPrice').textContent = `₦${product.price}`;
@@ -109,6 +129,52 @@ function loadProductDetails(product) {
     addBtn.innerHTML = '<i class="fas fa-ban"></i> Out of Stock';
   }
   document.getElementById('productDescription').textContent = product.description;
+
+  // Inject SEO after details are set
+  try { injectProductSEO(product); } catch(_) {}
+}
+
+function injectProductSEO(product) {
+  try {
+    const PUBLIC_ORIGIN = (window.PUBLIC_URL || window.FRONTEND_URL || window.location.origin);
+    // Title
+    if (product && product.name) document.title = `${product.name} | VendPlug`;
+    // Canonical
+    const ensureTag = (sel, create) => document.querySelector(sel) || create();
+    const canon = ensureTag('link[rel="canonical"]', () => { const l=document.createElement('link'); l.rel='canonical'; document.head.appendChild(l); return l; });
+    canon.href = PUBLIC_ORIGIN + window.location.pathname + window.location.search;
+    // Meta description
+    const metaDesc = ensureTag('meta[name="description"]', () => { const m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); return m; });
+    metaDesc.content = (product.description || `${product.name || 'Product'} on VendPlug`).toString().slice(0,160);
+    // Images
+    const allImages = [product.image, ...(product.images || [])].filter(Boolean);
+    const images = allImages.length ? allImages.slice(0,6) : [PUBLIC_ORIGIN + '/assets/placeholder-product.svg'];
+    // Availability
+    const stock = Number(product.stock || 0), reserved = Number(product.reserved || 0);
+    const available = Math.max(0, stock - reserved);
+    const availability = available <= 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock';
+    // JSON-LD Product
+    const ld = {
+      "@context":"https://schema.org",
+      "@type":"Product",
+      "name": product.name || 'Product',
+      "image": images,
+      "description": product.description || '',
+      "sku": product._id || '',
+      "brand": { "@type":"Brand", "name": (product.vendor && (product.vendor.shopName || product.vendor.fullName)) || 'Vendor' },
+      "offers": {
+        "@type":"Offer",
+        "priceCurrency":"NGN",
+        "price": String(product.price || ''),
+        "availability": availability,
+        "url": PUBLIC_ORIGIN + window.location.pathname + window.location.search,
+        "itemCondition":"https://schema.org/NewCondition"
+      }
+    };
+    let el = document.getElementById('ld-product');
+    if (!el) { el = document.createElement('script'); el.type='application/ld+json'; el.id='ld-product'; document.head.appendChild(el); }
+    el.textContent = JSON.stringify(ld);
+  } catch(_) {}
 }
 
 async function loadVendorDetails(vendorId) {
