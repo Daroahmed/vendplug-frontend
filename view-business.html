@@ -635,18 +635,18 @@
           const PUBLIC_ORIGIN = (window.PUBLIC_URL || window.FRONTEND_URL || window.location.origin);
           document.title = `${agent.fullName || agent.businessName || 'Agent Business'} | VendPlug`;
           const ensureTag = (sel, create) => document.querySelector(sel) || create();
-          const canon = ensureTag('link[rel=\"canonical\"]', () => { const l=document.createElement('link'); l.rel='canonical'; document.head.appendChild(l); return l; });
+          const canon = ensureTag('link[rel="canonical"]', () => { const l=document.createElement('link'); l.rel='canonical'; document.head.appendChild(l); return l; });
           canon.href = PUBLIC_ORIGIN + window.location.pathname + window.location.search;
-          const metaDesc = ensureTag('meta[name=\"description\"]', () => { const m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); return m; });
+          const metaDesc = ensureTag('meta[name="description"]', () => { const m=document.createElement('meta'); m.name='description'; document.head.appendChild(m); return m; });
           metaDesc.content = `${agent.fullName || agent.businessName || 'Agent'} on VendPlug — ${products.length} products${agent.state ? ' — ' + agent.state : ''}`.slice(0,160);
           const ld = {
-            \"@context\":\"https://schema.org\",
-            \"@type\":\"CollectionPage\",
-            \"name\": (agent.fullName || agent.businessName || 'Agent') + ' | VendPlug',
-            \"url\": PUBLIC_ORIGIN + window.location.pathname + window.location.search,
-            \"isPartOf\": { \"@type\":\"WebSite\", \"name\":\"VendPlug\", \"url\": PUBLIC_ORIGIN },
-            \"about\": agent.fullName || agent.businessName || 'Agent',
-            \"hasPart\": (products || []).slice(0,12).map(p => ({ \"@type\":\"Product\", \"name\": p.name, \"url\": PUBLIC_ORIGIN + '/view-business-view.html?product=' + p._id }))
+            "@context":"https://schema.org",
+            "@type":"CollectionPage",
+            "name": (agent.fullName || agent.businessName || 'Agent') + ' | VendPlug',
+            "url": PUBLIC_ORIGIN + window.location.pathname + window.location.search,
+            "isPartOf": { "@type":"WebSite", "name":"VendPlug", "url": PUBLIC_ORIGIN },
+            "about": agent.fullName || agent.businessName || 'Agent',
+            "hasPart": (products || []).slice(0,12).map(p => ({ "@type":"Product", "name": p.name, "url": PUBLIC_ORIGIN + '/view-business-view.html?product=' + p._id }))
           };
           let el = document.getElementById('ld-collection');
           if (!el) { el = document.createElement('script'); el.type='application/ld+json'; el.id='ld-collection'; document.head.appendChild(el); }
