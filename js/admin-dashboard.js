@@ -524,6 +524,9 @@ class AdminDashboard {
             case 'wallet-management':
                 this.loadWalletManagement();
                 break;
+            case 'categories':
+                try { window.loadCategoriesForAdmin && window.loadCategoriesForAdmin(); } catch(_) {}
+                break;
         }
     }
 

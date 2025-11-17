@@ -148,6 +148,14 @@
     <label for="businessDescription">Business Description</label>
     <input type="text" id="businessDescription" />
 
+    <label>Business Categories</label>
+    <div class="category-hint" style="font-size:12px;color:#888;margin-bottom:6px;">Select multiple categories that describe your business</div>
+    <select id="category" multiple size="6" style="min-height:140px;"></select>
+    <div id="selectedCategory" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+    <div id="otherCategoryDiv" style="display:none;margin-top:8px;">
+      <input type="text" id="otherCategory" placeholder="Specify your custom category" />
+    </div>
+
     <button id="saveBtn" onclick="updateProfile()">Save Changes</button>
 
     <div id="statusMsg" class="msg"></div>
@@ -166,7 +174,8 @@
       window.location.href = "/agent-auth.html";
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
+    document.addEventListener("DOMContentLoaded", async () => {
+      await loadDynamicCategories('agent');
       loadProfile();
 
       // Preview uploaded brand image
@@ -182,6 +191,63 @@
       });
     });
 
+    // Category selection state and helpers
+    let selectedCategory = [];
+
+    function renderSelectedTags() {
+      const container = document.getElementById('selectedCategory');
+      if (!container) return;
+      container.innerHTML = selectedCategory.map(cat => (
+        `<span class="category-tag" style="background:#00cc99;color:#111;padding:6px 10px;border-radius:14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;">
+          ${cat}
+          <button type="button" data-cat="${cat}" style="background:transparent;border:none;font-weight:bold;cursor:pointer;">×</button>
+        </span>`
+      )).join('');
+      container.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const c = e.currentTarget.getAttribute('data-cat');
+          selectedCategory = selectedCategory.filter(x => x !== c);
+          syncSelectFromState();
+          renderSelectedTags();
+          toggleOtherVisibility();
+        });
+      });
+    }
+
+    function syncSelectFromState() {
+      const sel = document.getElementById('category');
+      if (!sel) return;
+      Array.from(sel.options).forEach(opt => {
+        opt.selected = selectedCategory.includes(opt.value);
+      });
+    }
+
+    function toggleOtherVisibility() {
+      const show = selectedCategory.includes('Other');
+      const div = document.getElementById('otherCategoryDiv');
+      if (div) div.style.display = show ? 'block' : 'none';
+    }
+
+    async function loadDynamicCategories(type) {
+      const select = document.getElementById('category');
+      if (!select) return;
+      try {
+        const res = await fetch(`/api/categories/public?type=${encodeURIComponent(type)}`);
+        const data = await res.json();
+        const cats = (res.ok && data.success && Array.isArray(data.categories) && data.categories.length)
+          ? data.categories.map(c => c.name)
+          : [];
+        const unique = Array.from(new Set(cats));
+        select.innerHTML = unique.map(n => `<option value="${n}">${n}</option>`).join('') + `<option value="Other">Other (Not Listed)</option>`;
+
+        select.addEventListener('change', () => {
+          selectedCategory = Array.from(select.selectedOptions).map(o => o.value);
+          renderSelectedTags();
+          toggleOtherVisibility();
+        });
+      } catch (_) {}
+    }
+
     function loadProfile() {
       document.getElementById("fullName").value = agent.fullName || "";
       document.getElementById("email").value = agent.email || "";
@@ -193,6 +259,14 @@
       if (agent.brandImage) {
         document.getElementById("brandPreview").src = agent.brandImage;
       }
+      // Initialize categories from local agent snapshot if present
+      try {
+        const arr = Array.isArray(agent.category) ? agent.category : (agent.category ? [agent.category] : []);
+        selectedCategory = arr;
+        syncSelectFromState();
+        renderSelectedTags();
+        toggleOtherVisibility();
+      } catch(_) {}
     }
 
     function showMessage(message, type) {
@@ -222,12 +296,23 @@
     }
 
     async function updateProfile() {
+      // Validate categories: at least one selected; if 'Other' selected, require value
+      if (!Array.isArray(selectedCategory) || selectedCategory.length === 0) {
+        return showMessage('Please select at least one business category.', 'error');
+      }
+      const otherVal = (document.getElementById('otherCategory')?.value || '').trim();
+      if (selectedCategory.includes('Other') && !otherVal) {
+        return showMessage('Please specify your custom category in the input provided.', 'error');
+      }
       const formData = new FormData();
       formData.append("businessName", document.getElementById("businessName").value);
       formData.append("businessAddress", document.getElementById("businessAddress").value);
       formData.append("phoneNumber", document.getElementById("phoneNumber").value);
       formData.append("cacNumber", document.getElementById("cacNumber").value);
       formData.append("businessDescription", document.getElementById("businessDescription").value);
+      // categories
+      formData.append("category", JSON.stringify(selectedCategory || []));
+      if (otherVal) formData.append("otherCategory", otherVal);
 
       const brandFile = document.getElementById("brandImage").files[0];
       if (brandFile) {

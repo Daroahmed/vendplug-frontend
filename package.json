@@ -4,7 +4,8 @@
   "description": "VendPlug Escrow Backend",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node backend/server.js"
+    "start": "node backend/server.js",
+    "generate:sitemap": "node js/generate-sitemap.js"
   },
   "keywords": [],
   "author": "Ahmed Abdullahi",

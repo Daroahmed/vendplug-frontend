@@ -580,6 +580,14 @@
           rows="4"
           style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #00cc99; background: #121212; color: white; margin: 10px 0;"
         ></textarea>
+        <div style="font-size: 0.85rem; color:#ccc; margin:6px 0;">Quick responses:</div>
+        <div id="quickRejectReasons" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+          <button type="button" class="btn-secondary quick-reason" data-reason="Sorry, this product is not available.">Product not available</button>
+          <button type="button" class="btn-secondary quick-reason" data-reason="Sorry, we are on holidays and cannot fulfill this order.">On holidays</button>
+          <button type="button" class="btn-secondary quick-reason" data-reason="We are out of stock at the moment.">Out of stock</button>
+          <button type="button" class="btn-secondary quick-reason" data-reason="Unable to process due to incorrect address details.">Incorrect address</button>
+          <button type="button" class="btn-secondary quick-reason" data-reason="Order cannot be fulfilled due to supplier delay.">Supplier delay</button>
+        </div>
         <div class="button-group">
           <button id="confirmRejectBtn" class="btn-danger">Confirm Rejection</button>
           <button id="cancelRejectBtn" class="btn-secondary">Cancel</button>

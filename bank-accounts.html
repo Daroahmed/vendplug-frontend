@@ -54,6 +54,55 @@
             background: var(--bg-secondary);
             color: var(--text-light);
         }
+
+        /* Custom bank dropdown */
+        .bank-dropdown { position: relative; }
+        .bank-dropdown-toggle {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--bg-secondary);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+            color: var(--text-light);
+            cursor: pointer;
+            user-select: none;
+        }
+        .bank-dropdown-panel {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            background: var(--bg-card);
+            border: 1px solid var(--bg-secondary);
+            border-radius: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+            z-index: 50;
+            padding: 8px;
+        }
+        .bank-dropdown-panel input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--bg-secondary);
+            border-radius: 4px;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .bank-options {
+            max-height: 260px;
+            overflow-y: auto;
+            border: 1px solid var(--bg-secondary);
+            border-radius: 4px;
+            background: var(--bg-secondary);
+        }
+        .bank-option {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .bank-option:last-child { border-bottom: none; }
+        .bank-option:hover { background: rgba(255,255,255,0.06); }
         
         .btn-primary {
             background: var(--primary);
@@ -242,9 +291,15 @@
             <form id="addAccountForm">
                 <div class="form-group">
                     <label for="bankName">Bank Name</label>
-                    <select id="bankName" required>
-                        <option value="">Select a bank</option>
-                    </select>
+                    <input type="hidden" id="bankName" required />
+                    <div class="bank-dropdown">
+                        <div id="bankDropdownToggle" class="bank-dropdown-toggle">Select a bank</div>
+                        <div id="bankDropdownPanel" class="bank-dropdown-panel" style="display:none;">
+                            <input type="text" id="bankSearch" placeholder="Search banks by name" />
+                            <div id="bankOptions" class="bank-options"></div>
+                        </div>
+                    </div>
+                    <small>Tap the field to open, type to filter, click to select</small>
                 </div>
                 
                 <div class="form-group">
@@ -330,18 +385,82 @@
             }
         }
 
-        // Populate bank select dropdown
-        function populateBankSelect() {
-            const bankSelect = document.getElementById('bankName');
-            bankSelect.innerHTML = '<option value="">Select a bank</option>';
-            
-            banks.forEach(bank => {
-                const option = document.createElement('option');
-                option.value = bank.code;
-                option.textContent = bank.name;
-                bankSelect.appendChild(option);
+        // Custom dropdown state
+        let selectedBankCode = '';
+        let selectedBankName = '';
+
+        // Populate custom bank options list (with optional filter)
+        function populateBankSelect(filterTerm = '') {
+            const optionsEl = document.getElementById('bankOptions');
+            if (!optionsEl) return;
+
+            const term = String(filterTerm || '').toLowerCase().trim();
+            const filtered = (banks || []).filter(b => (b.name || '').toLowerCase().includes(term));
+
+            if (filtered.length === 0) {
+                optionsEl.innerHTML = '<div class="bank-option" style="opacity:.7;cursor:default;">No matching banks</div>';
+                return;
+            }
+
+            optionsEl.innerHTML = '';
+            filtered.forEach(bank => {
+                const item = document.createElement('div');
+                item.className = 'bank-option';
+                item.textContent = bank.name;
+                item.dataset.code = bank.code;
+                item.addEventListener('click', () => {
+                    // Set selected
+                    selectedBankCode = bank.code;
+                    selectedBankName = bank.name;
+                    const hidden = document.getElementById('bankName');
+                    if (hidden) hidden.value = selectedBankCode;
+                    const toggle = document.getElementById('bankDropdownToggle');
+                    if (toggle) toggle.textContent = selectedBankName;
+                    closeBankDropdown();
+                });
+                optionsEl.appendChild(item);
             });
         }
+
+        function openBankDropdown() {
+            const panel = document.getElementById('bankDropdownPanel');
+            const search = document.getElementById('bankSearch');
+            if (!panel || !search) return;
+            panel.style.display = 'block';
+            search.value = '';
+            populateBankSelect('');
+            try { search.focus(); } catch(_) {}
+        }
+
+        function closeBankDropdown() {
+            const panel = document.getElementById('bankDropdownPanel');
+            if (panel) panel.style.display = 'none';
+        }
+
+        (function wireCustomDropdown(){
+            const toggle = document.getElementById('bankDropdownToggle');
+            const panel = document.getElementById('bankDropdownPanel');
+            const search = document.getElementById('bankSearch');
+            if (!toggle || !panel || !search) return;
+
+            toggle.addEventListener('click', () => {
+                const isOpen = panel.style.display !== 'none';
+                if (isOpen) closeBankDropdown(); else openBankDropdown();
+            });
+
+            search.addEventListener('input', (e) => {
+                populateBankSelect(e.target.value || '');
+            });
+            search.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeBankDropdown();
+            });
+
+            // Click outside to close
+            document.addEventListener('click', (e) => {
+                const dd = e.target.closest('.bank-dropdown');
+                if (!dd) closeBankDropdown();
+            });
+        })();
 
         // Load user's bank accounts
         async function loadBankAccounts() {

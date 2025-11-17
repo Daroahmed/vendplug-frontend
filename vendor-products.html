@@ -432,6 +432,9 @@
       object-fit: cover;
     }
 
+    /* Utility */
+    .hidden { display: none !important; }
+
     @keyframes spin {
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
@@ -650,17 +653,20 @@
         return response;
       }
 
-      // 👇 Load category (handle both array and string formats)
-      if (categorySelect && vendor?.category) {
-        const categories = Array.isArray(vendor.category) ? vendor.category : [vendor.category];
-        categorySelect.innerHTML = categories.map(cat => 
-          `<option value="${cat}" selected>${cat}</option>`
-        ).join('');
-      } else {
-        categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
-        // Try to refresh vendor data if category is missing
-        await refreshVendorData();
-        return; // Stop execution to prevent further issues
+      // 👇 Load categories (view-only; update from vendor-profile)
+      if (categorySelect) {
+        const categories = Array.isArray(vendor?.category) ? vendor.category : (vendor?.category ? [vendor.category] : []);
+        if (categories.length) {
+          try { categorySelect.multiple = true; } catch(_) {}
+          try { categorySelect.size = Math.min(6, Math.max(3, categories.length)); } catch(_) {}
+          try { categorySelect.disabled = true; } catch(_) {}
+          categorySelect.innerHTML = categories.map(cat => `<option value="${cat}" selected>${cat}</option>`).join('');
+        } else {
+          categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
+          // Try to refresh vendor data if category is missing
+          await refreshVendorData();
+          return; // Stop execution to prevent further issues
+        }
       }
 
       fetchVendorProducts();

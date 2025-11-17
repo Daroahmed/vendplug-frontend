@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>VendPlug - Agent Product View</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <style>
     :root {
       --primary: #00cc99;
@@ -510,7 +511,7 @@
   <div class="container">
     <!-- Product Image -->
     <div class="product-image-container">
-      <img id="productImage" class="product-image" src="" alt="Product Image" />
+      <img id="productImage" class="product-image" src="" alt="Product Image" fetchpriority="high" decoding="async" />
       <!-- Image Gallery -->
       <div id="productImageGallery" style="display: none;">
         <div class="gallery-thumbnails" id="galleryThumbnails"></div>
@@ -614,5 +615,9 @@
   <script src="js/cdn-utils.js"></script>
   <script src="js/view-business-view.js"></script>
   <script src="/js/cart-badge.js"></script>
+  <script>
+    try{ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); }catch(_){}
+    document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
+  </script>
 </body>
 </html>

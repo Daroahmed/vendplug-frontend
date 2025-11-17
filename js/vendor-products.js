@@ -22,11 +22,17 @@ document.addEventListener('DOMContentLoaded', () => {
     newFiles: [] // Array of File objects for newly selected images
   };
 
-  // 👇 Load category
-  if (categorySelect && vendor?.category) {
-    categorySelect.innerHTML = `<option value="${vendor.category}" selected>${vendor.category}</option>`;
-  } else {
-    categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
+  // 👇 Load categories (view-only, managed in vendor-profile)
+  if (categorySelect) {
+    const categories = Array.isArray(vendor?.category) ? vendor.category : (vendor?.category ? [vendor.category] : []);
+    if (categories.length) {
+      try { categorySelect.multiple = true; } catch(_) {}
+      try { categorySelect.size = Math.min(6, Math.max(3, categories.length)); } catch(_) {}
+      try { categorySelect.disabled = true; } catch(_) {}
+      categorySelect.innerHTML = categories.map(cat => `<option value="${cat}" selected>${cat}</option>`).join('');
+    } else {
+      categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
+    }
   }
 
   fetchVendorProducts();
@@ -171,10 +177,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const price = Number(document.getElementById('productPrice').value);
     const description = document.getElementById('productDescription').value;
     const stock = Number(document.getElementById('productStock').value);
-    const category = vendor?.category;
+    // Determine categories from select (supports single or multiple); fallback to vendor profile
+    let selectedCategories = [];
+    if (categorySelect) {
+      if (categorySelect.multiple) {
+        selectedCategories = Array.from(categorySelect.selectedOptions).map(o => o.value).filter(Boolean);
+      } else {
+        if (categorySelect.value) selectedCategories = [categorySelect.value];
+      }
+    }
+    if (!selectedCategories.length) {
+      const fromProfile = Array.isArray(vendor?.category) ? vendor.category : (vendor?.category ? [vendor.category] : []);
+      selectedCategories = fromProfile.filter(Boolean);
+    }
 
-    if (!category) {
-      const msg = 'Vendor category is missing';
+    if (!selectedCategories.length) {
+      const msg = 'Please select at least one category before saving.';
       if (typeof showOverlay === 'function') {
         return showOverlay({ type:'error', title:'Missing Category', message: msg });
       }
@@ -186,19 +204,34 @@ document.addEventListener('DOMContentLoaded', () => {
     formData.append('price', price);
     formData.append('description', description);
     formData.append('stock', stock);
-    formData.append('category', category);
+    // Backward compatibility: send single 'category' plus 'categories' array
+    formData.append('category', selectedCategories[0]);
+    formData.append('categories', JSON.stringify(selectedCategories));
 
     // Handle photo updates
     if (id) {
       // Updating existing product
-      // If there are existing photos to keep, pass them
-      if (currentPhotos.existing.length > 0) {
+      // Build keep list and primary decision from current UI state
+      const keptAdditionalUrls = (currentPhotos.existing || [])
+        .filter(p => !p.isPrimary)
+        .map(p => p.url);
+      const keepPrimary = (currentPhotos.existing || []).some(p => p.isPrimary);
+
+      // Send explicit kept additional images and primary decision
+      formData.append('keptAdditionalImages', JSON.stringify(keptAdditionalUrls));
+      formData.append('keepPrimary', keepPrimary ? 'true' : 'false');
+
+      // If there are existing photos kept, hint backend to preserve primary when adding more
+      if (keepPrimary) {
         formData.append('keepExistingImages', 'true');
+        formData.append('preservePrimary', 'true');
       }
       
       // If we want to clear all images and replace them
       if (currentPhotos.existing.length === 0 && currentPhotos.newFiles.length > 0) {
         formData.append('clearImages', 'true');
+        // No primary yet – allow first upload to become primary
+        // (do not append preservePrimary)
       }
     }
 
@@ -313,7 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="product-name">${product.name}</h3>
             <p class="product-description">${product.description || ''}</p>
             <div class="product-meta">
-              <span>Category: ${product.category}</span>
+              <span>Category: ${Array.isArray(product.category) ? product.category.join(', ') : (product.category || '')}</span>
               <span>Stock: ${(() => {
                 const stock = Number(product.stock ?? 0);
                 const reserved = Number(product.reserved ?? 0);
@@ -364,24 +397,40 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('productId').value = '';
     currentPhotos = { existing: [], newFiles: [] };
     initializePhotoInterface();
+
+    // Restore UI labels
+    const formTitle = document.getElementById('formTitle');
+    if (formTitle) formTitle.textContent = 'Add New Product';
+    const submitText = document.getElementById('submitButtonText');
+    if (submitText) submitText.textContent = 'Add Product';
   }
 
   // Edit product function
   window.editProduct = function(prod) {
     const formTitle = document.getElementById('formTitle');
     if (formTitle) formTitle.textContent = 'Edit Product';
+    const submitText = document.getElementById('submitButtonText');
+    if (submitText) submitText.textContent = 'Update Product';
+
+    // Ensure form is visible when editing
+    const toggleBtn = document.getElementById('toggleForm');
+    if (addProductForm && addProductForm.classList.contains('hidden')) {
+      addProductForm.classList.remove('hidden');
+      if (toggleBtn) toggleBtn.innerHTML = '<i class="fas fa-times"></i> Close Form';
+    }
     document.getElementById('productId').value = prod._id;
     document.getElementById('productName').value = prod.name;
     document.getElementById('productPrice').value = prod.price;
     document.getElementById('productDescription').value = prod.description || '';
     document.getElementById('productStock').value = prod.stock || 0;
 
-    // Load existing images
+    // Load existing images (mark primary for precise update semantics)
     const allImages = [prod.image, ...(prod.images || [])].filter(Boolean);
     currentPhotos.existing = allImages.map((url, index) => ({
       url,
       id: `existing-${index}`,
-      index
+      index,
+      isPrimary: index === 0 && url === prod.image
     }));
     currentPhotos.newFiles = [];
     

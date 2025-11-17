@@ -878,8 +878,8 @@
       // Redirect to auth selection to avoid auto-login loops
       window.location.href = 'auth-selection.html';
     }
-    // Grouped categories - exact match with buyer-home.html
-    const groupedCategories = [
+    // Grouped categories - default (fallback) data
+    let groupedCategories = [
 
     {
         groupName: "Electronics & Gadgets",
@@ -1097,11 +1097,36 @@
       stateSelect.value = persisted;
     }
 
-    // Load categories
-    function loadCategories() {
+    // Load categories (prefer dynamic categories from API; fallback to defaults)
+    async function loadCategories() {
       const categorySections = document.getElementById('categorySections');
       const loadingSpinner = document.getElementById('loadingSpinner');
       
+      // Try dynamic fetch first
+      try {
+        const res = await fetch('/api/categories/public?type=both');
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.categories)) {
+            // Transform flat list into groupedCategories structure
+            const map = new Map();
+            data.categories.forEach(cat => {
+              const group = (cat.groupName && cat.groupName.trim()) || 'Other';
+              const arr = map.get(group) || [];
+              arr.push({ name: cat.name, image: cat.imageUrl || `https://via.placeholder.com/300x150?text=${encodeURIComponent(cat.name)}` });
+              map.set(group, arr);
+            });
+            const dynamicGroups = Array.from(map.entries()).map(([groupName, categories]) => ({
+              groupName,
+              categories
+            }));
+            if (dynamicGroups.length > 0) {
+              groupedCategories = dynamicGroups;
+            }
+          }
+        }
+      } catch(_) {}
+
       // Hide loading spinner
       loadingSpinner.style.display = 'none';
       
