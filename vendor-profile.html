@@ -261,11 +261,46 @@
       const select = document.getElementById('category');
       if (!select) return;
       try {
-        const res = await fetch(`/api/categories/public?type=${encodeURIComponent(type)}`);
-        const data = await res.json();
-        const cats = (res.ok && data.success && Array.isArray(data.categories) && data.categories.length)
-          ? data.categories.map(c => c.name)
-          : [];
+        // Try production path first with BACKEND (same-origin in prod)
+        let res = await fetch(`${BACKEND}/api/categories/public?type=${encodeURIComponent(type)}`);
+        let data = await res.json().catch(()=>({}));
+
+        // Fallback 1: some backends expose only "both" on public route
+        if (!res.ok || res.status === 404) {
+          try {
+            res = await fetch(`${BACKEND}/api/categories/public?type=both`);
+            data = await res.json().catch(()=>({}));
+          } catch (_) {}
+        }
+
+        // Fallback 2: try relative path in case BACKEND differs
+        if (!res.ok || res.status === 404) {
+          try {
+            res = await fetch(`/api/categories/public?type=${encodeURIComponent(type)}`);
+            data = await res.json().catch(()=>({}));
+          } catch (_) {}
+        }
+
+        // Fallback 3: legacy path without /public
+        if (!res.ok || res.status === 404) {
+          try {
+            res = await fetch(`${BACKEND}/api/categories?type=${encodeURIComponent(type)}`);
+            data = await res.json().catch(()=>({}));
+          } catch (_) {}
+        }
+
+        let cats = [];
+        if (res.ok) {
+          if (Array.isArray(data?.categories)) {
+            cats = data.categories.map(c => c.name);
+          } else if (Array.isArray(data)) {
+            cats = data;
+          } else if (data?.success && Array.isArray(data?.data)) {
+            cats = data.data.map(c => c.name || c);
+          }
+        } else {
+          console.warn('⚠️ Unable to load categories; response not ok', { status: res.status, data });
+        }
         const unique = Array.from(new Set(cats));
         select.innerHTML = unique.map(n => `<option value="${n}">${n}</option>`).join('') + `<option value="Other">Other (Not Listed)</option>`;
 

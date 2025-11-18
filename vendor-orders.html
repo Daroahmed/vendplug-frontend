@@ -603,33 +603,49 @@
   <script src="js/vendor-orders.js" defer></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      async function fetchOrders() {
+      const ordersEl = document.getElementById('orders-container');
+      async function fetchOrdersWithRetry(attempts = 3){
         const status = document.getElementById("statusFilter").value;
         const startDate = document.getElementById("startDate").value;
         const endDate = document.getElementById("endDate").value;
-  
         let url = `/api/vendor-orders?`;
-  
-        if (status) url += `status=${status}&`;
-        if (startDate) url += `startDate=${startDate}&`;
-        if (endDate) url += `endDate=${endDate}&`;
-  
+        if (status) url += `status=${encodeURIComponent(status)}&`;
+        if (startDate) url += `startDate=${encodeURIComponent(startDate)}&`;
+        if (endDate) url += `endDate=${encodeURIComponent(endDate)}&`;
         const token = getAuthToken();
-  
-        const res = await fetch(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-  
-        const data = await res.json();
-        renderOrders(data);
+
+        let lastError;
+        for (let i=0;i<attempts;i++){
+          try{
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` }, cache:'no-store' });
+            if (!res.ok) {
+              // Avoid parsing HTML error pages as JSON
+              const txt = await res.text().catch(()=>'');
+              if (res.status >= 500 || res.status === 429 || res.status === 502 || res.status === 503 || res.status === 504) {
+                lastError = new Error(`Upstream error ${res.status}`);
+              } else {
+                throw new Error(`Request failed (${res.status}): ${txt || res.statusText}`);
+              }
+            } else {
+              let data = [];
+              try { data = await res.json(); } catch(e){ throw new Error('Bad response format'); }
+              if (typeof renderOrders === 'function') renderOrders(data);
+              return;
+            }
+          }catch(e){
+            lastError = e;
+          }
+          const delay = [300, 800, 1500][i] || 1500;
+          await new Promise(r=>setTimeout(r, delay));
+        }
+        console.warn('Orders load failed:', lastError && lastError.message);
+        if (ordersEl) {
+          ordersEl.innerHTML = `<p style="color:#bbb;">Unable to load orders right now. Please try again in a moment.</p>`;
+        }
       }
-  
-      document.getElementById("applyFilters").addEventListener("click", fetchOrders);
-  
-      // Initial fetch
-      fetchOrders();
+
+      document.getElementById("applyFilters").addEventListener("click", ()=>fetchOrdersWithRetry());
+      fetchOrdersWithRetry();
     });
   </script>
 </body>

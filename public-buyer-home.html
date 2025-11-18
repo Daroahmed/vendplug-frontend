@@ -5,6 +5,9 @@
   <title>VendPlug - Discover Amazing Products</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/logo.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/CSS/ads.css">
   <style>
@@ -1104,25 +1107,72 @@
       
       // Try dynamic fetch first
       try {
-        const res = await fetch('/api/categories/public?type=both');
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.success && Array.isArray(data.categories)) {
-            // Transform flat list into groupedCategories structure
-            const map = new Map();
-            data.categories.forEach(cat => {
-              const group = (cat.groupName && cat.groupName.trim()) || 'Other';
-              const arr = map.get(group) || [];
-              arr.push({ name: cat.name, image: cat.imageUrl || `https://via.placeholder.com/300x150?text=${encodeURIComponent(cat.name)}` });
-              map.set(group, arr);
-            });
-            const dynamicGroups = Array.from(map.entries()).map(([groupName, categories]) => ({
-              groupName,
-              categories
-            }));
-            if (dynamicGroups.length > 0) {
-              groupedCategories = dynamicGroups;
+        const BACKEND = window.BACKEND_URL || window.location.origin;
+        let res, data;
+
+        // Preferred: same-origin BACKEND public both
+        res = await fetch(`${BACKEND}/api/categories/public?type=both`);
+        data = await res.json().catch(()=>({}));
+
+        // Fallback: try vendor/agent separately and merge
+        if (!res.ok || !Array.isArray(data?.categories) || data.categories.length === 0) {
+          try {
+            const [rv, ra] = await Promise.allSettled([
+              fetch(`${BACKEND}/api/categories/public?type=vendor`),
+              fetch(`${BACKEND}/api/categories/public?type=agent`)
+            ]);
+            const jsonV = rv.status === 'fulfilled' ? await rv.value.json().catch(()=>({})) : {};
+            const jsonA = ra.status === 'fulfilled' ? await ra.value.json().catch(()=>({})) : {};
+            const arrV = Array.isArray(jsonV?.categories) ? jsonV.categories : [];
+            const arrA = Array.isArray(jsonA?.categories) ? jsonA.categories : [];
+            if (arrV.length || arrA.length) {
+              data = { categories: [...arrV, ...arrA] };
+              res = { ok: true };
             }
+          } catch (_) {}
+        }
+
+        // Fallback: relative path
+        if (!res.ok || !Array.isArray(data?.categories) || data.categories.length === 0) {
+          try {
+            const r2 = await fetch(`/api/categories/public?type=both`);
+            const d2 = await r2.json().catch(()=>({}));
+            if (r2.ok && Array.isArray(d2?.categories) && d2.categories.length) {
+              res = r2; data = d2;
+            }
+          } catch (_) {}
+        }
+
+        // Fallback: legacy without /public
+        if (!res.ok || !Array.isArray(data?.categories) || data.categories.length === 0) {
+          try {
+            const r3 = await fetch(`${BACKEND}/api/categories`);
+            const d3 = await r3.json().catch(()=>({}));
+            if (r3.ok && Array.isArray(d3)) {
+              data = { categories: d3 };
+              res = { ok: true };
+            }
+          } catch (_) {}
+        }
+
+        // If we have anything usable, transform into grouped structure
+        if (res && (res.ok || Array.isArray(data?.categories))) {
+          const cats = Array.isArray(data?.categories) ? data.categories : (Array.isArray(data) ? data : []);
+          const map = new Map();
+          cats.forEach(cat => {
+            const name = (cat?.name || '').toString();
+            if (!name) return;
+            const group = (cat?.groupName && cat.groupName.trim()) || 'Other';
+            const arr = map.get(group) || [];
+            arr.push({ name, image: cat?.imageUrl || `https://via.placeholder.com/300x150?text=${encodeURIComponent(name)}` });
+            map.set(group, arr);
+          });
+          const dynamicGroups = Array.from(map.entries()).map(([groupName, categories]) => ({
+            groupName,
+            categories
+          }));
+          if (dynamicGroups.length > 0) {
+            groupedCategories = dynamicGroups;
           }
         }
       } catch(_) {}

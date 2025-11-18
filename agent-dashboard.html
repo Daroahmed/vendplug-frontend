@@ -1896,5 +1896,18 @@
   </script>
   
   <script src="/js/pwa-register.js"></script>
+  <script>
+    // Personalize welcome header with agent name
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const a = JSON.parse(localStorage.getItem('vendplugAgent') || 'null');
+        const name = (a?.businessName || a?.fullName || '').toString().trim();
+        if (name) {
+          const welcome = document.querySelector('.welcome-message h2') || document.querySelector('.welcome-message')?.querySelector('h2');
+          if (welcome) welcome.textContent = `Welcome back, ${name}! 👋`;
+        }
+      } catch(_) {}
+    });
+  </script>
 </body>
 </html>

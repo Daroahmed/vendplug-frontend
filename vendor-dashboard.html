@@ -1908,6 +1908,19 @@
       }, 4000);
     }
   </script>
+  <script>
+    // Personalize welcome header with vendor name
+    document.addEventListener('DOMContentLoaded', () => {
+      try {
+        const v = JSON.parse(localStorage.getItem('vendplugVendor') || 'null');
+        const name = (v?.shopName || v?.businessName || v?.fullName || '').toString().trim();
+        if (name) {
+          const welcome = document.querySelector('.welcome-message h2') || document.querySelector('.welcome-message')?.querySelector('h2');
+          if (welcome) welcome.textContent = `Welcome back, ${name}! 👋`;
+        }
+      } catch(_) {}
+    });
+  </script>
   
   <script src="/js/pwa-register.js"></script>
 </body>
