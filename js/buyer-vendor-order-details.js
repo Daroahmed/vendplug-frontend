@@ -130,7 +130,7 @@ function renderOrderDetails(order) {
 
   const confirmBtn = document.getElementById("confirmBtn");
   if (confirmBtn) {
-    confirmBtn.addEventListener("click", () => confirmReceipt(order._id));
+    confirmBtn.addEventListener("click", (e) => confirmReceipt(order._id, e.currentTarget));
   }
 
   const openDisputeBtn = document.getElementById("openDisputeBtn");
@@ -139,7 +139,7 @@ function renderOrderDetails(order) {
   }
 }
 
-async function confirmReceipt(orderId) {
+async function confirmReceipt(orderId, buttonEl) {
   // Show warning about dispute eligibility
   const confirmed = confirm(
     "⚠️ IMPORTANT: By confirming delivery, you acknowledge that:\n\n" +
@@ -155,6 +155,12 @@ async function confirmReceipt(orderId) {
   }
 
   try {
+    // Guard UI against double clicks
+    if (buttonEl) {
+      buttonEl.disabled = true;
+      buttonEl.dataset._t = buttonEl.innerHTML;
+      buttonEl.innerHTML = '<span class="loading-spinner"></span> Updating...';
+    }
     const res = await fetch(`/api/buyer-orders/${orderId}/confirm`, {
       method: "PUT",
       headers: {
@@ -172,6 +178,11 @@ async function confirmReceipt(orderId) {
     }
   } catch (err) {
     console.error("❌ confirmReceipt error:", err);
+  } finally {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = buttonEl.dataset._t || 'Confirm Delivery';
+    }
   }
 }
 

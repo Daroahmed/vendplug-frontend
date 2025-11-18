@@ -260,19 +260,19 @@ function openOrderModal(orderId) {
   renderProcessFlow(order.status);
 
   // Attach dynamic listeners
-  document.getElementById("acceptBtn")?.addEventListener("click", acceptOrder);
+  document.getElementById("acceptBtn")?.addEventListener("click", (e) => acceptOrder(e.currentTarget));
   document.getElementById("rejectBtn")?.addEventListener("click", () => {
     openRejectionModal();
   });
 
-  document.getElementById("markPreparingBtn")?.addEventListener("click", () =>
-    updateOrderStatus("preparing")
+  document.getElementById("markPreparingBtn")?.addEventListener("click", (e) =>
+    updateOrderStatus("preparing", e.currentTarget)
   );
-  document.getElementById("markOutBtn")?.addEventListener("click", () =>
-    updateOrderStatus("out_for_delivery")
+  document.getElementById("markOutBtn")?.addEventListener("click", (e) =>
+    updateOrderStatus("out_for_delivery", e.currentTarget)
   );
-  document.getElementById("markDeliveredBtn")?.addEventListener("click", () =>
-    updateOrderStatus("delivered")
+  document.getElementById("markDeliveredBtn")?.addEventListener("click", (e) =>
+    updateOrderStatus("delivered", e.currentTarget)
   );
 
   document.getElementById("closeModalBtn")?.addEventListener("click", closeOrderModal);
@@ -307,8 +307,13 @@ function openOrderModal(orderId) {
 /* ---------------------------
    Accept / Reject / Status
 ---------------------------- */
-async function acceptOrder() {
+async function acceptOrder(buttonEl) {
   try {
+    if (buttonEl) {
+      buttonEl.disabled = true;
+      buttonEl.dataset._t = buttonEl.innerHTML;
+      buttonEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Accepting...';
+    }
     const res = await fetch(`/api/agent-orders/${currentOrderId}/accept`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
@@ -316,7 +321,7 @@ async function acceptOrder() {
 
     if (!res.ok) throw new Error(await res.text());
 
-    alert("✅ Order accepted!");
+    window.showOverlay ? showOverlay({ type:'success', title:'Accepted', message:'Order accepted!' }) : alert("✅ Order accepted!");
     // Update the order status in cached orders
     const order = cachedOrders.find(o => o._id === currentOrderId);
     if (order) {
@@ -328,12 +333,22 @@ async function acceptOrder() {
     fetchOrders();
   } catch (err) {
     console.error("Accept error:", err);
-    alert("Something went wrong while accepting the order.");
+    window.showOverlay ? showOverlay({ type:'error', title:'Error', message:'Something went wrong while accepting the order.' }) : alert("Something went wrong while accepting the order.");
+  } finally {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = buttonEl.dataset._t || 'Accept';
+    }
   }
 }
 
-async function rejectOrder(reason) {
+async function rejectOrder(reason, buttonEl) {
   try {
+    if (buttonEl) {
+      buttonEl.disabled = true;
+      buttonEl.dataset._t = buttonEl.innerHTML;
+      buttonEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejecting...';
+    }
     const res = await fetch(`/api/agent-orders/${currentOrderId}/reject`, {
       method: "POST",
       headers: {
@@ -345,7 +360,7 @@ async function rejectOrder(reason) {
 
     if (!res.ok) throw new Error(await res.text());
 
-    alert("❌ Order rejected and refunded!");
+    window.showOverlay ? showOverlay({ type:'success', title:'Rejected', message:'Order rejected and refunded!' }) : alert("❌ Order rejected and refunded!");
     // Update the order status in cached orders
     const order = cachedOrders.find(o => o._id === currentOrderId);
     if (order) {
@@ -357,12 +372,22 @@ async function rejectOrder(reason) {
     fetchOrders();
   } catch (err) {
     console.error("Reject error:", err);
-    alert("Something went wrong while rejecting the order.");
+    window.showOverlay ? showOverlay({ type:'error', title:'Error', message:'Something went wrong while rejecting the order.' }) : alert("Something went wrong while rejecting the order.");
+  } finally {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = buttonEl.dataset._t || 'Reject';
+    }
   }
 }
 
-async function updateOrderStatus(status) {
+async function updateOrderStatus(status, buttonEl) {
   try {
+    if (buttonEl) {
+      buttonEl.disabled = true;
+      buttonEl.dataset._t = buttonEl.innerHTML;
+      buttonEl.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Updating...`;
+    }
     const res = await fetch(`/api/agent-orders/${currentOrderId}/status`, {
       method: "POST",
       headers: {
@@ -374,7 +399,7 @@ async function updateOrderStatus(status) {
 
     if (!res.ok) throw new Error(await res.text());
 
-    alert(`📦 Order marked as ${status}!`);
+    window.showOverlay ? showOverlay({ type:'success', title:'Updated', message:`Order marked as ${status}!` }) : alert(`📦 Order marked as ${status}!`);
     // Update the order status in cached orders
     const order = cachedOrders.find(o => o._id === currentOrderId);
     if (order) {
@@ -386,7 +411,12 @@ async function updateOrderStatus(status) {
     fetchOrders();
   } catch (err) {
     console.error("Update status error:", err);
-    alert("Something went wrong while updating the status.");
+    window.showOverlay ? showOverlay({ type:'error', title:'Error', message:'Something went wrong while updating the status.' }) : alert("Something went wrong while updating the status.");
+  } finally {
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.innerHTML = buttonEl.dataset._t || 'Update';
+    }
   }
 }
 
@@ -416,43 +446,43 @@ document.getElementById("quickRejectReasons")?.addEventListener("click", (e) => 
 });
 document.getElementById("closeRejectionModalBtn")?.addEventListener("click", closeRejectionModal);
 document.getElementById("cancelRejectBtn")?.addEventListener("click", closeRejectionModal);
-document.getElementById("confirmRejectBtn")?.addEventListener("click", () => {
+document.getElementById("confirmRejectBtn")?.addEventListener("click", (e) => {
   const reason = document.getElementById("rejectionReason").value.trim();
   if (reason.length < 10) {
-    alert("Please provide a rejection reason with at least 10 characters.");
+    window.showOverlay ? showOverlay({ type:'info', title:'Add reason', message:'Please provide a rejection reason with at least 10 characters.' }) : alert("Please provide a rejection reason with at least 10 characters.");
     return;
   }
   closeRejectionModal();
-  rejectOrder(reason);
+  rejectOrder(reason, e.currentTarget);
 });
 
 /* ---------------------------
    Modal Actions
 ---------------------------- */
-document.getElementById("acceptBtn")?.addEventListener("click", acceptOrder);
+document.getElementById("acceptBtn")?.addEventListener("click", (e) => acceptOrder(e.currentTarget));
 
-document.getElementById("rejectBtn")?.addEventListener("click", () => {
+document.getElementById("rejectBtn")?.addEventListener("click", (e) => {
   const reason = prompt("Reason for rejecting this order:");
   if (reason?.trim()) {
-    rejectOrder(reason.trim());
+    rejectOrder(reason.trim(), e.currentTarget);
   } else {
-    alert("Rejection cancelled. A reason is required.");
+    window.showOverlay ? showOverlay({ type:'info', title:'Cancelled', message:'Rejection cancelled. A reason is required.' }) : alert("Rejection cancelled. A reason is required.");
   }
 });
 
-document.getElementById("acceptBtn")?.addEventListener("click", acceptOrder);
+document.getElementById("acceptBtn")?.addEventListener("click", (e) => acceptOrder(e.currentTarget));
 
-document.getElementById("rejectBtn")?.addEventListener("click", () => {
+document.getElementById("rejectBtn")?.addEventListener("click", (e) => {
   const reason = prompt("Reason for rejecting this order:");
   if (reason?.trim()) {
-    rejectOrder(reason.trim());
+    rejectOrder(reason.trim(), e.currentTarget);
   } else {
-    alert("Rejection cancelled. A reason is required.");
+    window.showOverlay ? showOverlay({ type:'info', title:'Cancelled', message:'Rejection cancelled. A reason is required.' }) : alert("Rejection cancelled. A reason is required.");
   }
 });
 
-document.getElementById("markDeliveredBtn")?.addEventListener("click", () => {
-  updateOrderStatus("delivered");
+document.getElementById("markDeliveredBtn")?.addEventListener("click", (e) => {
+  updateOrderStatus("delivered", e.currentTarget);
 });
 
 function closeOrderModal() {

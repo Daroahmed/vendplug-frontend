@@ -327,13 +327,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function fetchAgentProducts() {
     try {
-      const res = await fetch(`${BACKEND}/api/agent-products/mine`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // Lightweight retry with backoff; avoids parsing HTML error pages as JSON
+      const fetchWithRetry = async (url, opts, attempts = 3) => {
+        let lastErr;
+        for (let i = 0; i < attempts; i++) {
+          try {
+            const r = await fetch(url, { cache: 'no-store', ...opts });
+            if (!r.ok) {
+              const txt = await r.text().catch(() => '');
+              if (r.status >= 500 || r.status === 429 || r.status === 502 || r.status === 503 || r.status === 504) {
+                lastErr = new Error(`Upstream error ${r.status}`);
+              } else {
+                throw new Error(`Request failed (${r.status}): ${txt || r.statusText}`);
+              }
+            } else {
+              try {
+                return await r.json();
+              } catch (_) {
+                throw new Error('Bad response format');
+              }
+            }
+          } catch (e) {
+            lastErr = e;
+          }
+          const delay = [300, 800, 1500][i] || 1500;
+          await new Promise(r => setTimeout(r, delay));
+        }
+        throw lastErr || new Error('Request failed');
+      };
 
-      const products = await res.json();
+      const products = await fetchWithRetry(`${BACKEND}/api/agent-products/mine`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       productList.innerHTML = '';
       if (!Array.isArray(products) || !products.length) {
@@ -390,6 +415,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const r = await fetch(`${BACKEND}/api/agent-products/${id}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
+            if (!r.ok) {
+              const txt = await r.text().catch(()=>'');
+              throw new Error(txt || `Failed to load product (${r.status})`);
+            }
             const product = await r.json();
             if (window.editProduct) {
               window.editProduct(product);
@@ -432,14 +461,17 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Delete failed');
+      if (!res.ok) {
+        const txt = await res.text().catch(()=>'');
+        throw new Error(txt || 'Delete failed');
+      }
+      const result = await res.json().catch(()=>({}));
 
       await fetchAgentProducts();
       alert('✅ Product deleted');
     } catch (err) {
       console.error(err);
-      alert('❌ Failed to delete productierre: ' + err.message);
+      alert('❌ Failed to delete product: ' + err.message);
     }
   }
 

@@ -1145,14 +1145,45 @@
       try {
         const select = document.getElementById('categoryFilter');
         if (!select) return;
-        const res = await fetch(`/api/categories/public?type=${encodeURIComponent(type)}`);
+        const BACKEND = window.BACKEND_URL || window.location.origin;
+        let res = await fetch(`${BACKEND}/api/categories/public?type=${encodeURIComponent(type)}`);
+        let data = await res.json().catch(()=>({}));
+
+        // Fallback 1: both
+        if (!res.ok || !Array.isArray(data?.categories) || data.categories.length === 0) {
+          try {
+            res = await fetch(`${BACKEND}/api/categories/public?type=both`);
+            data = await res.json().catch(()=>({}));
+          } catch (_) {}
+        }
+        // Fallback 2: relative
+        if (!res.ok || !Array.isArray(data?.categories) || data.categories.length === 0) {
+          try {
+            res = await fetch(`/api/categories/public?type=${encodeURIComponent(type)}`);
+            data = await res.json().catch(()=>({}));
+          } catch (_) {}
+        }
+        // Fallback 3: legacy
+        if (!res.ok || !Array.isArray(data?.categories) || data.categories.length === 0) {
+          try {
+            res = await fetch(`${BACKEND}/api/categories?type=${encodeURIComponent(type)}`);
+            data = await res.json().catch(()=>({}));
+          } catch (_) {}
+        }
+
         if (!res.ok) return; // keep static
-        const data = await res.json();
-        if (!data.success || !Array.isArray(data.categories) || data.categories.length === 0) return; // keep static
+        const categories = Array.isArray(data?.categories) ? data.categories
+          : Array.isArray(data) ? data
+          : Array.isArray(data?.data) ? data.data
+          : [];
+        if (categories.length === 0) return; // keep static
 
         // Rebuild options
         const placeholder = '<option value="">-- All Categories --</option>';
-        const options = data.categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        const options = categories.map(c => {
+          const name = typeof c === 'string' ? c : (c?.name || '');
+          return name ? `<option value="${name}">${name}</option>` : '';
+        }).join('');
         select.innerHTML = placeholder + options;
         // Restore selected value
         if (typeof currentValue === 'string') {
