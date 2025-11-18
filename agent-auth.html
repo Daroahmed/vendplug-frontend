@@ -1074,12 +1074,32 @@
           } catch (_) {}
         }
 
-        if (!res.ok) return; // keep static
         const categories = Array.isArray(data?.categories) ? data.categories
           : Array.isArray(data) ? data
           : Array.isArray(data?.data) ? data.data
           : [];
-        if (categories.length === 0) return; // keep static
+
+        // Build from API or curated fallback if API unavailable
+        let names = categories.map(c => (typeof c === 'string' ? c : (c?.name || ''))).filter(Boolean);
+        if (!names.length) {
+          names = [
+            'Phones & Accessories / Laptops & Computers','Game Consoles & Accessories','Solar & Inverters','CCTV & Security Devices',
+            'Boutiques','Thrift / Okrika / Gonjo','Tokunbo / Belgium Products','Shoes and Bags','Jewelry & Accessories','Tailoring & Fashion Design','Textiles & Fabrics','Wigs & Hair','Cosmetics & Skincare','Perfumes, Incense & Fragrances','Nigerian Caps e.g. Zana',
+            'Supermarkets/Groceries and Provisions','Soft Drinks & Water','Kitchen Utensils & Plastics','Tea & Spices','Fruits & Vegetables','Grains',
+            'Suya, Kebabs & Balango','Raw Meat Sellers','Poultry (Chicken, Eggs, Turkey)','Livestock (Goat, Ram, Cow)','Fish & Seafood',
+            'Restaurants','Catering & Small Chops','Hotels & Apartments','Event Rentals (Canopies, Chairs)',
+            'Furniture','Home Appliances','Interior Decor & Curtains','Cleaning Services','Flowers & Gardens',
+            'Building Materials','Aluminium & Roofing','Cement, Blocks & Interlock','Gravel, Sharp Sand & Quarry','Electrical Supplies','Plumbing Materials','Tiles & Paints','Metal & Iron Works','Carpenters & Artisans',
+            'Pharmacy & Patent Stores','Hospital & Medical Equipment','Herbal Medicine','Maternity & Clinics','Fitness & Supplements',
+            'Printing Press','Stationery & Office Supplies','Internet & Data Services','Freelancers & Digital Services',
+            'Car Dealers / New, Tokunbo $ Used Cars ','Car Spare Parts','Auto Mechanics','Tyres, Batteries & Accessories','Car Wash & Detailing',
+            'Laundry Services','Dry Cleaning','House Cleaning',
+            'Animal Feed & Supplements','Fish Farming',
+            'Pets (Dogs, Cats, Birds)','Pet Food & Accessories','Veterinary Clinics','Pet Grooming',
+            'Real Estate Agents','Rentals & Sales','Facility Management','Movers & Packers',
+            'Legal Services','Accounting & Tax','Private Tutors','Event Planners','Photography & Videography','Tech Repairs'
+          ];
+        }
 
         // We have categories — rebuild options
         const placeholder = select.querySelector('option[value=""]');
@@ -1087,10 +1107,8 @@
         select.innerHTML = '';
         if (placeholder) select.appendChild(placeholder);
 
-        categories.forEach(cat => {
+        Array.from(new Set(names)).forEach(name => {
           const opt = document.createElement('option');
-          const name = typeof cat === 'string' ? cat : (cat?.name || '');
-          if (!name) return;
           opt.value = name;
           opt.textContent = name;
           select.appendChild(opt);
