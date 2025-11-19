@@ -6,27 +6,45 @@ console.log("✅ auth-utils.js loaded");
  * @returns {string|null} The authentication token or null if not found
  */
 function getAuthToken() {
-  // Prefer elevated roles first to avoid using a buyer/agent token on staff/admin pages
+  // 1) Prefer the token that matches the ACTIVE session (determined by user data presence)
+  const roleToDataKey = {
+    admin: 'vendplugAdmin',
+    staff: 'staff-info',
+    buyer: 'vendplugBuyer',
+    agent: 'vendplugAgent',
+    vendor: 'vendplugVendor'
+  };
+  const roleToTokenKey = {
+    admin: 'vendplug-admin-token',
+    staff: 'vendplug-staff-token',
+    buyer: 'vendplug-buyer-token',
+    agent: 'vendplug-agent-token',
+    vendor: 'vendplug-vendor-token'
+  };
+
+  // Determine active role by presence of both token and its user data
+  const rolesInPriority = ['admin', 'staff', 'buyer', 'agent', 'vendor'];
+  for (const role of rolesInPriority) {
+    const data = localStorage.getItem(roleToDataKey[role]);
+    const token = localStorage.getItem(roleToTokenKey[role]);
+    if (data && token) return token;
+  }
+
+  // 2) Fallback to any available token (legacy behavior, but safer ordering)
   const adminToken = localStorage.getItem("vendplug-admin-token");
   const staffToken = localStorage.getItem("vendplug-staff-token");
   const buyerToken = localStorage.getItem("vendplug-buyer-token");
   const agentToken = localStorage.getItem("vendplug-agent-token");
   const vendorToken = localStorage.getItem("vendplug-vendor-token");
-  
-  // Return the first available token in priority order
-  const token = adminToken || staffToken || buyerToken || agentToken || vendorToken;
-  
-  if (token) {
-    return token;
-  }
-  
-  // Fallback to generic token (for backward compatibility)
+  const any = adminToken || staffToken || buyerToken || agentToken || vendorToken;
+  if (any) return any;
+
+  // 3) Generic fallback
   const genericToken = localStorage.getItem("vendplug-token");
   if (genericToken) {
     console.log("⚠️ Using fallback generic token");
     return genericToken;
   }
-  
   console.warn("❌ No authentication token found");
   return null;
 }
@@ -36,43 +54,23 @@ function getAuthToken() {
  * @returns {string|null} The user type or null if not found
  */
 function getCurrentUserType() {
-  // Check higher privilege tokens first (admin, staff)
-  if (localStorage.getItem("vendplug-admin-token")) {
-    // Only log if we also have valid user data (indicates active session)
-    const hasValidSession = localStorage.getItem('vendplugAdmin');
-    if (hasValidSession) {
-      console.log("🔍 Detected admin token");
+  // Return the role only if both token AND user data exist (prevents cross‑role leakage)
+  const checks = [
+    { role: 'admin', token: 'vendplug-admin-token', data: 'vendplugAdmin' },
+    { role: 'staff', token: 'vendplug-staff-token', data: 'staff-info' },
+    { role: 'buyer', token: 'vendplug-buyer-token', data: 'vendplugBuyer' },
+    { role: 'agent', token: 'vendplug-agent-token', data: 'vendplugAgent' },
+    { role: 'vendor', token: 'vendplug-vendor-token', data: 'vendplugVendor' }
+  ];
+  for (const c of checks) {
+    if (localStorage.getItem(c.token) && localStorage.getItem(c.data)) {
+      if (c.role === 'admin') console.log("🔍 Detected admin token");
+      if (c.role === 'staff') console.log("🔍 Detected staff token");
+      if (c.role === 'buyer') console.log("🔍 Detected buyer token");
+      if (c.role === 'agent') console.log("🔍 Detected agent token");
+      if (c.role === 'vendor') console.log("🔍 Detected vendor token");
+      return c.role;
     }
-    return "admin";
-  }
-  if (localStorage.getItem("vendplug-staff-token")) {
-    const hasValidSession = localStorage.getItem('staff-info');
-    if (hasValidSession) {
-      console.log("🔍 Detected staff token");
-    }
-    return "staff";
-  }
-  // Then check regular user tokens
-  if (localStorage.getItem("vendplug-buyer-token")) {
-    const hasValidSession = localStorage.getItem('vendplugBuyer');
-    if (hasValidSession) {
-      console.log("🔍 Detected buyer token");
-    }
-    return "buyer";
-  }
-  if (localStorage.getItem("vendplug-agent-token")) {
-    const hasValidSession = localStorage.getItem('vendplugAgent');
-    if (hasValidSession) {
-      console.log("🔍 Detected agent token");
-    }
-    return "agent";
-  }
-  if (localStorage.getItem("vendplug-vendor-token")) {
-    const hasValidSession = localStorage.getItem('vendplugVendor');
-    if (hasValidSession) {
-      console.log("🔍 Detected vendor token");
-    }
-    return "vendor";
   }
   return null;
 }
@@ -242,6 +240,54 @@ window.clearOtherUserTokens = clearOtherUserTokens;
 window.autoCleanupTokens = autoCleanupTokens;
 window.clearAllTokens = clearAllTokens;
 window.cleanupAfterLogin = cleanupAfterLogin;
+
+/**
+ * Get token strictly for a specific role (returns null if role not active)
+ * @param {'buyer'|'agent'|'vendor'|'staff'|'admin'} role
+ */
+function getAuthTokenForRole(role){
+  const roleToTokenKey = {
+    admin: 'vendplug-admin-token',
+    staff: 'vendplug-staff-token',
+    buyer: 'vendplug-buyer-token',
+    agent: 'vendplug-agent-token',
+    vendor: 'vendplug-vendor-token'
+  };
+  const roleToDataKey = {
+    admin: 'vendplugAdmin',
+    staff: 'staff-info',
+    buyer: 'vendplugBuyer',
+    agent: 'vendplugAgent',
+    vendor: 'vendplugVendor'
+  };
+  if (!roleToTokenKey[role]) return null;
+  const token = localStorage.getItem(roleToTokenKey[role]);
+  const data = localStorage.getItem(roleToDataKey[role]);
+  return (token && data) ? token : null;
+}
+
+/**
+ * Return Authorization header value for a given role if available
+ */
+function getAuthHeaderForRole(role){
+  const t = getAuthTokenForRole(role);
+  return t ? `Bearer ${t}` : '';
+}
+
+/**
+ * Get user object for a specific role (null if not active)
+ */
+function getCurrentUserOfRole(role){
+  const map = {
+    admin: 'vendplugAdmin',
+    staff: 'staff-info',
+    buyer: 'vendplugBuyer',
+    agent: 'vendplugAgent',
+    vendor: 'vendplugVendor'
+  };
+  const raw = localStorage.getItem(map[role]);
+  return raw ? JSON.parse(raw) : null;
+}
 
 // Lightweight global loading overlay
 ;(function(){

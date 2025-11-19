@@ -1,7 +1,7 @@
 // vendor-orders.js
 
-// ✅ Consistent token key
-const token = localStorage.getItem("vendplug-vendor-token");
+// ✅ Use role-pinned token (fallback to legacy)
+const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('vendor') : null) || localStorage.getItem("vendplug-vendor-token") || (typeof getAuthToken === 'function' ? getAuthToken() : null);
 if (!token) {
   console.warn("⚠️ No vendor token found. Did you login?");
 }

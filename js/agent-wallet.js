@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const accountNumberEl = document.getElementById('accountNumber');
   const balanceEl = document.getElementById('balance');
-  const agent = getCurrentUser();
-  const token = getAuthToken();
+  const agent = (typeof getCurrentUserOfRole === 'function' ? getCurrentUserOfRole('agent') : null) || getCurrentUser();
+  const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('agent') : null) || getAuthToken();
   
   // Store actual balance for toggle functionality
   let actualBalance = '0';

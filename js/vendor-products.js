@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const vendor = getCurrentUser();
-  const token = getAuthToken();
+  const vendor = (typeof getCurrentUserOfRole === 'function' ? getCurrentUserOfRole('vendor') : null) || getCurrentUser();
+  const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('vendor') : null) || getAuthToken();
   const BACKEND = window.BACKEND_URL || "";
 
   if (!token) {

@@ -85,7 +85,7 @@
         <div id="loadingState">
             <div class="loading-spinner"></div>
             <h2>Processing Payment...</h2>
-            <p>Please wait while we verify your payment.</p>
+            <p>We’re verifying your payment with Paystack. This can take up to 2 minutes. You can leave this page — your wallet will be credited automatically once confirmed.</p>
         </div>
         
         <div id="successState" style="display: none;">
@@ -123,37 +123,65 @@
             
             console.log('🔍 Payment reference:', reference);
             
-            // Get token using smart auth utility
-            const token = getAuthToken();
-            if (!token) {
-                showError('No authentication token found. Please login again.');
-                return;
-            }
-            
-            try {
-                // Verify payment with backend
-                console.log('🔍 Verifying payment with backend...');
-                const response = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment-api?reference=${reference}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+            // Try direct verification if token exists; otherwise fall back to polling
+            const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('buyer') : null) || getAuthToken();
+
+            const tryDirectVerify = async () => {
+                if (!token) return false;
+                try {
+                    console.log('🔍 Verifying payment with backend (token-based)...');
+                    const response = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment-api?reference=${encodeURIComponent(reference)}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const data = await response.json();
+                    console.log('📡 Backend response:', data);
+                    if (response.ok && data.success) {
+                        showSuccess('Payment verified successfully! Your wallet has been credited.');
+                        return true;
                     }
-                });
-                
-                const data = await response.json();
-                console.log('📡 Backend response:', data);
-                
-                if (response.ok && data.success) {
-                    showSuccess('Payment verified successfully! Your wallet has been credited.');
-                } else {
-                    showError(data.message || 'Payment verification failed');
+                } catch (err) {
+                    console.warn('Direct verification failed, will poll status:', err?.message || err);
                 }
-                
-            } catch (error) {
-                console.error('❌ Payment verification error:', error);
-                showError('Network error during payment verification. Please try again.');
+                return false;
+            };
+
+            const startPolling = async () => {
+                console.log('⏳ Starting status polling...');
+                // keep loading state visible while polling
+                await pollTopupStatus(reference, 24, 5000);
+            };
+
+            // Attempt direct verify; if it doesn’t confirm, start polling
+            const verified = await tryDirectVerify();
+            if (!verified) {
+                await startPolling();
             }
         });
-        
+
+        async function pollTopupStatus(reference, maxAttempts = 24, intervalMs = 5000) {
+            for (let i = 0; i < maxAttempts; i++) {
+                try {
+                    const res = await fetch(`${window.BACKEND_URL}/api/wallet/topup/status?reference=${encodeURIComponent(reference)}`);
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        const status = (data.data && data.data.status) || '';
+                        if (status === 'successful') {
+                            showSuccess('Payment verified successfully! Your wallet has been credited.');
+                            return;
+                        }
+                        if (status === 'failed') {
+                            showError('Payment was marked as failed. If you were debited, please contact support with your reference.');
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Polling error:', e?.message || e);
+                }
+                await new Promise(r => setTimeout(r, intervalMs));
+            }
+            showError('We are still processing your payment. If your wallet isn’t credited shortly, please check back later or contact support with your reference.');
+        }
+
         function showSuccess(message) {
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('successState').style.display = 'block';
