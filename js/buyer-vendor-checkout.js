@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   // CONFIG & STATE
   // =========================
-  const token = getAuthToken();
+  const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('buyer') : null) || getAuthToken();
   const baseURL = window.BACKEND_URL; // ✅ from config.js
 
   if (!baseURL) {
@@ -226,6 +226,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // =========================
   checkoutBtn.addEventListener('click', async () => {
     if (checkoutBtn && checkoutBtn.disabled) return;
+    // Safety confirmation before proceeding
+    const confirmMsg =
+      'Delivery is arranged directly with the vendor (e.g., motor‑park/dispatch).\n\n' +
+      '• Agree delivery details and cost with the vendor in chat.\n' +
+      '• Your payment is held by VendPlug (escrow) until you confirm delivery.\n' +
+      '• Only release payment after you collect and check the items at pickup.\n\n' +
+      'Do you want to place this order now?';
+    const proceed = window.confirm(confirmMsg);
+    if (!proceed) return;
     const state = stateInput.value.trim();
     const address = addressInput.value.trim();
     

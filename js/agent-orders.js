@@ -1,7 +1,7 @@
 // agent-orders.js
 
-// ✅ Consistent token key
-const token = localStorage.getItem("vendplug-agent-token");
+// ✅ Use role-pinned token (fallback to legacy)
+const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('agent') : null) || localStorage.getItem("vendplug-agent-token") || (typeof getAuthToken === 'function' ? getAuthToken() : null);
 if (!token) {
   console.warn("⚠️ No agent token found. Did you login?");
 }

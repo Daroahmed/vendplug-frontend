@@ -208,6 +208,22 @@
       margin: 1.5rem 0;
     }
 
+    /* Safety / Delivery guidance banner */
+    .safety-note{
+      display:flex;
+      gap:12px;
+      align-items:flex-start;
+      background: rgba(255,255,255,0.06);
+      border-left:4px solid var(--primary);
+      padding:12px;
+      border-radius:8px;
+      color:#e5e5e5;
+      margin:12px 0 16px;
+      line-height:1.4;
+      font-size:.95rem;
+    }
+    .safety-note i{ color: var(--primary); font-size:20px; margin-top:2px; }
+
     /* Form Elements */
     .form-group {
       margin-bottom: 1.5rem;
@@ -399,6 +415,15 @@
       <small style="color: var(--muted); font-size: 0.8rem; margin-top: 0.3rem; display: block;">
         Add specific area, street, or landmark to help with delivery
       </small>
+    </div>
+
+    <!-- Safety / Delivery info -->
+    <div class="safety-note" role="note" aria-live="polite">
+      <i class="fas fa-shield-alt" aria-hidden="true"></i>
+      <div>
+        <strong>Delivery is arranged directly with the vendor.</strong>
+        For inter‑state or park pickups, agree delivery details with the vendor in chat. Your payment is held safely by <strong>VendPlug (escrow)</strong> until you confirm delivery. <u>Only release payment after you receive and check your items at pickup</u>. If anything looks wrong, open a dispute from the order page — we’ll help you resolve it.
+      </div>
     </div>
 
     <!-- Checkout Button -->

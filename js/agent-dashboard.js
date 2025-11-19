@@ -1,4 +1,4 @@
-const token = getAuthToken();
+const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('agent') : null) || getAuthToken();
 const role = getCurrentUserType();
 
 // Redirect to login if no token or not an agent
