@@ -1,0 +1,99 @@
+/* Minimal skeleton loading styles with shimmer */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #1f1f1f;
+  border-radius: 8px;
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%);
+  animation: skeleton-shimmer 1.2s infinite;
+}
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+.skeleton-line { height: 12px; margin: 8px 0; border-radius: 6px; background: #2a2a2a; }
+.skeleton-line.sm { height: 10px; }
+.skeleton-line.lg { height: 16px; }
+.w-40 { width: 40%; } .w-60 { width: 60%; } .w-80 { width: 80%; } .w-100 { width: 100%; }
+.h-120 { height: 120px; } .h-140 { height: 140px; } .h-160 { height: 160px; } .h-200 { height: 200px; }
+.skeleton-avatar { width: 64px; height: 64px; border-radius: 50%; background: #2a2a2a; }
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1.2rem;
+  padding: 0.5rem 0;
+}
+.skeleton-card { background: #1b1b1b; border-radius: 12px; overflow: hidden; }
+.skeleton-card .img { background: #222; }
+.skeleton-card .body { padding: 12px; }
+
+/* Image loader overlay for cards */
+.img-wrap {
+  position: relative;
+  background: #171717;
+  overflow: hidden;
+}
+.img-wrap > img {
+  display: block;
+  width: 100%;
+  height: auto; /* allow page-specific classes (e.g., .product-image, .vendor-image) to define height */
+  object-fit: cover; /* will be overridden by hero rules where needed */
+  opacity: 0.001; /* invisible until loaded; will fade in to 1 */
+  transition: opacity .35s ease;
+}
+.img-wrap > img.product-image {
+  /* Hero images should keep their intrinsic aspect ratio */
+  object-fit: contain;
+}
+.img-wrap > img.img-loaded {
+  opacity: 1;
+}
+.img-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.05), rgba(255,255,255,0.03));
+  animation: skeleton-shimmer 1.2s infinite;
+}
+.img-loader .spinner {
+  width: 26px;
+  height: 26px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top: 3px solid #00cc99;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.img-wrap.loaded .img-loader { display: none; }
+
+/* Ensure hero image area reserves space and shows full image */
+.product-image-container .img-wrap {
+  width: 100%;
+  min-height: 40vh;    /* reserve space so spinner and image aren't tiny */
+  max-height: 70vh;    /* matches page style */
+}
+.product-image-container .img-wrap > img.product-image {
+  width: 100%;
+  height: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+/* Card images: respect per-page heights */
+.vendor-card .img-wrap > img.vendor-image { height: 160px; object-fit: cover; }
+.agent-card .img-wrap > img.agent-image { height: 160px; object-fit: cover; }
+.products .img-wrap > img.product-image { height: 140px; object-fit: cover; }
+/* Public home categories */
+.category-card .img-wrap > img.category-image { height: 150px; object-fit: cover; }
+.active-category-card .img-wrap > img.active-category-image { height: 120px; object-fit: cover; }
+@media (max-width: 768px){
+  .active-category-card .img-wrap > img.active-category-image { height: 100px; }
+}
+
+

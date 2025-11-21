@@ -1,5 +1,11 @@
 // Register service worker and handle PWA installation
 (function(){
+  // Skip service worker in Capacitor native runtime to avoid stale caches in WebView
+  try {
+    const isCapacitorNative = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
+    if (isCapacitorNative) return;
+  } catch(_) {}
+
   if (!('serviceWorker' in navigator)) return;
   
   let deferredPrompt;

@@ -23,6 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchTransactions(start, end);
   });
 
+  // Initialize push notifications for buyer (best-effort, native only)
+  try { window.initPushForRole && window.initPushForRole('buyer'); } catch (_) {}
+
   async function fetchWallet() {
     try {
       const res = await fetch(`${window.BACKEND_URL}/api/wallet/buyer`, {
@@ -239,12 +242,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Redirect to Paystack payment page
       console.log('🚀 Redirecting to Paystack:', authorizationUrl);
-      // Firefox Android sometimes blocks/bugs inline and back/forward cache. Force a top-level replace.
-      const ua = navigator.userAgent || '';
-      const isFirefoxAndroid = /Android/i.test(ua) && /Firefox/i.test(ua);
-      if (isFirefoxAndroid) {
-        window.location.replace(authorizationUrl);
-      } else {
+      // Prefer Capacitor Browser in native runtime for reliability
+      try {
+        const isCap = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
+        const browser = isCap && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser;
+        if (browser && typeof browser.open === 'function') {
+          await browser.open({ url: authorizationUrl, presentationStyle: 'fullscreen' });
+        } else {
+          // Firefox Android sometimes blocks/bugs inline and back/forward cache. Force a top-level replace.
+          const ua = navigator.userAgent || '';
+          const isFirefoxAndroid = /Android/i.test(ua) && /Firefox/i.test(ua);
+          if (isFirefoxAndroid) {
+            window.location.replace(authorizationUrl);
+          } else {
+            window.location.href = authorizationUrl;
+          }
+        }
+      } catch (_) {
         window.location.href = authorizationUrl;
       }
     } catch (error) {

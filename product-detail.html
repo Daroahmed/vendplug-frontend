@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Product Details - Vendplug</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="CSS/skeleton.css">
   <style>
     :root {
       --primary: #00cc99;
@@ -106,6 +107,17 @@
   </div>
 
   <div class="container">
+    <!-- Skeleton detail -->
+    <div id="skeletonDetail" style="margin-bottom:16px;">
+      <div class="skeleton h-200" style="border-radius:12px;"></div>
+      <div style="padding:12px 2px;">
+        <div class="skeleton-line lg w-80"></div>
+        <div class="skeleton-line w-40"></div>
+        <div class="skeleton-line w-100"></div>
+        <div class="skeleton-line w-80"></div>
+      </div>
+    </div>
+
     <div id="loadingSpinner" class="loading" style="text-align:center; padding: 3rem;">
       <div class="spinner" style="width:50px;height:50px;border:5px solid rgba(255,255,255,0.1);border-top:5px solid var(--primary);border-radius:50%;margin:0 auto 10px;animation:spin 1s linear infinite"></div>
       <div style="color:var(--muted)">Loading product details...</div>
@@ -200,6 +212,7 @@
     function showLoading(show){
       document.getElementById('loadingSpinner').style.display = show ? 'block' : 'none';
       document.getElementById('productContainer').style.display = show ? 'none' : 'block';
+      try { document.getElementById('skeletonDetail').style.display = show ? 'block' : 'none'; } catch(_) {}
       document.getElementById('errorMessage').style.display = 'none';
     }
     function showError(){

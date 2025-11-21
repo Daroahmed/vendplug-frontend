@@ -90,8 +90,19 @@ function loadProductDetails(product) {
         thumbnail.loading = 'lazy';
         thumbnail.decoding = 'async';
         thumbnail.onclick = function() {
-          // Update main image
-          productImageEl.src = (window.optimizeImage ? optimizeImage(imgUrl, 1200, { crop:'fill' }) : imgUrl);
+          // Update main image with spinner + blur-up
+          try {
+            const wrap = productImageEl.closest('.img-wrap');
+            if (wrap) wrap.classList.remove('loaded');
+            productImageEl.classList.remove('img-loaded');
+            // show tiny blur immediately
+            try { productImageEl.src = (window.blurPlaceholder ? blurPlaceholder(imgUrl, 60) : imgUrl); } catch(_) { productImageEl.src = imgUrl; }
+            // set upgrade target and re-observe
+            productImageEl.setAttribute('data-src', (window.optimizeImage ? optimizeImage(imgUrl, 1200, { crop:'fill' }) : imgUrl));
+            if (window.lazyUpgradeImages) window.lazyUpgradeImages();
+          } catch(_) {
+            productImageEl.src = (window.optimizeImage ? optimizeImage(imgUrl, 1200, { crop:'fill' }) : imgUrl);
+          }
           
           // Update active thumbnail
           document.querySelectorAll('.gallery-thumbnail').forEach((thumb, idx) => {
@@ -132,6 +143,8 @@ function loadProductDetails(product) {
 
   // Inject SEO after details are set
   try { injectProductSEO(product); } catch(_) {}
+
+  try { document.getElementById('skeletonDetail').style.display = 'none'; } catch(_) {}
 }
 
 function injectProductSEO(product) {
