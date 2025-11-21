@@ -6,6 +6,7 @@
   <title>VendPlug - Agent Product View</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
+  <link rel="stylesheet" href="CSS/skeleton.css">
   <style>
     :root {
       --primary: #00cc99;
@@ -509,6 +510,16 @@
   </div>
 
   <div class="container">
+    <!-- Skeleton detail -->
+    <div id="skeletonDetail" style="margin-bottom:16px;">
+      <div class="skeleton h-200" style="border-radius:12px;"></div>
+      <div style="padding:12px 2px;">
+        <div class="skeleton-line lg w-80"></div>
+        <div class="skeleton-line w-40"></div>
+        <div class="skeleton-line w-100"></div>
+        <div class="skeleton-line w-80"></div>
+      </div>
+    </div>
     <!-- Product Image -->
     <div class="product-image-container">
       <img id="productImage" class="product-image" src="" alt="Product Image" fetchpriority="high" decoding="async" />

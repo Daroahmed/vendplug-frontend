@@ -87,8 +87,17 @@ function loadProductDetails(product) {
         if (index === 0) thumbnail.classList.add('active');
         
         thumbnail.addEventListener('click', () => {
-          // Switch main image
-          productImageEl.src = (window.optimizeImage ? optimizeImage(imgUrl, 1200, { crop:'fill' }) : imgUrl);
+          // Switch main image with spinner + blur-up
+          try {
+            const wrap = productImageEl.closest('.img-wrap');
+            if (wrap) wrap.classList.remove('loaded');
+            productImageEl.classList.remove('img-loaded');
+            try { productImageEl.src = (window.blurPlaceholder ? blurPlaceholder(imgUrl, 60) : imgUrl); } catch(_) { productImageEl.src = imgUrl; }
+            productImageEl.setAttribute('data-src', (window.optimizeImage ? optimizeImage(imgUrl, 1200, { crop:'fill' }) : imgUrl));
+            if (window.lazyUpgradeImages) window.lazyUpgradeImages();
+          } catch(_) {
+            productImageEl.src = (window.optimizeImage ? optimizeImage(imgUrl, 1200, { crop:'fill' }) : imgUrl);
+          }
           // Update active thumbnail
           thumbnailsContainer.querySelectorAll('.gallery-thumbnail').forEach(t => t.classList.remove('active'));
           thumbnail.classList.add('active');
@@ -125,6 +134,8 @@ function loadProductDetails(product) {
 
   // Inject SEO after details are set
   try { injectAgentProductSEO(product); } catch(_) {}
+
+  try { document.getElementById('skeletonDetail').style.display = 'none'; } catch(_) {}
 }
 
 function injectAgentProductSEO(product) {

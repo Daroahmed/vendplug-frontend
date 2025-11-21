@@ -10,6 +10,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/logo.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/CSS/ads.css">
+  <link rel="stylesheet" href="CSS/skeleton.css">
   <style>
     :root {
       --primary: #00cc99;
@@ -749,6 +750,7 @@
 
   <!-- Ad Manager -->
   <script src="/js/adManager.js"></script>
+  <script src="js/cdn-utils.js"></script>
   <script src="/js/pwa-register.js"></script>
   
   <!-- Notification and Message Scripts -->
@@ -1193,7 +1195,14 @@
           <div class="categories-grid">
             ${group.categories.map(category => `
               <div class="category-card" onclick="selectCategory('${category.name}')">
-                <img src="${category.image}" alt="${category.name}" class="category-image" onerror="this.src='https://via.placeholder.com/300x150?text=${encodeURIComponent(category.name)}'">
+                <img src="${(window.blurPlaceholder ? blurPlaceholder(category.image, 40, 30) : category.image)}"
+                     data-src="${category.image}"
+                     data-srcset="${(window.buildSrcSet ? buildSrcSet(category.image, [320,480,640,800]) : '')}"
+                     sizes="(max-width: 480px) 50vw, 300px"
+                     alt="${category.name}"
+                     class="category-image"
+                     loading="lazy" decoding="async"
+                     onerror="this.src='https://via.placeholder.com/300x150?text=${encodeURIComponent(category.name)}'">
                 <div class="category-info">
                   <h4 class="category-name">${category.name}</h4>
                   <p class="category-description">Browse products in this category</p>
@@ -1204,6 +1213,7 @@
         `;
         
         categorySections.appendChild(groupDiv);
+        try { window.lazyUpgradeImages && window.lazyUpgradeImages(); } catch(_){}
       });
     }
 
@@ -1254,13 +1264,21 @@
         wrapper.style.display = '';
         grid.innerHTML = activeCards.slice(0, 12).map(category => `
           <div class="active-category-card" onclick="selectCategory('${category.name}')">
-            <img src="${category.image}" alt="${category.name}" class="active-category-image" onerror="this.src='https://via.placeholder.com/300x150?text=${encodeURIComponent(category.name)}'">
+            <img src="${(window.blurPlaceholder ? blurPlaceholder(category.image, 40, 30) : category.image)}"
+                 data-src="${category.image}"
+                 data-srcset="${(window.buildSrcSet ? buildSrcSet(category.image, [320,480,640,800]) : '')}"
+                 sizes="(max-width: 480px) 50vw, 300px"
+                 alt="${category.name}"
+                 class="active-category-image"
+                 loading="lazy" decoding="async"
+                 onerror="this.src='https://via.placeholder.com/300x150?text=${encodeURIComponent(category.name)}'">
             <div class="active-category-info">
               <h4 class="active-category-name">${category.name}</h4>
               <p class="active-category-description">${currentMode === 'agent' ? 'Agents' : 'Vendors'} available</p>
             </div>
           </div>
         `).join('');
+        try { window.lazyUpgradeImages && window.lazyUpgradeImages(); } catch(_){}
       } catch (e) {
         console.warn('Active categories load failed:', e.message);
         document.getElementById('activeCategoriesSection').style.display = 'none';

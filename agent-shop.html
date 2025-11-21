@@ -6,6 +6,8 @@
   <title>VendPlug | Agent Businesses</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="CSS/ads.css">
+  <link rel="stylesheet" href="CSS/skeleton.css">
+  <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <style>
     /* Your CSS remains the same */
     :root {
@@ -975,6 +977,18 @@
     <!-- All Agents Section -->
     <h2 class="section-title">All Agents</h2>
     
+    <!-- Skeleton while loading -->
+    <div id="agentSkeleton" class="skeleton-grid">
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+    </div>
+
     <!-- Agent Grid -->
     <div class="agent-grid" id="agentGrid">
       <!-- All agents will be loaded here -->
@@ -1271,6 +1285,7 @@
           currentPage = 1;
           hasMore = true;
           agentGrid.innerHTML = "";
+          try { document.getElementById('agentSkeleton').style.display = 'grid'; } catch(_) {}
         }
         loadingSpinner.style.display = "flex";
 
@@ -1316,6 +1331,7 @@
       } finally {
         const loadingSpinner = document.getElementById("loadingSpinner");
         loadingSpinner.style.display = "none";
+        try { document.getElementById('agentSkeleton').style.display = 'none'; } catch(_) {}
         isLoading = false;
       }
     }
@@ -1325,6 +1341,7 @@
       const startIndex = agentGrid.children.length;
       const html = agents.map((agent, i) => agentCardHTML(agent, startIndex + i)).join("");
       agentGrid.insertAdjacentHTML('beforeend', html);
+      try { window.lazyUpgradeImages && window.lazyUpgradeImages(); } catch(_){}
     }
 
     function agentCardHTML(agent, idx) {
@@ -1579,6 +1596,7 @@
     try{ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); }catch(_){}
     document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
   </script>
+  <script src="/js/cdn-utils.js"></script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>
     <script src="/js/adManager.js"></script>

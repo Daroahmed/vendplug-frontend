@@ -1,0 +1,15 @@
+# Ignore heavy/duplicate assets when copying webDir to native
+
+node_modules/**
+**/*.map
+**/*.gz
+**/*.br
+
+# Dev-only
+**/*.ts
+package-lock.json
+README.md
+test/**
+tests/**
+
+

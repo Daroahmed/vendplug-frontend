@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Search Results - Vendplug</title>
+  <link rel="stylesheet" href="CSS/skeleton.css">
   <style>
     :root{--primary:#00cc99;--bg:#0a0a0a;--card:#1e1e1e;--muted:#9aa0a6;--border:rgba(255,255,255,.08)}
     *{box-sizing:border-box;margin:0;padding:0}
@@ -97,6 +98,16 @@
       </div>
     </div>
 
+    <!-- Skeleton while searching -->
+    <div id="resultsSkeleton" class="skeleton-grid" style="display:none">
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div></div>
+    </div>
+
     <div id="grid" class="grid"></div>
     <div id="empty" class="empty" style="display:none">No products found</div>
   </div>
@@ -127,6 +138,8 @@
     }
 
     async function searchProducts(query){
+      try { document.getElementById('resultsSkeleton').style.display = 'grid'; } catch(_) {}
+      try { document.getElementById('grid').style.display = 'none'; } catch(_) {}
       try{
         const res = await fetch(`${window.BACKEND_URL || window.location.origin}/api/products/search?q=${encodeURIComponent(query)}&limit=50`);
         const data = await res.json();
@@ -138,6 +151,9 @@
         console.error('Search error:', err);
         allProducts = filteredProducts = [];
         render([]);
+      } finally {
+        try { document.getElementById('resultsSkeleton').style.display = 'none'; } catch(_) {}
+        try { document.getElementById('grid').style.display = ''; } catch(_) {}
       }
     }
 

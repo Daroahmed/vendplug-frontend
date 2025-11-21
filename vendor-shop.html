@@ -6,6 +6,7 @@
   <title>VendPlug | Vendor Shops</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="CSS/ads.css">
+  <link rel="stylesheet" href="CSS/skeleton.css">
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   <style>
     /* Your CSS remains the same */
@@ -992,6 +993,18 @@
     <!-- All Vendors Section -->
     <h2 class="section-title">All Vendors</h2>
     
+    <!-- Skeleton while loading -->
+    <div id="vendorSkeleton" class="skeleton-grid">
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-160 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div><div class="skeleton-line sm w-40"></div></div></div>
+    </div>
+
     <!-- Vendor Grid -->
     <div class="vendor-grid" id="vendorGrid">
       <!-- All vendors will be loaded here -->
@@ -1288,6 +1301,7 @@
           currentPage = 1;
           hasMore = true;
           vendorGrid.innerHTML = "";
+          try { document.getElementById('vendorSkeleton').style.display = 'grid'; } catch(_) {}
         }
         loadingSpinner.style.display = "flex";
 
@@ -1333,6 +1347,7 @@
       } finally {
         const loadingSpinner = document.getElementById("loadingSpinner");
         loadingSpinner.style.display = "none";
+        try { document.getElementById('vendorSkeleton').style.display = 'none'; } catch(_) {}
         isLoading = false;
       }
     }
@@ -1342,6 +1357,7 @@
       const startIndex = vendorGrid.children.length;
       const html = vendors.map((vendor, i) => vendorCardHTML(vendor, startIndex + i)).join("");
       vendorGrid.insertAdjacentHTML('beforeend', html);
+      try { window.lazyUpgradeImages && window.lazyUpgradeImages(); } catch(_){}
     }
 
     function vendorCardHTML(vendor, idx) {
@@ -1599,6 +1615,7 @@
     // Kick lazy upgrade after DOM ready (for LQIP -> full)
     document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
   </script>
+    <script src="js/cdn-utils.js"></script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>
     <script src="/js/adManager.js"></script>
@@ -1618,6 +1635,16 @@
         } catch(_) {}
         window.location.href = 'auth-selection.html';
       }
+    </script>
+    <script>
+      // Ensure images added dynamically get wrapped with loaders
+      (function(){
+        const origAppend = appendVendors;
+        appendVendors = function(vendors){
+          origAppend(vendors);
+          try { window.lazyUpgradeImages && window.lazyUpgradeImages(); } catch(_) {}
+        };
+      })();
     </script>
 </body>
 </html>

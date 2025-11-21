@@ -6,6 +6,7 @@
   <title>Vendor Shop - VendPlug</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="CSS/ads.css">
+  <link rel="stylesheet" href="CSS/skeleton.css">
   <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
   
   <style>
@@ -438,6 +439,15 @@
   </div>
 
   <!-- Vendor Profile -->
+  <section id="skeletonProfile" class="vendor-profile" style="padding:1rem;">
+    <div style="display:flex;align-items:center;gap:15px;">
+      <div class="skeleton-avatar skeleton"></div>
+      <div style="flex:1;">
+        <div class="skeleton-line w-60"></div>
+        <div class="skeleton-line w-40"></div>
+      </div>
+    </div>
+  </section>
   <section id="vendorProfile" class="vendor-profile">
     <!-- Vendor details will be loaded here -->
   </section>
@@ -474,6 +484,14 @@
   </div>
 
   <!-- Products Grid -->
+  <section id="skeletonProducts" class="products">
+    <div class="skeleton-grid" style="padding:0;">
+      <div class="skeleton-card"><div class="img h-140 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-140 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-140 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-40"></div></div></div>
+      <div class="skeleton-card"><div class="img h-140 skeleton"></div><div class="body"><div class="skeleton-line w-80"></div><div class="skeleton-line w-40"></div></div></div>
+    </div>
+  </section>
   <section id="vendorProducts" class="products">
     <!-- Products will be loaded here -->
   </section>
@@ -802,6 +820,8 @@
 
         // Hide loading spinner
         loadingEl.style.display = 'none';
+        try { document.getElementById('skeletonProfile').style.display = 'none'; } catch(_) {}
+        try { document.getElementById('skeletonProducts').style.display = 'none'; } catch(_) {}
 
         if (!products || products.length === 0) {
           vendorProductsEl.innerHTML = '<p class="no-products">No products for this vendor yet.</p>';
@@ -829,6 +849,8 @@
             </div>
           </div>
         `).join('');
+
+        try { window.lazyUpgradeImages && window.lazyUpgradeImages(); } catch(_){}
 
         // Prefetch product details JSON when cards are near viewport
         try {
@@ -907,6 +929,7 @@
     try{ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); }catch(_){}
     document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
   </script>
+  <script src="/js/cdn-utils.js"></script>
   <script src="/js/auth-utils.js"></script>
   <script src="/js/back-button.js"></script>
   <script src="/js/adManager.js"></script>
