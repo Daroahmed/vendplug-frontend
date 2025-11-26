@@ -1,17 +1,50 @@
 document.addEventListener('DOMContentLoaded', () => {
   const accountNumberEl = document.getElementById('accountNumber');
   const balanceEl = document.getElementById('balance');
-  const buyer = getCurrentUserOfRole ? (getCurrentUserOfRole('buyer') || getCurrentUser()) : getCurrentUser();
-  const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('buyer') : null) || getAuthToken();
+  let buyer = getCurrentUserOfRole ? (getCurrentUserOfRole('buyer') || getCurrentUser()) : getCurrentUser();
+  let token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('buyer') : null) || getAuthToken();
+  const BACKEND = window.BACKEND_URL || "";
   
   // Store actual balance for toggle functionality
   let actualBalance = '0';
 
-  if (!buyer || !token) {
-    window.showOverlay && showOverlay({ type:'error', title:'Unauthorized', message:'Please log in again.' });
-    redirectToLogin();
-    return;
+  // Attempt to restore buyer session if missing (e.g., after external payment return)
+  async function ensureBuyerSession() {
+    if (buyer && token) return true;
+    try {
+      const res = await fetch(`${BACKEND}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
+      if (!res.ok) return false;
+      const body = await res.json().catch(()=>({}));
+      const refreshed = body.token || body.accessToken || body.access_token;
+      const role = body.role || 'buyer';
+      if (!refreshed || role !== 'buyer') return false;
+      try { localStorage.setItem('vendplug-buyer-token', refreshed); } catch(_){}
+      token = refreshed;
+      const p = await fetch(`${BACKEND}/api/buyers/profile`, { headers: { Authorization: `Bearer ${token}` } });
+      if (p.ok) {
+        const prof = await p.json().catch(()=>null);
+        if (prof) {
+          try { localStorage.setItem('vendplugBuyer', JSON.stringify(prof)); } catch(_){}
+          buyer = prof;
+          return true;
+        }
+      }
+    } catch(_){ /* ignore */ }
+    return false;
   }
+
+  (async () => {
+    if (!buyer || !token) {
+      const ok = await ensureBuyerSession();
+      if (!ok) {
+        window.showOverlay && showOverlay({ type:'error', title:'Session', message:'Your session expired. Please log in again.' });
+        redirectToLogin();
+        return;
+      }
+    }
+    fetchWallet();
+    fetchTransactions();
+  })();
   const resolvedNameEl = document.getElementById('resolvedName');
 
   fetchWallet();

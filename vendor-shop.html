@@ -1105,6 +1105,28 @@
       setTimeout(() => loadVendors(true), 0);
     });
 
+    // Handle back/forward cache restores or returning to the page
+    window.addEventListener('pageshow', (e) => {
+      // If page was restored from bfcache or grid is empty, re-fetch
+      const grid = document.getElementById('vendorGrid');
+      const skeleton = document.getElementById('vendorSkeleton');
+      const shouldReload = (e.persisted === true) || !grid || grid.children.length === 0;
+      if (shouldReload) {
+        try { if (skeleton) skeleton.style.display = 'grid'; } catch(_) {}
+        setTimeout(() => loadVendors(true), 0);
+      }
+    });
+
+    // Also guard with visibility change (some Android WebView/Capacitor cases)
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        const grid = document.getElementById('vendorGrid');
+        if (grid && grid.children.length === 0) {
+          setTimeout(() => loadVendors(true), 0);
+        }
+      }
+    });
+
     // Backend URL configuration 
     const API_BASE = window.location.hostname === "localhost" 
       ? `${window.BACKEND_URL || window.location.origin}/api` 

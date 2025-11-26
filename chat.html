@@ -415,6 +415,31 @@
             color: var(--primary);
         }
 
+        .btn-mic {
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            margin-left: 4px;
+        }
+
+        .btn-mic:hover {
+            background: var(--bg-dark);
+            color: var(--primary);
+        }
+
+        .btn-mic.recording {
+            color: #e53935;
+            background: var(--bg-dark);
+        }
+
         .message-textarea {
             flex: 1;
         }
@@ -812,7 +837,11 @@
             <button class="btn-attach" onclick="triggerFileInput()" title="Attach File">
                 <i class="fas fa-paperclip"></i>
             </button>
-            <input type="file" id="fileInput" multiple accept="image/*,application/pdf,.doc,.docx,.txt" style="display: none;">
+            <input type="file" id="fileInput" multiple accept="image/*,audio/*,application/pdf,.doc,.docx,.txt" style="display: none;">
+            <input type="file" id="audioInput" accept="audio/*" capture="microphone" style="display: none;">
+            <button class="btn-mic" id="recordButton" title="Record voice note">
+                <i class="fas fa-microphone"></i>
+            </button>
             <div class="message-textarea">
                 <textarea id="messageInput" placeholder="Type your message..." rows="1"></textarea>
             </div>
@@ -842,6 +871,12 @@
         let currentUserType = null;
         let chats = [];
         let messages = {};
+        // Voice note recording state
+        let mediaRecorder = null;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordTimer = null;
+        let recordStartMs = 0;
 
         // Initialize chat
         document.addEventListener('DOMContentLoaded', function() {
@@ -1014,6 +1049,28 @@
 
             // File input
             document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            const audioInput = document.getElementById('audioInput');
+            if (audioInput) {
+                audioInput.addEventListener('change', handleAudioSelect);
+            }
+            // Record button
+            const recordButton = document.getElementById('recordButton');
+            if (recordButton) {
+                recordButton.addEventListener('click', toggleRecording);
+                // Long-press to record (mobile-friendly)
+                let pressTimeout;
+                recordButton.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    pressTimeout = setTimeout(() => {
+                        if (!isRecording) startRecording();
+                    }, 200);
+                });
+                recordButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    clearTimeout(pressTimeout);
+                    if (isRecording) stopRecording();
+                });
+            }
 
             // Mobile sidebar toggle
             document.getElementById('sidebarToggle').addEventListener('click', toggleSidebar);
@@ -1407,28 +1464,41 @@
                 attachmentsHtml = `
                     <div class="message-attachments">
                         ${message.attachments.map(attachment => {
-                            const isImage = attachment.mimeType && attachment.mimeType.startsWith('image/');
-                            const fileIcon = getFileIcon(attachment.mimeType);
+                            const mime = attachment.mimeType || '';
+                            const isImage = mime.startsWith('image/');
+                            const isAudio = mime.startsWith('audio/');
+                            const fileIcon = getFileIcon(mime);
+                            const url = attachment.url || attachment.secure_url || attachment.cloudinaryId || '#';
                             
                             if (isImage) {
-                                const imageUrl = attachment.url || attachment.secure_url || attachment.cloudinaryId;
                                 return `
                                     <div class="attachment-image">
-                                        <img src="${imageUrl}" alt="${attachment.originalName}" 
-                                             onclick="openImageModal('${imageUrl}', '${attachment.originalName}')"
+                                        <img src="${url}" alt="${attachment.originalName}" 
+                                             onclick="openImageModal('${url}', '${attachment.originalName}')"
                                              class="attachment-preview">
                                         <div class="attachment-info">
                                             <span class="attachment-name">${attachment.originalName}</span>
-                                            <a href="${imageUrl}" target="_blank" class="attachment-download">
+                                            <a href="${url}" target="_blank" class="attachment-download">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                `;
+                            } else if (isAudio) {
+                                return `
+                                    <div class="attachment-audio">
+                                        <audio controls preload="none" src="${url}" style="width: 100%;"></audio>
+                                        <div class="attachment-info">
+                                            <span class="attachment-name">${attachment.originalName}</span>
+                                            <a href="${url}" target="_blank" class="attachment-download">
                                                 <i class="fas fa-download"></i>
                                             </a>
                                         </div>
                                     </div>
                                 `;
                             } else {
-                                const fileUrl = attachment.url || attachment.secure_url || attachment.cloudinaryId;
                                 return `
-                                    <a href="${fileUrl || '#'}" target="_blank" class="attachment">
+                                    <a href="${url}" target="_blank" class="attachment">
                                         <i class="${fileIcon}"></i>
                                         <span class="attachment-name">${attachment.originalName}</span>
                                         <span class="attachment-size">${formatFileSize(attachment.size)}</span>
@@ -1787,6 +1857,12 @@
             document.getElementById('fileInput').click();
         }
 
+        // iOS/mobile fallback: use native audio capture via hidden input
+        function triggerAudioCapture() {
+            const input = document.getElementById('audioInput');
+            if (input) input.click();
+        }
+
         function handleFileSelect(event) {
             const files = event.target.files;
             console.log('Files selected:', files);
@@ -1819,6 +1895,144 @@
             
             // Clear the input
             event.target.value = '';
+        }
+
+        function handleAudioSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            const file = files[0];
+
+            // Restrict to ~10MB (server already enforces 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                window.showOverlay && showOverlay({ type:'error', title:'Voice note', message:'Audio too large (max 10MB)' });
+                event.target.value = '';
+                return;
+            }
+
+            // Show loading state for attach button
+            const attachButton = document.querySelector('.btn-attach');
+            attachButton && attachButton.classList.add('loading');
+
+            const formData = new FormData();
+            formData.append('attachments', file);
+            formData.append('content', '🎤 Voice message');
+            formData.append('messageType', 'file');
+
+            showUploadProgress([file]);
+            uploadFiles(formData, [file]);
+
+            event.target.value = '';
+        }
+
+        // Recording helpers
+        function getSupportedAudioMime() {
+            const candidates = [
+                'audio/webm;codecs=opus',
+                'audio/webm',
+                'audio/mp4',       // Safari/iOS
+                'audio/mpeg',      // mp3 (not recordable in many browsers)
+                'audio/ogg;codecs=opus'
+            ];
+            for (const type of candidates) {
+                if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
+                    return type;
+                }
+            }
+            return null;
+        }
+
+        async function toggleRecording() {
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        }
+
+        async function startRecording() {
+            try {
+                const mimeType = getSupportedAudioMime();
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder || !mimeType) {
+                    // Fallback to native capture (works well on iOS Safari)
+                    triggerAudioCapture();
+                    return;
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                recordedChunks = [];
+                mediaRecorder = new MediaRecorder(stream, { mimeType });
+
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data && e.data.size > 0) recordedChunks.push(e.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    try {
+                        const blob = new Blob(recordedChunks, { type: mimeType });
+                        const durationSec = Math.max(1, Math.round((Date.now() - recordStartMs) / 1000));
+                        const ext = mimeType.includes('mp4') ? 'mp4' : (mimeType.includes('webm') ? 'webm' : (mimeType.includes('ogg') ? 'ogg' : 'mp3'));
+                        const file = new File([blob], `voice-note-${Date.now()}.${ext}`, { type: blob.type });
+
+                        const formData = new FormData();
+                        formData.append('attachments', file);
+                        formData.append('content', `🎤 Voice message (${durationSec}s)`);
+                        formData.append('messageType', 'file');
+
+                        showUploadProgress([file]);
+                        await uploadFiles(formData, [file]);
+                    } catch (e) {
+                        console.error('Error preparing/uploading voice note:', e);
+                        window.showOverlay && showOverlay({ type:'error', title:'Voice note', message:'Failed to upload voice note' });
+                    } finally {
+                        // Stop tracks
+                        try { mediaRecorder.stream.getTracks().forEach(t => t.stop()); } catch(_) {}
+                        mediaRecorder = null;
+                    }
+                };
+
+                mediaRecorder.start(100);
+                isRecording = true;
+                recordStartMs = Date.now();
+                updateRecordUI(true);
+
+                // Auto-stop after 120s
+                recordTimer = setTimeout(() => {
+                    if (isRecording) stopRecording();
+                }, 120000);
+            } catch (err) {
+                console.error('Recording start failed:', err);
+                // Fallback
+                triggerAudioCapture();
+            }
+        }
+
+        function stopRecording() {
+            try {
+                if (recordTimer) {
+                    clearTimeout(recordTimer);
+                    recordTimer = null;
+                }
+                if (mediaRecorder && isRecording) {
+                    mediaRecorder.stop();
+                }
+            } catch (_) {}
+            isRecording = false;
+            updateRecordUI(false);
+        }
+
+        function updateRecordUI(active) {
+            const btn = document.getElementById('recordButton');
+            if (!btn) return;
+            const icon = btn.querySelector('i');
+            if (active) {
+                btn.classList.add('recording');
+                if (icon) icon.className = 'fas fa-stop';
+                btn.title = 'Stop recording';
+            } else {
+                btn.classList.remove('recording');
+                if (icon) icon.className = 'fas fa-microphone';
+                btn.title = 'Record voice note';
+            }
         }
 
         // Show upload progress modal
