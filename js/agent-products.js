@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
-  const agent = (typeof getCurrentUserOfRole === 'function' ? getCurrentUserOfRole('agent') : null) || getCurrentUser();
-  const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('agent') : null) || getAuthToken();
+  let agent = (typeof getCurrentUserOfRole === 'function' ? getCurrentUserOfRole('agent') : null) || getCurrentUser();
+  let token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('agent') : null) || getAuthToken();
   const BACKEND = window.BACKEND_URL || "";
 
   if (!token) {
@@ -12,9 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const addProductForm = document.getElementById('addProductForm');
   const productList = document.getElementById('productList');
   const categorySelect = document.getElementById('productCategory');
+  const categoryChips = document.getElementById('productCategoryChips');
+  const preparingEl = document.getElementById('profilePreparing');
+  const submitBtnGlobal = document.querySelector('.submit-btn');
   const photosContainer = document.getElementById('photosContainer');
   const photoCount = document.getElementById('photoCount');
   const imageInput = document.getElementById('productImages');
+  const isiOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  let formReady = false;
 
   // Store for managing photos (both existing URLs and new files)
   let currentPhotos = {
@@ -22,27 +27,99 @@ document.addEventListener('DOMContentLoaded', () => {
     newFiles: [] // Array of File objects for newly selected images
   };
 
-  // 👇 Load categories (view-only, managed in agent-profile)
-  if (categorySelect) {
-    const categories = Array.isArray(agent?.category) ? agent.category : (agent?.category ? [agent.category] : []);
-    if (categories.length) {
-      try { categorySelect.multiple = true; } catch(_) {}
-      try { categorySelect.size = Math.min(6, Math.max(3, categories.length)); } catch(_) {}
-      try { categorySelect.disabled = true; } catch(_) {}
-      categorySelect.innerHTML = categories.map(cat => `<option value="${cat}" selected>${cat}</option>`).join('');
-    } else {
-      categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
+  // Bootstrap: ensure agent profile is ready, then render categories and load data
+  (async function init() {
+    try {
+      if (preparingEl) preparingEl.classList.remove('hidden');
+      if (submitBtnGlobal) submitBtnGlobal.disabled = true;
+
+      await ensureAgentProfileReady();
+
+      // Render categories as read-only chips and hide native select (iOS shows "2 items")
+      if (categorySelect) {
+        const categories = Array.isArray(agent?.category) ? agent.category : (agent?.category ? [agent.category] : []);
+        if (categories.length) {
+          try { categorySelect.multiple = true; } catch(_) {}
+          try { categorySelect.size = Math.min(6, Math.max(3, categories.length)); } catch(_) {}
+          try { categorySelect.disabled = true; } catch(_) {}
+          categorySelect.innerHTML = categories.map(cat => `<option value="${cat}" selected>${cat}</option>`).join('');
+          renderCategoryChips(categories);
+          try { categorySelect.classList.add('hidden'); } catch(_) {}
+        } else {
+          categorySelect.innerHTML = `<option value="" selected>No category found</option>`;
+          if (categoryChips) {
+            categoryChips.classList.add('hidden');
+            categoryChips.innerHTML = '';
+          }
+        }
+      }
+
+      fetchAgentProducts();
+      initializePhotoInterface();
+
+      formReady = true;
+    } finally {
+      if (submitBtnGlobal) submitBtnGlobal.disabled = !formReady;
+      if (preparingEl) preparingEl.classList.add('hidden');
     }
+  })();
+
+  function renderCategoryChips(categories) {
+    if (!categoryChips) return;
+    categoryChips.innerHTML = categories.map(c => `<span class="chip">${c}</span>`).join('');
+    categoryChips.classList.remove('hidden');
   }
 
-  fetchAgentProducts();
-  initializePhotoInterface();
+  async function ensureAgentProfileReady() {
+    try {
+      const r = await fetch(`${BACKEND}/api/agents/profile?force=1`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (r.status === 401) {
+        const rr = await fetch(`${BACKEND}/api/auth/refresh`, { method: 'POST', credentials: 'include' });
+        if (rr.ok) {
+          const data = await rr.json().catch(() => ({}));
+          if (data && data.token) {
+            localStorage.setItem('vendplug-agent-token', data.token);
+            token = data.token;
+            const r2 = await fetch(`${BACKEND}/api/agents/profile?force=1`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (r2.ok) {
+              const prof = await r2.json().catch(() => ({}));
+              if (prof && prof.agent) {
+                agent = prof.agent;
+                localStorage.setItem('vendplugAgent', JSON.stringify(agent));
+                return;
+              }
+            }
+          }
+        }
+      } else if (r.ok) {
+        const prof = await r.json().catch(() => ({}));
+        if (prof && prof.agent) {
+          agent = prof.agent;
+          localStorage.setItem('vendplugAgent', JSON.stringify(agent));
+          return;
+        }
+      }
+      // If all fails, continue with cached agent
+    } catch (_) {
+      // Network issue: continue with cached agent
+    }
+  }
 
   // ✅ Form submission (guard against double-binding if inline script also binds)
   if (!window.__agentProductsSubmitBound) {
     window.__agentProductsSubmitBound = true;
     addProductForm.addEventListener('submit', (e) => {
       e.preventDefault();
+      if (!formReady) {
+        if (typeof showOverlay === 'function') {
+          return showOverlay({ type:'info', title:'Please wait', message:'Preparing your account. Try again in a moment.' });
+        }
+        return alert('Please wait while your account is prepared. Try again shortly.');
+      }
       submitProduct();
     });
   }
