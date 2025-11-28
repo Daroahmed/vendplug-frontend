@@ -698,8 +698,6 @@
         </div>
 
         <div class="content">
-            <button class="back-btn" onclick="goBack()">← Back to Dashboard</button>
-            <button class="create-dispute-btn" onclick="createDispute()">+ Create New Dispute</button>
             
             <div id="alertContainer"></div>
             <div id="loadingContainer" class="loading">
@@ -713,7 +711,8 @@
         </div>
     </div>
 
-    <script src="js/auth-utils.js"></script>
+    <script src="/js/config.js"></script>
+    <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>
     <script>
         // Get user token and role using smart utilities
@@ -763,10 +762,7 @@
                     <div class="empty-state">
                         <div class="empty-state-icon">📋</div>
                         <h3>No Disputes Found</h3>
-                        <p>You haven't created any disputes yet.</p>
-                        <button class="create-dispute-btn" onclick="createDispute()" style="margin-top: 20px;">
-                            Create Your First Dispute
-                        </button>
+                        <p>To create a dispute, click the "open dispute" button in the orders page.</p>
                     </div>
                 `;
             } else {

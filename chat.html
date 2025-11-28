@@ -860,8 +860,9 @@
     </div>
 
     <!-- Scripts -->
+    <script src="/js/config.js"></script>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="js/auth-utils.js"></script>
+    <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>
     <script>
         // Global variables
@@ -1860,7 +1861,54 @@
         // iOS/mobile fallback: use native audio capture via hidden input
         function triggerAudioCapture() {
             const input = document.getElementById('audioInput');
-            if (input) input.click();
+            if (!input) return;
+            // iOS/Safari often blocks programmatic clicks on fully hidden inputs.
+            // Make it temporarily present but invisible, click, then hide again.
+            const prevDisplay = input.style.display;
+            const prevOpacity = input.style.opacity;
+            const prevPos = input.style.position;
+            const prevLeft = input.style.left;
+            try {
+                input.style.display = 'block';
+                input.style.opacity = '0';
+                input.style.position = 'absolute';
+                input.style.left = '-9999px';
+                input.click();
+            } catch (_) {
+                // As a last resort, inform user to use the paperclip to attach audio
+                try { window.showOverlay && showOverlay({ type:'info', title:'Voice note', message:'Could not open microphone. Use the paperclip to attach audio.' }); } catch(_){}
+            } finally {
+                // restore shortly after to avoid layout shifts
+                setTimeout(() => {
+                    input.style.display = prevDisplay || 'none';
+                    input.style.opacity = prevOpacity || '';
+                    input.style.position = prevPos || '';
+                    input.style.left = prevLeft || '';
+                }, 100);
+            }
+        }
+
+        async function ensureMicPermission() {
+            try {
+                // Fast path: if Permissions API available
+                if (navigator.permissions && navigator.permissions.query) {
+                    const status = await navigator.permissions.query({ name: 'microphone' });
+                    if (status.state === 'granted') return true;
+                    // Trigger a lightweight getUserMedia to prompt user, then stop immediately
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop());
+                    return true;
+                }
+                // Fallback: attempt to getUserMedia to trigger prompt
+                if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    stream.getTracks().forEach(t => t.stop());
+                    return true;
+                }
+            } catch (e) {
+                return false;
+            }
+            return false;
         }
 
         function handleFileSelect(event) {
@@ -1952,8 +2000,16 @@
         async function startRecording() {
             try {
                 const mimeType = getSupportedAudioMime();
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder || !mimeType) {
+                // Prefer native capture on many mobile browsers for reliability
+                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder || !mimeType || isMobile) {
                     // Fallback to native capture (works well on iOS Safari)
+                    triggerAudioCapture();
+                    return;
+                }
+
+                const granted = await ensureMicPermission();
+                if (!granted) {
                     triggerAudioCapture();
                     return;
                 }

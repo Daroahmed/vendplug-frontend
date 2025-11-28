@@ -193,16 +193,16 @@ class TokenManager {
         window.location.href = '/admin-login.html';
         break;
       case 'vendor':
-        window.location.href = '/vendor-login.html';
+        window.location.href = '/vendor-auth.html';
         break;
       case 'agent':
-        window.location.href = '/agent-login.html';
+        window.location.href = '/agent-auth.html';
         break;
       case 'buyer':
-        window.location.href = '/buyer-login.html';
+        window.location.href = '/buyer-auth.html';
         break;
       default:
-        window.location.href = '/';
+        window.location.href = '/auth-selection.html';
     }
   }
 

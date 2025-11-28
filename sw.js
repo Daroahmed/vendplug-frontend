@@ -1,5 +1,5 @@
 // VendPlug Service Worker - consolidated and hardened
-const CACHE_NAME = 'vendplug-app-shell-v9.1';
+const CACHE_NAME = 'vendplug-app-shell-v9.3';
 const APP_SHELL = [
   '/',
   '/public-buyer-home.html',

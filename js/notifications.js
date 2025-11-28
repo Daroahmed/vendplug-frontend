@@ -377,10 +377,16 @@ class NotificationManager {
     // If the floating FAB exists now, hook it up to the (now ensured) dropdown
     const maybeFab = document.getElementById('notification-fab');
     if (maybeFab && document.getElementById('notification-dropdown')) {
-      maybeFab.onclick = () => {
+      maybeFab.onclick = (e) => {
+        try { e.preventDefault(); } catch(_) {}
         const dd = document.getElementById('notification-dropdown');
         if (!dd) return;
-        dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+        const isHidden = (window.getComputedStyle ? getComputedStyle(dd).display : dd.style.display) === 'none';
+        dd.style.display = isHidden ? 'block' : 'none';
+        // Ensure content is loaded on first open
+        if (isHidden && this.notifications.length === 0 && !this.isLoading) {
+          this.loadNotifications();
+        }
       };
     }
 
@@ -391,8 +397,14 @@ class NotificationManager {
     const closeBtn = document.getElementById('close-notifications');
 
     if (icon && dropdown && markAllRead) {
-      icon.addEventListener('click', () => {
-        dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+      icon.addEventListener('click', (e) => {
+        try { e.preventDefault(); } catch(_) {}
+        const isHidden = (window.getComputedStyle ? getComputedStyle(dropdown).display : dropdown.style.display) === 'none';
+        dropdown.style.display = isHidden ? 'block' : 'none';
+        // Ensure content is loaded on first open
+        if (isHidden && this.notifications.length === 0 && !this.isLoading) {
+          this.loadNotifications();
+        }
       });
 
       markAllRead.addEventListener('click', () => {

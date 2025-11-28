@@ -1,8 +1,22 @@
 // js/config.js
 // Always prefer same-origin in production so cookies/paths match Nginx
 (function () {
-  const isLocal = window.location.hostname === "localhost";
-  let backend = isLocal ? "http://localhost:5000" : window.location.origin;
+  // Treat Capacitor-native (Android/iOS) differently from browser localhost
+  const isNative = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
+  const isLocal = !isNative && window.location.hostname === "localhost";
+
+  // Backend base URL:
+  // - Browser localhost → http://localhost:5000
+  // - Native (Capacitor http://localhost origin) → use deployed domain
+  // - Browser prod (https origin) → same-origin
+  let backend;
+  if (isLocal) {
+    backend = "http://localhost:5000";
+  } else if (isNative) {
+    backend = "https://vendplug.com.ng";
+  } else {
+    backend = window.location.origin;
+  }
 
   // Dev override: ?backend=http://host:port or localStorage BACKEND_URL_OVERRIDE
   try {
@@ -16,10 +30,10 @@
   window.BACKEND_URL = backend;
 
   // Frontend URL for email verification links
-  window.FRONTEND_URL = isLocal ? "http://localhost:5000" : window.location.origin;
+  window.FRONTEND_URL = isLocal ? "http://localhost:5000" : (isNative ? "https://vendplug.com.ng" : window.location.origin);
 
-  // Socket.IO configuration - always use same-origin
-  window.SOCKET_URL = window.location.origin;
+  // Socket.IO configuration - prefer same-origin when valid, else backend
+  window.SOCKET_URL = isNative ? window.BACKEND_URL : window.location.origin;
 
   // Paystack configuration
   window.PAYSTACK_PUBLIC_KEY = isLocal
@@ -28,7 +42,7 @@
 
   // Deep link handling (App/Universal Links → route inside SPA)
   try {
-    const isNative = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
+    // isNative already computed above
     const App = isNative ? (window.Capacitor.App || window.Capacitor.Plugins?.App) : null;
     if (App && typeof App.addListener === 'function') {
       App.addListener('appUrlOpen', ({ url }) => {
@@ -85,4 +99,35 @@
       });
     } catch (_) {}
   };
+
+  // On native builds, rewrite relative API calls to the production backend
+  try {
+    if (isNative && !window.__vpFetchPatched) {
+      const originalFetch = window.fetch.bind(window);
+      window.fetch = function(input, init) {
+        try {
+          const raw = typeof input === 'string' ? input : input.url;
+          // Normalize to a URL object (base: current origin) to inspect path/origin
+          const u = new URL(raw, window.location.origin);
+          const isApiLike = /^\/(api|socket\.io)\b/.test(u.pathname);
+          const isLocalOrigin = u.origin === window.location.origin; // Capacitor uses http://localhost
+
+          // Rewrite cases:
+          // 1) Relative /api... (already handled by isLocalOrigin true since base is current origin)
+          // 2) Absolute pointing to current (localhost) origin under /api or /socket.io
+          if (isApiLike && (raw.startsWith('/') || isLocalOrigin)) {
+            const rewritten = window.BACKEND_URL + u.pathname + (u.search || '');
+            if (typeof input === 'string') {
+              return originalFetch(rewritten, init);
+            } else {
+              const req = new Request(rewritten, input);
+              return originalFetch(req, init);
+            }
+          }
+        } catch (_) {}
+        return originalFetch(input, init);
+      };
+      window.__vpFetchPatched = true;
+    }
+  } catch (_) {}
 })();

@@ -4,7 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Search Results - Vendplug</title>
-  <link rel="stylesheet" href="CSS/skeleton.css">
+  <link rel="stylesheet" href="/CSS/skeleton.css">
+  <script src="/js/config.js"></script>
+  <script src="/js/auth-utils.js"></script>
+  <script src="/js/cdn-utils.js"></script>
+  <script src="/js/back-button.js"></script>
   <style>
     :root{--primary:#00cc99;--bg:#0a0a0a;--card:#1e1e1e;--muted:#9aa0a6;--border:rgba(255,255,255,.08)}
     *{box-sizing:border-box;margin:0;padding:0}
@@ -169,6 +173,8 @@
       empty.style.display = 'none';
       list.forEach(p=> grid.appendChild(cardFor(p)) );
       setCounts(list.length, allProducts.length);
+      // After cards mount, upgrade images and reveal when decoded
+      try { if (window.lazyUpgradeImages) window.lazyUpgradeImages(); } catch(_){}
     }
 
     function setCounts(count,total){
@@ -180,8 +186,13 @@
       const vendorName = product.agent ? (vendor.businessName || vendor.fullName || 'Unknown') : (vendor.shopName || vendor.fullName || 'Unknown');
       const div = document.createElement('div'); div.className='card';
       const mainImg = product.image || (Array.isArray(product.images) && product.images[0]) || '/assets/placeholder-product.svg';
+      // Build blur-up + lazy-upgrade attributes
+      let tiny = mainImg, full = mainImg, srcset = '';
+      try { tiny = (window.blurPlaceholder ? blurPlaceholder(mainImg, 60) : mainImg); } catch(_){}
+      try { full = (window.optimizeImage ? optimizeImage(mainImg, 800, { crop:'fill' }) : mainImg); } catch(_){}
+      try { srcset = (window.buildSrcSet ? buildSrcSet(mainImg, [320,480,640,800,1200]) : ''); } catch(_){}
       div.innerHTML = `
-        <img src="${mainImg}" alt="${product.name}" onerror="this.src='/assets/placeholder-product.svg'" />
+        <img class="product-image" src="${tiny}" data-src="${full}" ${srcset ? `data-srcset="${srcset}" sizes="(max-width: 768px) 50vw, 33vw"` : ''} alt="${product.name || 'Product'}" onerror="this.src='/assets/placeholder-product.svg'" decoding="async" loading="lazy" />
         <div class="card-body">
           <div class="name">${product.name || 'Unnamed product'}</div>
           <div class="desc">${product.description || 'No description available'}</div>

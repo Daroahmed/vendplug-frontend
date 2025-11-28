@@ -583,14 +583,43 @@
 
     /* Responsive */
     @media (max-width: 768px) {
-      .header {
-        flex-direction: column;
-        gap: 1rem;
+      /* Convert header to a two-row grid on mobile:
+         Row 1: left (hamburger) | right (icons)
+         Row 2: search spanning full width */
+      .header { 
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto;
+        grid-template-areas:
+          "left right"
+          "search search";
+        gap: 0.75rem;
+        align-items: center;
       }
+      .logo-container { grid-area: left; }
+      .header-actions { 
+        grid-area: right; 
+        justify-self: end; 
+        display: flex; 
+        align-items: center; 
+        gap: 12px;
+      }
+      .search-container {
+        grid-area: search;
+        margin: 0;
+        max-width: none;
+        width: 100%;
+      }
+      /* Tighten icon spacing on mobile */
+      .message-icon, .notification-icon, .cart-icon {
+        font-size: 1.15rem;
+        padding: 8px;
+      }
+      .menu-toggle { font-size: 1.6rem; }
 
       .auth-buttons {
-        flex-direction: column;
-        width: 100%;
+        flex-direction: row;
+        gap: .5rem;
       }
 
       .state-select {
@@ -634,7 +663,7 @@
       <button class="menu-toggle" id="menuToggle">
         <i class="fas fa-bars"></i>
       </button>
-      <h2>Select Category</h2>
+      
     </div>
     
     <!-- Global Product Search Bar -->
@@ -700,7 +729,7 @@
         <li><a href="my-disputes.html"><i class="fas fa-clipboard-list"></i> My Disputes</a></li>
         <li><a href="support.html"><i class="fas fa-headset"></i> Support</a></li>
         <li><a href="#" onclick="buyerLogout(event)"><i class="fas fa-sign-out-alt"></i> Sign Out</a></li>
-        <li><a href="index.html"><i class="fas fa-list"></i> About Vendplug</a></li>
+        <li><a href="about.html"><i class="fas fa-list"></i> About Vendplug</a></li>
       </ul>
       </ul>
     </div>
@@ -729,7 +758,7 @@
     <main class="main-content">
     <!-- State Selection -->
     <div class="state-selection">
-      <h2 class="section-title">Select Your Location</h2>
+      <h2 class="section-title">Select Location</h2>
       <select id="stateSelect" class="state-select"></select>
     </div>
 
