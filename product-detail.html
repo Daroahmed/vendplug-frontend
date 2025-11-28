@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Product Details - Vendplug</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="CSS/skeleton.css">
+  <link rel="stylesheet" href="/CSS/skeleton.css">
+  <script src="/js/config.js"></script>
+  <script src="/js/cdn-utils.js"></script>
   <style>
     :root {
       --primary: #00cc99;
@@ -227,18 +229,54 @@
       const unique = Array.from(new Set(imgs));
       const mainSrc = unique[0] || '/assets/placeholder-product.svg';
       const main = document.getElementById('productImage');
-      main.src = mainSrc;
+      // Prepare blur-up + lazy-upgrade for hero
+      try {
+        const tiny = (window.blurPlaceholder ? blurPlaceholder(mainSrc, 60) : mainSrc);
+        const full = (window.optimizeImage ? optimizeImage(mainSrc, 1200, { crop:'fill' }) : mainSrc);
+        const srcset = (window.buildSrcSet ? buildSrcSet(mainSrc, [480,640,800,1200]) : '');
+        main.src = tiny;
+        main.setAttribute('data-src', full);
+        if (srcset) {
+          main.setAttribute('data-srcset', srcset);
+          main.setAttribute('sizes', '100vw');
+        }
+        try { main.loading = 'lazy'; } catch(_){}
+        try { main.decoding = 'async'; } catch(_){}
+      } catch(_){
+        main.src = mainSrc;
+      }
       const thumbs = document.getElementById('galleryThumbnails');
       thumbs.innerHTML = '';
       if (unique.length > 0) {
         thumbs.style.display = 'grid';
         unique.forEach((src, idx) => {
           const img = document.createElement('img');
-          img.src = src; img.alt = p.name || 'Product';
+          // Thumbnails use tiny blur, upgrade lazily when scrolled into view
+          try {
+            img.src = (window.blurPlaceholder ? blurPlaceholder(src, 24) : src);
+            img.setAttribute('data-src', (window.optimizeImage ? optimizeImage(src, 200, { crop:'fill', height:120 }) : src));
+            const sset = (window.buildSrcSet ? buildSrcSet(src, [120,160,200,240]) : '');
+            if (sset) { img.setAttribute('data-srcset', sset); img.setAttribute('sizes','(max-width: 480px) 25vw, 120px'); }
+            try { img.loading = 'lazy'; } catch(_){}
+            try { img.decoding = 'async'; } catch(_){}
+          } catch(_){ img.src = src; }
+          img.alt = p.name || 'Product';
           img.className = 'gallery-thumbnail' + (idx === 0 ? ' active' : '');
           img.onerror = () => { img.src = '/assets/placeholder-product.svg'; };
           img.addEventListener('click', () => {
-            main.src = src;
+            // Switch main image with spinner + blur-up
+            try {
+              const wrap = main.closest('.img-wrap');
+              if (wrap) wrap.classList.remove('loaded');
+              main.classList.remove('img-loaded');
+              main.src = (window.blurPlaceholder ? blurPlaceholder(src, 60) : src);
+              main.setAttribute('data-src', (window.optimizeImage ? optimizeImage(src, 1200, { crop:'fill' }) : src));
+              const sset2 = (window.buildSrcSet ? buildSrcSet(src, [480,640,800,1200]) : '');
+              if (sset2) { main.setAttribute('data-srcset', sset2); main.setAttribute('sizes', '100vw'); }
+              if (window.lazyUpgradeImages) window.lazyUpgradeImages();
+            } catch(_) {
+              main.src = (window.optimizeImage ? optimizeImage(src, 1200, { crop:'fill' }) : src);
+            }
             document.querySelectorAll('.gallery-thumbnail').forEach(t => t.classList.remove('active'));
             img.classList.add('active');
             try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch(_) {}
@@ -248,6 +286,9 @@
       } else {
         thumbs.style.display = 'none';
       }
+
+      // Ensure hero and thumbnails are wrapped and upgraded
+      try { if (window.lazyUpgradeImages) window.lazyUpgradeImages(); } catch(_){}
 
       // Product info
       document.getElementById('productName').textContent = p.name || 'Untitled Product';
@@ -387,6 +428,5 @@
       } catch(err){ alert('Error starting chat. Please try again.'); }
     }
   </script>
-  <script src="js/config.js"></script>
 </body>
 </html>

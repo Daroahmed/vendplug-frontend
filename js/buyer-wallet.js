@@ -275,14 +275,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Redirect to Paystack payment page
       console.log('🚀 Redirecting to Paystack:', authorizationUrl);
-      // Prefer Capacitor Browser in native runtime for reliability
+      // Prefer Capacitor Browser (Custom Tabs) in native runtime; intercept callback and return to app
       try {
         const isCap = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
-        const browser = isCap && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser;
-        if (browser && typeof browser.open === 'function') {
-          await browser.open({ url: authorizationUrl, presentationStyle: 'fullscreen' });
+        const Browser = (window.Browser) || (isCap && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser);
+        if (Browser && typeof Browser.open === 'function') {
+          try {
+            const onPage = async ({ url }) => {
+              try {
+                const u = new URL(url);
+                if (u.pathname.endsWith('/payment-success.html')) {
+                  const qs = u.search || '';
+                  // Close the custom tab and continue in-app
+                  try { await Browser.close(); } catch(_){}
+                  window.location.href = '/payment-success.html' + qs;
+                }
+              } catch(_){}
+            };
+            const subLoad = Browser.addListener && await Browser.addListener('browserPageLoaded', onPage);
+            const subFinish = Browser.addListener && await Browser.addListener('browserFinished', () => {
+              try { subLoad && subLoad.remove && subLoad.remove(); } catch(_){}
+              try { subFinish && subFinish.remove && subFinish.remove(); } catch(_){}
+            });
+          } catch(_){ /* ignore listener setup errors */ }
+          await Browser.open({ url: authorizationUrl, presentationStyle: 'fullscreen' });
         } else {
-          // Firefox Android sometimes blocks/bugs inline and back/forward cache. Force a top-level replace.
+          // Fallback: open in current webview (may leave app if WebView blocks cross-origin)
           const ua = navigator.userAgent || '';
           const isFirefoxAndroid = /Android/i.test(ua) && /Firefox/i.test(ua);
           if (isFirefoxAndroid) {

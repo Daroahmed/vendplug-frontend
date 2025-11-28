@@ -3,29 +3,33 @@
   try{
     const isTouch = matchMedia('(pointer: coarse)').matches;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-    // Show only on desktop (not mobile/touch devices)
+    // Show desktop floating back button only on non-touch, but do NOT early return
     const shouldEnable = !isTouch;
-    if (!shouldEnable) return;
 
-    const style = document.createElement('style');
-    style.textContent = `
-      .vp-back-btn{position:fixed;bottom:20px;left:20px;z-index:9999;display:none;align-items:center;gap:8px;background:rgba(30,30,30,.9);color:#fff;border:1px solid rgba(255,255,255,.1);padding:10px 12px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.35);cursor:grab;user-select:none;touch-action:none}
-      .vp-back-btn.dragging{cursor:grabbing;opacity:.95}
-      .vp-back-btn svg{width:16px;height:16px}
-      .vp-back-btn.show{display:flex}
-      @media (max-width: 768px){ .vp-back-btn{bottom:16px;left:16px} }
-    `;
-    document.head.appendChild(style);
+    // Desktop-only floating button UI
+    if (shouldEnable) {
+      const style = document.createElement('style');
+      style.textContent = `
+        .vp-back-btn{position:fixed;bottom:20px;left:20px;z-index:9999;display:none;align-items:center;gap:8px;background:rgba(30,30,30,.9);color:#fff;border:1px solid rgba(255,255,255,.1);padding:10px 12px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.35);cursor:grab;user-select:none;touch-action:none}
+        .vp-back-btn.dragging{cursor:grabbing;opacity:.95}
+        .vp-back-btn svg{width:16px;height:16px}
+        .vp-back-btn.show{display:flex}
+        @media (max-width: 768px){ .vp-back-btn{bottom:16px;left:16px} }
+      `;
+      document.head.appendChild(style);
+    }
 
     // Ensure singleton instance even if script is included multiple times
     const existing = document.querySelector('.vp-back-btn');
-    if (existing) {
-      // If more than one exists, keep the first and remove extras
-      const extras = Array.from(document.querySelectorAll('.vp-back-btn')).slice(1);
-      extras.forEach(el => { try{ el.remove(); }catch(_){ } });
+    if (shouldEnable) {
+      if (existing) {
+        // If more than one exists, keep the first and remove extras
+        const extras = Array.from(document.querySelectorAll('.vp-back-btn')).slice(1);
+        extras.forEach(el => { try{ el.remove(); }catch(_){ } });
+      }
     }
     const btn = existing || document.createElement('button');
-    if (!existing) {
+    if (shouldEnable && !existing) {
       btn.type = 'button';
       btn.className = 'vp-back-btn';
       btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Back</span>';
@@ -42,7 +46,7 @@
       if (shouldEnable) btn.classList.add('show'); else btn.classList.remove('show');
     }
 
-    if (!btn.__vpBound) btn.addEventListener('click', function(){
+    if (shouldEnable && !btn.__vpBound) btn.addEventListener('click', function(){
       if (btn._dragMoved) return; // ignore click right after drag
       if (canGoBack()) {
         window.history.back();
@@ -117,18 +121,20 @@
       // small delay so click after drag is ignored
       setTimeout(()=>{ btn._dragMoved = false; }, 50);
     }
-    if (!btn.__vpBound) {
+    if (shouldEnable && !btn.__vpBound) {
       btn.addEventListener('mousedown', onPointerDown);
       btn.addEventListener('touchstart', onPointerDown, { passive:false });
       btn.__vpBound = true; // prevent double-binding if script reinjected
     }
 
     function mount(){
-      if (!document.body.contains(btn)) {
-        document.body.appendChild(btn);
+      if (shouldEnable) {
+        if (!document.body.contains(btn)) {
+          document.body.appendChild(btn);
+        }
+        loadPos();
+        updateVisibility();
       }
-      loadPos();
-      updateVisibility();
     }
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', mount);
@@ -139,6 +145,85 @@
 
     window.addEventListener('popstate', updateVisibility);
     window.addEventListener('hashchange', updateVisibility);
+
+  // ---- Native Android back button handling (Capacitor) ----
+  try {
+    const isNativeEnv = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
+    if (isNativeEnv && !window.__vpNativeBackBound) {
+      const App = window.Capacitor.App || window.Capacitor.Plugins?.App;
+
+      // History guard: ensure there's always at least one entry to consume back presses
+      // so the OS doesn't immediately minimize the app when on a root screen.
+      try {
+        const guardKey = '__vp_back_guard__';
+        const ensureGuard = () => {
+          try {
+            // If history has only one entry, add a guard state
+            if (window.history.length <= 1 || !history.state || history.state.__vp !== guardKey) {
+              try { history.replaceState({ __vp: guardKey }, document.title, location.href); } catch(_) {}
+              try { history.pushState({ __vp: guardKey }, document.title, location.href); } catch(_) {}
+            }
+          } catch(_){}
+        };
+        // Install guard on load and on visibility regain
+        ensureGuard();
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') ensureGuard();
+        });
+        // Re-arm guard after a pop when at root
+        window.addEventListener('popstate', () => {
+          try {
+            const path = (location.pathname || '').replace(/^\//, '');
+            const isRoot = !path || path === 'public-buyer-home.html' || path === 'index.html';
+            if (isRoot) {
+              // Re-arm guard so another back press won't exit the app
+              ensureGuard();
+            }
+          } catch(_){}
+        });
+      } catch(_){}
+
+      if (App && typeof App.addListener === 'function') {
+        App.addListener('backButton', async ({ canGoBack } = {}) => {
+          try {
+            const path = (location.pathname || '').replace(/^\//, '');
+            const isRoot = !path || path === 'public-buyer-home.html' || path === 'index.html';
+
+            // Prefer Capacitor's canGoBack signal (more reliable than history length)
+            let nativeCanGoBack = !!canGoBack;
+            try {
+              if (!nativeCanGoBack && typeof App.canGoBack === 'function') {
+                const res = await App.canGoBack();
+                // Capacitor can return { value: boolean } or { canGoBack: boolean } depending on version
+                nativeCanGoBack = !!(res && (res.value === true || res.canGoBack === true));
+              }
+            } catch(_){}
+
+            if (nativeCanGoBack) {
+              window.history.back();
+              return;
+            }
+
+            // Fallback: heuristic using referrer or history length
+            const sameOriginRef = document.referrer && new URL(document.referrer).origin === location.origin;
+            if (!isRoot && (sameOriginRef || window.history.length > 1)) {
+              window.history.back();
+              return;
+            }
+
+            if (!isRoot) {
+              // No back stack → route to app home instead of exiting
+              // Use replace to avoid adding extra history entry
+              window.location.replace('/public-buyer-home.html');
+              return;
+            }
+            // At root with no back stack → let default behavior (exit) occur
+          } catch(_){ /* ignore */ }
+        });
+        window.__vpNativeBackBound = true;
+      }
+    }
+  } catch(_){ /* ignore */ }
   }catch(_){/* no-op */}
 })();
 

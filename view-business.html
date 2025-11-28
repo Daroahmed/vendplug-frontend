@@ -126,10 +126,15 @@
     .share-btn i {
       font-size: 1rem;
     }
+    .share-btn svg {
+      width: 1rem;
+      height: 1rem;
+      display: block;
+    }
 
     /* Message Button Styles */
     .message-btn {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #00cc99 0%, #00b894 100%);
       color: white;
       border: none;
       padding: 12px 24px;
@@ -141,12 +146,12 @@
       align-items: center;
       gap: 8px;
       transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 204, 153, 0.3);
     }
 
     .message-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 6px 20px rgba(0, 204, 153, 0.4);
     }
 
     .message-btn i {
@@ -422,8 +427,8 @@
       
       <!-- Public user actions -->
       <div id="publicActions" style="display: none;">
-        <a href="buyer-login.html" class="btn btn-outline" style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Sign In</a>
-        <a href="buyer-register.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Sign Up</a>
+        <a href="auth-selection.html" class="btn btn-outline" style="padding: 0.5rem 1rem; margin-right: 0.5rem;">Sign In</a>
+        <a href="auth-selection.html" class="btn btn-primary" style="padding: 0.5rem 1rem;">Sign Up</a>
       </div>
       
       <!-- Logged in user actions -->
@@ -456,19 +461,17 @@
     <div class="share-buttons">
       <button class="share-btn whatsapp" onclick="shareToWhatsApp()">
         <i class="fab fa-whatsapp"></i>
-        WhatsApp
       </button>
       <button class="share-btn facebook" onclick="shareToFacebook()">
         <i class="fab fa-facebook"></i>
-        Facebook
       </button>
       <button class="share-btn twitter" onclick="shareToX()">
-        <i class="fab fa-x-twitter"></i>
-        X
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+          <path d="M18.244 2H21l-7.34 8.39L22.5 22h-6.77l-5.3-6.43L3.756 22H1l7.68-8.78L1.5 2h6.89l4.77 5.79L18.244 2zm-1.18 18h1.84L7.04 4h-1.9l11.93 16z"/>
+        </svg>
       </button>
       <button class="share-btn copy" onclick="copyBusinessLink()">
         <i class="fas fa-copy"></i>
-        Copy Link
       </button>
     </div>
     <div class="copy-success" id="copySuccess">Link copied to clipboard!</div>
@@ -825,7 +828,7 @@
       if (!buyerToken) {
         const login = confirm('Please sign in to start a chat. Would you like to sign in now?');
         if (login) {
-          window.location.href = 'buyer-login.html';
+          window.location.href = 'auth-selection.html';
         }
         return;
       }
@@ -975,6 +978,7 @@
     try{ if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); }catch(_){}
     document.addEventListener('DOMContentLoaded', ()=>{ try{ window.lazyUpgradeImages && window.lazyUpgradeImages(); }catch(_){} });
   </script>
+  <script src="/js/config.js"></script>
   <script src="/js/cdn-utils.js"></script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>

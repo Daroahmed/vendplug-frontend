@@ -105,7 +105,7 @@
         </div>
     </div>
 
-    <script src="js/config.js"></script>
+    <script src="/js/config.js"></script>
     <script src="/js/auth-utils.js"></script>
     <script src="/js/back-button.js"></script>
     <script>
@@ -127,20 +127,34 @@
             const token = (typeof getAuthTokenForRole === 'function' ? getAuthTokenForRole('buyer') : null) || getAuthToken();
 
             const tryDirectVerify = async () => {
-                if (!token) return false;
                 try {
-                    console.log('🔍 Verifying payment with backend (token-based)...');
-                    const response = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment-api?reference=${encodeURIComponent(reference)}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    const data = await response.json();
-                    console.log('📡 Backend response:', data);
-                    if (response.ok && data.success) {
+                    if (token) {
+                        console.log('🔍 Verifying payment with backend (token-based)...');
+                        const response = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment-api?reference=${encodeURIComponent(reference)}`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        const data = await response.json();
+                        console.log('📡 Backend response:', data);
+                        if (response.ok && data.success) {
+                            showSuccess('Payment verified successfully! Your wallet has been credited.');
+                            return true;
+                        }
+                    }
+                } catch (err) {
+                    console.warn('Direct verification failed:', err?.message || err);
+                }
+                // Fallback: public verification (no token) to cover external browser callbacks
+                try {
+                    console.log('🌐 Trying public verification fallback...');
+                    const res2 = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment-public?reference=${encodeURIComponent(reference)}`);
+                    const data2 = await res2.json();
+                    console.log('📡 Public verify response:', data2);
+                    if (res2.ok && data2.success) {
                         showSuccess('Payment verified successfully! Your wallet has been credited.');
                         return true;
                     }
-                } catch (err) {
-                    console.warn('Direct verification failed, will poll status:', err?.message || err);
+                } catch (err2) {
+                    console.warn('Public verification failed:', err2?.message || err2);
                 }
                 return false;
             };

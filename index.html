@@ -7,6 +7,19 @@
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/logo.png">
+  <script>
+    (function () {
+      try {
+        var isNative = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
+        if (isNative) {
+          var target = 'public-buyer-home.html';
+          if (!location.pathname.endsWith('/' + target) && !location.pathname.endsWith(target)) {
+            location.replace(target);
+          }
+        }
+      } catch (_) {}
+    })();
+  </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     :root {
