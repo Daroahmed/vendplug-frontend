@@ -54,11 +54,11 @@
           if (!u.host || u.host.endsWith('vendplug.com.ng')) {
             let path = u.pathname;
             // Map known virtual paths to actual files
-            if (path === '/payment-success') path = '/payment-success.html';
+            if (path === '/payment-success') path = '/buyer-wallet.html';
             if (path === '/wallet') path = '/buyer-wallet.html';
             // Only route if it targets an html file or explicit mapping above
             const pathAndQuery = path + (u.search || '');
-            if (/\.html$/i.test(pathAndQuery) || pathAndQuery.startsWith('/buyer-wallet.html') || pathAndQuery.startsWith('/payment-success.html')) {
+            if (/\.html$/i.test(pathAndQuery) || pathAndQuery.startsWith('/buyer-wallet.html')) {
               window.location.href = pathAndQuery;
             }
           }

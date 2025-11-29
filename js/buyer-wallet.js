@@ -50,6 +50,19 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchWallet();
   fetchTransactions();
 
+  // If a Paystack reference was stored (from deep link or inline close), verify on load
+  try {
+    setTimeout(async () => {
+      try {
+        const pending = localStorage.getItem('paystack:pendingRef');
+        if (pending) {
+          await verifyPayment(pending);
+          try { localStorage.removeItem('paystack:pendingRef'); } catch(_){}
+        }
+      } catch(_){}
+    }, 300);
+  } catch(_){}
+
   document.getElementById('filterBtn')?.addEventListener('click', () => {
     const start = document.getElementById('startDate').value;
     const end = document.getElementById('endDate').value;
@@ -325,17 +338,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
           await Browser.open({ url: authorizationUrl, presentationStyle: 'fullscreen' });
         } else {
-          // Fallback: open in current webview (may leave app if WebView blocks cross-origin)
-          const ua = navigator.userAgent || '';
-          const isFirefoxAndroid = /Android/i.test(ua) && /Firefox/i.test(ua);
-          if (isFirefoxAndroid) {
-            window.location.replace(authorizationUrl);
-          } else {
+          // Web/PWA → Use Paystack Inline so we stay on wallet
+          async function ensurePaystackInlineScriptLoaded() {
+            if (window.PaystackPop && typeof window.PaystackPop.setup === 'function') return true;
+            return await new Promise((resolve) => {
+              try {
+                const s = document.createElement('script');
+                s.src = 'https://js.paystack.co/v1/inline.js';
+                s.async = true;
+                s.onload = () => resolve(true);
+                s.onerror = () => resolve(false);
+                document.head.appendChild(s);
+              } catch (_) { resolve(false); }
+            });
+          }
+          const inlineOk = await ensurePaystackInlineScriptLoaded();
+          if (!inlineOk || !window.PaystackPop) {
+            // Fallback last resort: navigate to authorization URL
             window.location.href = authorizationUrl;
+          } else {
+            try { localStorage.setItem('paystack:pendingRef', reference); } catch(_){}
+            const handler = window.PaystackPop.setup({
+              key: window.PAYSTACK_PUBLIC_KEY,
+              email: buyer.email,
+              amount: Number(totalAmountToPay) * 100,
+              ref: reference,
+              label: 'VendPlug Wallet Funding',
+              onClose: async () => {
+                try {
+                  const ref = localStorage.getItem('paystack:pendingRef') || reference;
+                  if (ref) { await verifyPayment(ref); }
+                } finally {
+                  try { localStorage.removeItem('paystack:pendingRef'); } catch(_){}
+                  fundBtn.classList.remove('loading');
+                  try { fundBtn.disabled = false; } catch(_){}
+                }
+              },
+              callback: async (response) => {
+                try {
+                  const refOk = (response && response.reference) ? response.reference : reference;
+                  try { localStorage.setItem('paystack:pendingRef', refOk); } catch(_){}
+                  await verifyPayment(refOk);
+                } finally {
+                  try { localStorage.removeItem('paystack:pendingRef'); } catch(_){}
+                  fundBtn.classList.remove('loading');
+                  try { fundBtn.disabled = false; } catch(_){}
+                }
+              }
+            });
+            handler.openIframe();
           }
         }
       } catch (_) {
-        window.location.href = authorizationUrl;
+        // Silent fallback if inline setup failed unexpectedly
+        try { window.location.href = authorizationUrl; } catch(__) {}
       }
     } catch (error) {
       console.error('Payment initialization error:', error);
@@ -349,30 +405,87 @@ document.addEventListener('DOMContentLoaded', () => {
   async function verifyPayment(reference) {
     try {
       console.log('🔍 Verifying payment:', reference);
-      
-      const verifyRes = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment?reference=${reference}`, {
+
+      // Helper: poll public status until credited or timeout
+      const pollUntilCredited = async (ref, maxAttempts = 20, intervalMs = 3000) => {
+        for (let i = 0; i < maxAttempts; i++) {
+          try {
+            const statusRes = await fetch(`${window.BACKEND_URL}/api/wallet/topup/status?reference=${encodeURIComponent(ref)}`);
+            if (statusRes.ok) {
+              const statusJson = await statusRes.json();
+              const st = String(statusJson?.data?.status || '').toLowerCase();
+              if (st === 'successful') {
+                // Refresh wallet/transactions silently and exit
+                await fetchWallet();
+                await fetchTransactions();
+                closeFundingModal();
+                try {
+                  const fundBtn = document.querySelector('.fund-button');
+                  fundBtn && fundBtn.classList.remove('loading');
+                  if (fundBtn) fundBtn.disabled = false;
+                } catch(_){}
+                // Optional gentle success toast (avoid modal)
+                try { window.showOverlay && showOverlay({ type:'success', title:'Payment', message:'Wallet credited.' }); } catch(_){}
+                return true;
+              }
+              if (st === 'failed') {
+                try { window.showOverlay && showOverlay({ type:'error', title:'Payment', message:'Payment failed. If debited, contact support with your reference.' }); } catch(_){}
+                return false;
+              }
+            }
+          } catch(_){}
+          await new Promise(r => setTimeout(r, intervalMs));
+        }
+        // Timeout: do not show an error modal; keep UI usable
+        try { window.showOverlay && showOverlay({ type:'info', title:'Payment', message:'Verifying… Your wallet will update shortly.' }); } catch(_){}
+        return false;
+      };
+
+      const verifyRes = await fetch(`${window.BACKEND_URL}/api/paystack/verify-payment?reference=${encodeURIComponent(reference)}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
       const verifyData = await verifyRes.json();
-      
+
       if (verifyRes.ok && verifyData.success) {
-        window.showOverlay && showOverlay({ type:'success', title:'Payment', message:'Payment successful! Your wallet has been credited.' });
-        fetchWallet(); // Refresh wallet balance
-        fetchTransactions(); // Refresh transaction history
+        try { window.showOverlay && showOverlay({ type:'success', title:'Payment', message:'Payment successful! Your wallet has been credited.' }); } catch(_){}
+        await fetchWallet(); // Refresh wallet balance
+        await fetchTransactions(); // Refresh transaction history
         closeFundingModal();
-        // Ensure any loading state is cleared
         try {
           const fundBtn = document.querySelector('.fund-button');
           fundBtn && fundBtn.classList.remove('loading');
           if (fundBtn) fundBtn.disabled = false;
         } catch(_){}
-      } else {
-        throw new Error(verifyData.message || 'Payment verification failed');
+        return true;
       }
+
+      // If verification returns pending (202) or explicit pending status → poll silently
+      if (verifyRes.status === 202 || String(verifyData?.status || '').toLowerCase() === 'pending') {
+        await pollUntilCredited(reference);
+        return false;
+      }
+
+      // If backend says already processed successfully (unlikely to reach here), treat as success
+      if (verifyRes.ok && verifyData?.data?.alreadyProcessed === true) {
+        await fetchWallet();
+        await fetchTransactions();
+        closeFundingModal();
+        try { window.showOverlay && showOverlay({ type:'success', title:'Payment', message:'Wallet credited.' }); } catch(_){}
+        return true;
+      }
+
+      // Any other outcome: fall back to polling instead of error modal
+      await pollUntilCredited(reference);
     } catch (error) {
       console.error('❌ Payment verification error:', error);
-      window.showOverlay && showOverlay({ type:'error', title:'Payment', message:'Error verifying payment. Please contact support if your wallet is not credited.' });
+      // Network or other transient issue: poll status quietly
+      try {
+        await (async () => {
+          const ref = reference;
+          await (async function(refInner){ await new Promise(r => setTimeout(r, 500)); await fetch(`${window.BACKEND_URL}/api/wallet/topup/status?reference=${encodeURIComponent(refInner)}`).catch(()=>{}); }) (ref);
+        })();
+      } catch(_){}
       try {
         const fundBtn = document.querySelector('.fund-button');
         fundBtn && fundBtn.classList.remove('loading');
