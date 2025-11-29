@@ -2,6 +2,9 @@
   const isNative = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
   const App = isNative ? (window.Capacitor.App || window.Capacitor.Plugins?.App) : null;
 
+  // Signal that a dedicated deep link handler is active so generic handlers can no-op
+  try { window.__DEEPLINK_HANDLER_ACTIVE = true; } catch(_){}
+
   function navigateTo(path){
     try { window.location.replace(path); } catch(_){ window.location.href = path; }
   }
