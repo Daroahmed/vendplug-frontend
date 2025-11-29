@@ -46,13 +46,21 @@
     const App = isNative ? (window.Capacitor.App || window.Capacitor.Plugins?.App) : null;
     if (App && typeof App.addListener === 'function') {
       App.addListener('appUrlOpen', ({ url }) => {
+        // If a dedicated deep link handler is active, skip this generic fallback
+        if (window.__DEEPLINK_HANDLER_ACTIVE === true) return;
         try {
           const u = new URL(url);
           // Only handle links from our own domain/scheme
           if (!u.host || u.host.endsWith('vendplug.com.ng')) {
-            const pathAndQuery = u.pathname + (u.search || '');
-            // Navigate inside web app
-            window.location.href = pathAndQuery;
+            let path = u.pathname;
+            // Map known virtual paths to actual files
+            if (path === '/payment-success') path = '/payment-success.html';
+            if (path === '/wallet') path = '/buyer-wallet.html';
+            // Only route if it targets an html file or explicit mapping above
+            const pathAndQuery = path + (u.search || '');
+            if (/\.html$/i.test(pathAndQuery) || pathAndQuery.startsWith('/buyer-wallet.html') || pathAndQuery.startsWith('/payment-success.html')) {
+              window.location.href = pathAndQuery;
+            }
           }
         } catch (_) {}
       });
