@@ -94,6 +94,9 @@
             <p>Your wallet has been credited successfully.</p>
             <div class="status-message status-success" id="successMessage"></div>
             <a href="buyer-wallet.html?from=payment-success" class="btn btn-success">Go to Wallet</a>
+            <div style="margin-top:10px">
+                <a id="openInAppBtn" href="#" class="btn">Open in App</a>
+            </div>
         </div>
         
         <div id="errorState" style="display: none;">
@@ -170,6 +173,35 @@
             if (!verified) {
                 await startPolling();
             }
+
+            // Provide a way to jump back into the native app (Custom Tabs cannot access Capacitor)
+            try {
+              const openBtn = document.getElementById('openInAppBtn');
+              if (openBtn) {
+                openBtn.addEventListener('click', function(e){
+                  e.preventDefault();
+                  if (reference) {
+                    // Custom scheme deep link handled by Android intent filter
+                    window.location.href = `vendplug://payment-success?reference=${encodeURIComponent(reference)}`;
+                  } else {
+                    window.location.href = `vendplug://wallet`;
+                  }
+                });
+              }
+              // If we are NOT in the app WebView, attempt an automatic deep link once
+              const isCap = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
+              if (!isCap) {
+                setTimeout(()=>{
+                  try {
+                    if (reference) {
+                      window.location.href = `vendplug://payment-success?reference=${encodeURIComponent(reference)}`;
+                    } else {
+                      window.location.href = `vendplug://wallet`;
+                    }
+                  } catch(_){}
+                }, 800);
+              }
+            } catch(_){}
         });
 
         async function pollTopupStatus(reference, maxAttempts = 24, intervalMs = 5000) {

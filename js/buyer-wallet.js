@@ -57,7 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Initialize push notifications for buyer (best-effort, native only)
-  try { window.initPushForRole && window.initPushForRole('buyer'); } catch (_) {}
+  // Native push init temporarily disabled pending crash investigation
+  // try { window.initPushForRole && window.initPushForRole('buyer'); } catch (_) {}
 
   async function fetchWallet() {
     try {
@@ -232,15 +233,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       // Initialize wallet funding with our new Paystack integration
+      const isCap = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
       const res = await fetch(`${window.BACKEND_URL}/api/paystack/fund-wallet`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          ...(isCap ? { 'X-Native-App': 'true' } : {})
         },
         body: JSON.stringify({ 
           amount,
-          email: buyer.email 
+          email: buyer.email,
+          ...(isCap ? { native: true } : {})
         })
       });
 
@@ -279,25 +283,46 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const isCap = !!(window.Capacitor && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web');
         const Browser = (window.Browser) || (isCap && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser);
+        const App = isCap && (window.Capacitor.App || window.Capacitor.Plugins?.App);
         if (Browser && typeof Browser.open === 'function') {
+          // Persist pending reference so we can verify on return
+          try { localStorage.setItem('paystack:pendingRef', reference); } catch(_){}
+
+          // Android Custom Tabs cannot report intermediate URLs reliably.
+          // We verify on close (browserFinished) and also on app resume.
+          let subFinish;
           try {
-            const onPage = async ({ url }) => {
-              try {
-                const u = new URL(url);
-                if (u.pathname.endsWith('/payment-success.html')) {
-                  const qs = u.search || '';
-                  // Close the custom tab and continue in-app
-                  try { await Browser.close(); } catch(_){}
-                  window.location.href = '/payment-success.html' + qs;
+            if (Browser.addListener) {
+              subFinish = await Browser.addListener('browserFinished', async () => {
+                try {
+                  const ref = localStorage.getItem('paystack:pendingRef') || reference;
+                  if (ref) { await verifyPayment(ref); }
+                } finally {
+                  try { localStorage.removeItem('paystack:pendingRef'); } catch(_){}
+                  fundBtn.classList.remove('loading');
+                  try { fundBtn.disabled = false; } catch(_) {}
                 }
-              } catch(_){}
-            };
-            const subLoad = Browser.addListener && await Browser.addListener('browserPageLoaded', onPage);
-            const subFinish = Browser.addListener && await Browser.addListener('browserFinished', () => {
-              try { subLoad && subLoad.remove && subLoad.remove(); } catch(_){}
-              try { subFinish && subFinish.remove && subFinish.remove(); } catch(_){}
-            });
+              });
+            }
           } catch(_){ /* ignore listener setup errors */ }
+
+          // Also verify when app returns to foreground (if tab was closed via system)
+          try {
+            if (App && typeof App.addListener === 'function') {
+              App.addListener('appStateChange', async ({ isActive }) => {
+                if (isActive) {
+                  const ref = localStorage.getItem('paystack:pendingRef');
+                  if (ref) {
+                    await verifyPayment(ref);
+                    try { localStorage.removeItem('paystack:pendingRef'); } catch(_){}
+                    fundBtn.classList.remove('loading');
+                    try { fundBtn.disabled = false; } catch(_) {}
+                  }
+                }
+              });
+            }
+          } catch(_){}
+
           await Browser.open({ url: authorizationUrl, presentationStyle: 'fullscreen' });
         } else {
           // Fallback: open in current webview (may leave app if WebView blocks cross-origin)
@@ -336,12 +361,23 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchWallet(); // Refresh wallet balance
         fetchTransactions(); // Refresh transaction history
         closeFundingModal();
+        // Ensure any loading state is cleared
+        try {
+          const fundBtn = document.querySelector('.fund-button');
+          fundBtn && fundBtn.classList.remove('loading');
+          if (fundBtn) fundBtn.disabled = false;
+        } catch(_){}
       } else {
         throw new Error(verifyData.message || 'Payment verification failed');
       }
     } catch (error) {
       console.error('❌ Payment verification error:', error);
       window.showOverlay && showOverlay({ type:'error', title:'Payment', message:'Error verifying payment. Please contact support if your wallet is not credited.' });
+      try {
+        const fundBtn = document.querySelector('.fund-button');
+        fundBtn && fundBtn.classList.remove('loading');
+        if (fundBtn) fundBtn.disabled = false;
+      } catch(_){}
     }
   }
 

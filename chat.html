@@ -1057,20 +1057,8 @@
             // Record button
             const recordButton = document.getElementById('recordButton');
             if (recordButton) {
+                // Use a simple click/tap toggle to avoid mobile click suppression
                 recordButton.addEventListener('click', toggleRecording);
-                // Long-press to record (mobile-friendly)
-                let pressTimeout;
-                recordButton.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    pressTimeout = setTimeout(() => {
-                        if (!isRecording) startRecording();
-                    }, 200);
-                });
-                recordButton.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    clearTimeout(pressTimeout);
-                    if (isRecording) stopRecording();
-                });
             }
 
             // Mobile sidebar toggle
@@ -2000,13 +1988,12 @@
         async function startRecording() {
             try {
                 const mimeType = getSupportedAudioMime();
-                // Prefer native capture on many mobile browsers for reliability
-                const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || '');
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder || !mimeType || isMobile) {
-                    // Fallback to native capture (works well on iOS Safari)
-                    triggerAudioCapture();
-                    return;
-                }
+                // Prefer in-page MediaRecorder on Android (Chrome/Capacitor), fallback for iOS Safari or when unsupported
+                const ua = navigator.userAgent || '';
+                const isiOS = /iPhone|iPad|iPod/i.test(ua);
+                const mediaAPISupported = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder && mimeType);
+                const shouldFallbackToNativeCapture = !mediaAPISupported || isiOS;
+                if (shouldFallbackToNativeCapture) { triggerAudioCapture(); return; }
 
                 const granted = await ensureMicPermission();
                 if (!granted) {

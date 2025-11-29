@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VendPlug – Vendor-led Marketplace</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/logo.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-primary: #121212;
+      --bg-secondary: #1e1e1e;
+      --bg-card: #2c2c2c;
+      --accent: #00cc99;
+      --text-primary: #fff;
+      --text-secondary: #ccc;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding-top: 80px; /* Space for fixed header */
+    }
+    
+    /* Header Styles */
+    header {
+      background: var(--bg-secondary);
+      padding: 1rem 2rem;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      display: flex;
+      align-items: center;
+    }
+    
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+    }
+    
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+    
+    .logo-img {
+      width: 8px;
+      height: 25px;
+      margin-right: 15px;
+      background-color: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    
+    .logo h1 {
+      color: var(--accent);
+      font-size: 1.8rem;
+      margin-bottom: 0.2rem;
+    }
+    
+    .logo p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    /* Desktop Navigation */
+    .desktop-nav {
+      display: flex;
+    }
+    
+    .desktop-nav a {
+      color: var(--text-primary);
+      text-decoration: none;
+      margin: 0 1rem;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    
+    .desktop-nav a:hover {
+      color: var(--accent);
+    }
+    
+    .auth-buttons {
+      display: flex;
+    }
+    
+    .auth-buttons button {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--accent);
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      margin-left: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .auth-buttons button:hover {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+    
+    /* Mobile Navigation */
+    .mobile-nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    
+    .mobile-nav {
+      position: fixed;
+      top: 80px;
+      right: -100%;
+      width: 80%;
+      max-width: 300px;
+      height: calc(100vh - 80px);
+      background: var(--bg-secondary);
+      padding: 2rem;
+      transition: right 0.3s ease;
+      z-index: 999;
+      box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+      overflow-y: auto;
+    }
+    
+    .mobile-nav.active {
+      right: 0;
+    }
+    
+    .mobile-nav a {
+      display: block;
+      color: var(--text-primary);
+      text-decoration: none;
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-weight: 500;
+    }
+    
+    .mobile-nav a:hover {
+      color: var(--accent);
+    }
+    
+    .mobile-auth {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
+    .mobile-auth button {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--accent);
+      padding: 0.8rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 100%;
+    }
+    
+    .mobile-auth button:hover {
+      background: var(--accent);
+      color: var(--bg-primary);
+    }
+    
+    /* Hero Carousel */
+    .hero-carousel {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .hero-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease;
+      background-size: cover;
+      background-position: center;
+    }
+    
+    .hero-slide.active {
+      opacity: 1;
+    }
+    
+    .hero-slide::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+    }
+    
+    .hero-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 2;
+      width: 80%;
+      max-width: 800px;
+    }
+    
+    .hero-content h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      min-height: 3.5rem;
+    }
+    
+    .hero-content p {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      color: var(--text-secondary);
+    }
+    
+    .btn {
+      background: var(--accent);
+      color: var(--bg-primary);
+      padding: 0.8rem 1.8rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: opacity 0.3s;
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+    }
+    
+    .hero-indicators {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 3;
+    }
+    
+    .hero-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .hero-indicator.active {
+      background: var(--accent);
+    }
+    
+    /* Sections */
+    section {
+      padding: 5rem 2rem;
+    }
+    
+    .section-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .section-title {
+      text-align: center;
+      font-size: 2.2rem;
+      margin-bottom: 3rem;
+      color: var(--accent);
+      min-height: 2.8rem;
+    }
+    
+    .typed-cursor {
+      opacity: 1;
+      animation: blink 0.7s infinite;
+    }
+    
+    @keyframes blink {
+      0% { opacity: 1; }
+      50% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+    
+    .section-subtitle {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto 3rem;
+      color: var(--text-secondary);
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+    
+    .card {
+      background: var(--bg-card);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+      transition: transform 0.3s;
+    }
+    
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .card h3 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+      font-size: 1.4rem;
+    }
+    
+    .user-type-section {
+      margin-bottom: 4rem;
+    }
+    
+    .user-type-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    
+    .user-type-header h2 {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      min-height: 2.4rem;
+    }
+    
+    .user-type-header p {
+      max-width: 700px;
+      margin: 0 auto;
+      color: var(--text-secondary);
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    
+    .feature-item {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    
+    .feature-item h3 {
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    
+    .payout-process {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    
+    .process-step {
+      background: var(--bg-card);
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .process-step h3 {
+      color: var(--accent);
+      margin-bottom: 0.8rem;
+    }
+    
+    /* Agent Carousel */
+    .agent-carousel {
+      position: relative;
+      height: 500px;
+      overflow: hidden;
+      border-radius: 12px;
+      margin: 3rem 0;
+    }
+    
+    .agent-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 1s ease;
+      background-size: cover;
+      background-position: center;
+    }
+    
+    .agent-slide.active {
+      opacity: 1;
+    }
+    
+    .agent-slide::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+    }
+    
+    .agent-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 2;
+      width: 80%;
+      max-width: 800px;
+    }
+    
+    .agent-content h2 {
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent);
+    }
+    
+    .agent-content p {
+      font-size: 1.2rem;
+      line-height: 1.8;
+    }
+    
+    .agent-indicators {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      z-index: 3;
+    }
+    
+    .agent-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .agent-indicator.active {
+      background: var(--accent);
+    }
+    
+    /* App Showcase Section */
+    .app-showcase {
+      background: var(--bg-secondary);
+      padding: 5rem 0;
+    }
+    
+    .carousel {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    
+    .carousel-inner {
+      display: flex;
+      transition: transform 0.5s ease;
+    }
+    
+    .carousel-item {
+      min-width: 100%;
+      position: relative;
+    }
+    
+    .carousel-item img {
+      width: 100%;
+      display: block;
+      border-radius: 12px;
+    }
+    
+    .carousel-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.7);
+      padding: 1.5rem;
+      text-align: center;
+    }
+    
+    .carousel-caption h3 {
+      color: var(--accent);
+      margin-bottom: 0.5rem;
+    }
+    
+    .carousel-controls {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      transform: translateY(-50%);
+      padding: 0 1rem;
+      z-index: 10;
+    }
+    
+    .carousel-control {
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .carousel-control:hover {
+      background: rgba(0,0,0,0.8);
+    }
+    
+    .carousel-indicators {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.5rem;
+      gap: 0.5rem;
+    }
+    
+    .carousel-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      border: none;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .carousel-indicator.active {
+      background: var(--accent);
+    }
+    
+    /* Demo Section */
+    .demo-section {
+      background: var(--bg-secondary);
+      padding: 5rem 2rem;
+      text-align: center;
+    }
+    
+    .video-container {
+      position: relative;
+      padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+      height: 0;
+      overflow: hidden;
+      max-width: 900px;
+      margin: 0 auto;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    
+    .video-container iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 12px;
+    }
+    
+    .author-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-right: 1rem;
+      font-size: 1.2rem;
+    }
+    
+    .author-details h4 {
+      color: var(--accent);
+      margin-bottom: 0.2rem;
+    }
+    
+    .author-details p {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+      background: linear-gradient(to right, #111, #333);
+      text-align: center;
+      padding: 4rem 2rem;
+    }
+    
+    .cta-section h2 {
+      font-size: 2.2rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .cta-section p {
+      max-width: 700px;
+      margin: 0 auto 2rem;
+      color: var(--text-secondary);
+    }
+    
+    /* Footer */
+    footer {
+      background: var(--bg-secondary);
+      padding: 3rem 2rem;
+      text-align: center;
+    }
+    
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+      gap: 1.5rem;
+    }
+    
+    .footer-links a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+    
+    .footer-links a:hover {
+      color: var(--accent);
+    }
+    
+    .copyright {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    
+    /* Media Queries */
+    @media (max-width: 968px) {
+      .desktop-nav, .auth-buttons {
+        display: none;
+      }
+      
+      .mobile-nav-toggle {
+        display: block;
+      }
+      
+      .hero-content h1 {
+        font-size: 2rem;
+      }
+      
+      .section-title {
+        font-size: 1.8rem;
+      }
+      
+      .agent-content h2 {
+        font-size: 2rem;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .header-container {
+        padding: 0.5rem 1rem;
+      }
+      
+      .hero-carousel {
+        height: 80vh;
+      }
+      
+      .hero-content {
+        width: 90%;
+      }
+      
+      .agent-carousel {
+        height: 400px;
+      }
+      
+      section {
+        padding: 3rem 1.5rem;
+      }
+      
+      .carousel-caption {
+        padding: 1rem;
+      }
+      
+      .carousel-caption h3 {
+        font-size: 1rem;
+      }
+      
+      .carousel-caption p {
+        font-size: 0.9rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .logo h1 {
+        font-size: 1.5rem;
+      }
+      
+      .hero-content h1 {
+        font-size: 1.8rem;
+      }
+      
+      .hero-content p {
+        font-size: 1rem;
+      }
+      
+      .section-title {
+        font-size: 1.6rem;
+      }
+      
+      .user-type-header h2 {
+        font-size: 1.6rem;
+      }
+      
+      .agent-content h2 {
+        font-size: 1.6rem;
+      }
+      
+      .agent-content p {
+        font-size: 1rem;
+      }
+      
+      .card, .feature-item {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <div class="logo">
+       <div class="logo-img"></div>
+        <div>
+          <h1>VendPlug</h1>
+          <p>Vendor-led Marketplace for Seamless Commerce</p>
+        </div>
+      </div>
+      
+      <nav class="desktop-nav">
+        <a href="#features">Features</a>
+        <a href="#buyers">Buyers</a>
+        <a href="#vendors">Vendors</a>
+        <a href="#agents">Agents</a>
+        <a href="#admin">Admin</a>
+      </nav>
+      
+      
+      <button class="mobile-nav-toggle">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </header>
+
+  <nav class="mobile-nav">
+    <a href="#features">Features</a>
+    <a href="#buyers">Buyers</a>
+    <a href="#vendors">Vendors</a>
+    <a href="#agents">Agents</a>
+    <a href="#admin">Admin</a>
+    <div class="mobile-auth">
+    </div>
+  </nav>
+
+  <!-- Hero Carousel -->
+  <section class="hero-carousel">
+    <div class="hero-slide active" style="background-image: url('market-1.jpg');"></div>
+    <div class="hero-slide" style="background-image: url('market-2.jpg');"></div>
+    <div class="hero-slide" style="background-image: url('market-4.jpg');"></div>
+    <div class="hero-slide" style="background-image: url('market-5.jpg');"></div>
+    <div class="hero-slide" style="background-image: url('market-6.jpg');"></div>
+  </section>
+  
+    <div class="hero-content">
+      <h1 id="typed-heading"></h1>
+      <p>VendPlug is the first marketplace built around vendors. Upload products, manage payouts, and reach buyers directly while maintaining full control of your business.</p>
+    <a href="vendor-auth.html" class="btn">Join as Vendor</a>
+  </div>
+    
+    <div class="hero-indicators">
+      <div class="hero-indicator active"></div>
+      <div class="hero-indicator"></div>
+      <div class="hero-indicator"></div>
+      <div class="hero-indicator"></div>
+      <div class="hero-indicator"></div>
+    </div>
+
+  <section id="features">
+    <div class="section-container">
+      <h2 class="section-title" id="features-title"></h2>
+      <p class="section-subtitle">Our platform is designed with all users in mind, creating a seamless ecosystem for commerce</p>
+      
+      <div class="grid">
+        <div class="card">
+          <h3>Vendor-first Approach</h3>
+          <p>Unlike others, our platform is designed around vendors – giving them tools to manage products, sales, and payouts with full transparency.</p>
+        </div>
+        <div class="card">
+          <h3>Smart Checkout</h3>
+          <p>Buyers add products to cart, select location, and checkout securely. Orders are automatically routed to the right vendors and agents.</p>
+        </div>
+        <div class="card">
+          <h3>Escrow Payments</h3>
+          <p>Funds are held safely until buyers confirm delivery. Vendors and agents get fair payouts with no disputes.</p>
+        </div>
+        <div class="card">
+          <h3>Real-time Updates</h3>
+          <p>Instant order notifications, payout updates, and delivery tracking keep everyone informed at all times.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="app-showcase">
+    <div class="section-container">
+      <h2 class="section-title">VendPlug in Action</h2>
+      <p class="section-subtitle">See how our platform works for different users</p>
+      
+      <div class="carousel">
+        <div class="carousel-inner">
+          <div class="carousel-item">
+            <img src="https://placehold.co/1000x600/2c2c2c/00cc99/png?text=Vendor+Dashboard" alt="Vendor Dashboard">
+            <div class="carousel-caption">
+              <h3>Vendor Dashboard</h3>
+              <p>Manage products, orders, and track earnings in one place</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="https://placehold.co/1000x600/2c2c2c/00cc99/png?text=Buyer+Experience" alt="Buyer Experience">
+            <div class="carousel-caption">
+              <h3>Buyer Experience</h3>
+              <p>Seamless shopping with secure escrow payments</p>
+            </div>
+          </div>
+          <div class="carousel-item">
+            <img src="https://placehold.co/1000x600/2c2c2c/00cc99/png?text=Agent+Interface" alt="Agent Interface">
+            <div class="carousel-caption">
+              <h3>Agent Interface</h3>
+              <p>Efficient order management and delivery tracking</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="carousel-controls">
+          <button class="carousel-control prev">
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <button class="carousel-control next">
+            <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+        
+        <div class="carousel-indicators">
+          <button class="carousel-indicator active"></button>
+          <button class="carousel-indicator"></button>
+          <button class="carousel-indicator"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="buyers" style="background: var(--bg-secondary);">
+    <div class="section-container">
+      <div class="user-type-header">
+        <h2 id="buyers-title"></h2>
+        <p>Shopping made seamless. With VendPlug, buyers get choice, trust, and control every step of the way.</p>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h3>Discover Products</h3>
+          <p>Browse across vendors, categories, and states — with smart filters for faster discovery.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Track Orders</h3>
+          <p>From cart to doorstep, stay updated on every order's journey in real-time.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Safe Payments</h3>
+          <p>Your money is held securely until you confirm delivery. No delivery, no release.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="vendors">
+    <div class="section-container">
+      <div class="user-type-header">
+        <h2 id="vendors-title"></h2>
+        <p>Sell smarter, not harder. VendPlug equips vendors with everything needed to grow, manage, and scale their businesses.</p>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h3>Simple Store Setup</h3>
+          <p>Upload products, manage categories, and showcase your offerings effortlessly.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Real-Time Orders</h3>
+          <p>Receive and respond to buyer orders instantly with smart notifications.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Escrow Protection</h3>
+          <p>Payments are secured in escrow until buyers confirm delivery. Zero risks, only trust.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Growth Insights</h3>
+          <p>Track sales, performance, and payouts with real-time dashboards.</p>
+        </div>
+      </div>
+      
+      <h3 class="section-title" style="font-size: 1.8rem; margin-top: 4rem;">Transparent Payout Process</h3>
+      
+      <div class="payout-process">
+        <div class="process-step">
+          <h3>1. Buyer Pays</h3>
+          <p>Funds are secured in escrow as soon as an order is placed.</p>
+        </div>
+        <div class="process-step">
+          <h3>2. Vendor Delivers</h3>
+          <p>You fulfill the order knowing your payment is safe and guaranteed.</p>
+        </div>
+        <div class="process-step">
+          <h3>3. Buyer Confirms</h3>
+          <p>Once the buyer confirms receipt, the payment is released automatically.</p>
+        </div>
+        <div class="process-step">
+          <h3>4. Instant Payout</h3>
+          <p>Funds move directly into your wallet, ready for withdrawal.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="agents" style="background: var(--bg-secondary);">
+    <div class="section-container">
+      <div class="user-type-header">
+        <h2 id="agents-title"></h2>
+        <p>Become the bridge between local markets and digital commerce, earning commissions while serving your community.</p>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h3>Digitizing Local Markets</h3>
+          <p>Agents live inside the local markets, bridging the gap between offline stalls and online buyers.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Empowered Earners</h3>
+          <p>Accept order requests, purchase from vendors, and earn transparent commissions through escrow payments.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Trusted & Scalable</h3>
+          <p>Build reputation based on performance. Serve your neighborhood or expand across states.</p>
+        </div>
+      </div>
+      
+      <!-- Agent Carousel -->
+      <div class="agent-carousel">
+        <div class="agent-slide active" style="background-image: url('https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=80');"></div>
+        <div class="agent-slide" style="background-image: url('https://images.unsplash.com/photo-1608190003443-86a6a2c2f14c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=80');"></div>
+        <div class="agent-slide" style="background-image: url('https://images.unsplash.com/photo-1598301257982-0cf01499abb2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1800&q=80');"></div>
+        
+        <div class="agent-content">
+          <h2>More Than Delivery</h2>
+          <p>VendPlug agents are the lifeblood of our ecosystem - digitizing Nigeria's markets, making commerce safe, fast, and limitless.</p>
+        </div>
+        
+        <div class="agent-indicators">
+          <div class="agent-indicator active"></div>
+          <div class="agent-indicator"></div>
+          <div class="agent-indicator"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="admin">
+    <div class="section-container">
+      <div class="user-type-header">
+        <h2 id="admin-title"></h2>
+        <p>Powerful tools to monitor, manage, and optimize the entire marketplace ecosystem.</p>
+      </div>
+      
+      <div class="feature-grid">
+        <div class="feature-item">
+          <h3>System Overview</h3>
+          <p>Monitor transactions, user activity, and platform health in real-time with comprehensive dashboards.</p>
+        </div>
+        <div class="feature-item">
+          <h3>User Management</h3>
+          <p>Manage vendors, buyers, and agents with sophisticated tools for verification and support.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Dispute Resolution</h3>
+          <p>Fair mediation tools to handle disputes between buyers, vendors, and agents efficiently.</p>
+        </div>
+        <div class="feature-item">
+          <h3>Analytics & Reporting</h3>
+          <p>Deep insights into marketplace performance, trends, and opportunities for growth.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="cta-section">
+    <h2>Ready to Join the Marketplace Revolution?</h2>
+    <p>Whether you're a vendor looking to scale, a buyer seeking trust and convenience, or an agent ready to earn — VendPlug is built for you.</p>
+    <a href="auth-selection.html" class="btn">Get Started Today</a>
+  </section>
+
+  <footer>
+    <div class="footer-content">
+      <div class="footer-links">
+        <a >info@vendplug.com.ng</a>
+        <a >+234 803 886 1283</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">FAQ</a>
+      </div>
+      <p class="copyright">© 2025 VendPlug. All Rights Reserved. Made for Vendors. Built on Trust.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile Navigation
+    const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+    const mobileNav = document.querySelector('.mobile-nav');
+    
+    mobileNavToggle.addEventListener('click', () => {
+      mobileNav.classList.toggle('active');
+      const icon = mobileNavToggle.querySelector('i');
+      if (mobileNav.classList.contains('active')) {
+        icon.classList.remove('fa-bars');
+        icon.classList.add('fa-times');
+      } else {
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+      }
+    });
+    
+    // Close mobile nav when clicking on links
+    const mobileNavLinks = document.querySelectorAll('.mobile-nav a');
+    mobileNavLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        mobileNav.classList.remove('active');
+        const icon = mobileNavToggle.querySelector('i');
+        icon.classList.remove('fa-times');
+        icon.classList.add('fa-bars');
+      });
+    });
+    
+    // Typing animation
+    function typeEffect(element, text, speed = 100) {
+      let i = 0;
+      element.innerHTML = '';
+      
+      function type() {
+        if (i < text.length) {
+          element.innerHTML += text.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        } else {
+          element.innerHTML += '<span class="typed-cursor">|</span>';
+        }
+      }
+      
+      type();
+    }
+    
+    // Initialize typing animations when in viewport
+    const observerOptions = {
+      threshold: 0.5,
+      rootMargin: '0px 0px -100px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const target = entry.target;
+          
+          switch(target.id) {
+            case 'typed-heading':
+              typeEffect(target, 'Empowering Vendors, Connecting Buyers');
+              break;
+            case 'features-title':
+              typeEffect(target, 'Why VendPlug?');
+              break;
+            case 'buyers-title':
+              typeEffect(target, 'For Buyers');
+              break;
+            case 'vendors-title':
+              typeEffect(target, 'For Vendors');
+              break;
+            case 'agents-title':
+              typeEffect(target, 'For Agents');
+              break;
+            case 'admin-title':
+              typeEffect(target, 'Admin Dashboard');
+              break;
+          }
+          
+          observer.unobserve(target);
+        }
+      });
+    }, observerOptions);
+    
+    // Observe elements for typing animation
+    const elementsToType = [
+      'typed-heading', 'features-title', 'buyers-title', 
+      'vendors-title', 'agents-title', 'admin-title'
+    ];
+    
+    elementsToType.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+    
+    // Hero Carousel
+    const heroSlides = document.querySelectorAll('.hero-slide');
+    const heroIndicators = document.querySelectorAll('.hero-indicator');
+    let heroCurrentIndex = 0;
+    
+    function updateHeroCarousel() {
+      heroSlides.forEach((slide, index) => {
+        if (index === heroCurrentIndex) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+      
+      heroIndicators.forEach((indicator, index) => {
+        if (index === heroCurrentIndex) {
+          indicator.classList.add('active');
+        } else {
+          indicator.classList.remove('active');
+        }
+      });
+    }
+    
+    function advanceHeroSlide() {
+      heroCurrentIndex = (heroCurrentIndex < heroSlides.length - 1) ? heroCurrentIndex + 1 : 0;
+      updateHeroCarousel();
+    }
+    
+    // Add click events to hero indicators
+    heroIndicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => {
+        heroCurrentIndex = index;
+        updateHeroCarousel();
+      });
+    });
+    
+    // Auto-advance hero carousel
+    setInterval(advanceHeroSlide, 5000);
+    
+    // Agent Carousel
+    const agentSlides = document.querySelectorAll('.agent-slide');
+    const agentIndicators = document.querySelectorAll('.agent-indicator');
+    let agentCurrentIndex = 0;
+    
+    function updateAgentCarousel() {
+      agentSlides.forEach((slide, index) => {
+        if (index === agentCurrentIndex) {
+          slide.classList.add('active');
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+      
+      agentIndicators.forEach((indicator, index) => {
+        if (index === agentCurrentIndex) {
+          indicator.classList.add('active');
+        } else {
+          indicator.classList.remove('active');
+        }
+      });
+    }
+    
+    function advanceAgentSlide() {
+      agentCurrentIndex = (agentCurrentIndex < agentSlides.length - 1) ? agentCurrentIndex + 1 : 0;
+      updateAgentCarousel();
+    }
+    
+    // Add click events to agent indicators
+    agentIndicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => {
+        agentCurrentIndex = index;
+        updateAgentCarousel();
+      });
+    });
+    
+    // Auto-advance agent carousel
+    setInterval(advanceAgentSlide, 5000);
+    
+    // App Showcase Carousel
+    const carouselInner = document.querySelector('.carousel-inner');
+    const carouselItems = document.querySelectorAll('.carousel-item');
+    const prevButton = document.querySelector('.carousel-control.prev');
+    const nextButton = document.querySelector('.carousel-control.next');
+    const indicators = document.querySelectorAll('.carousel-indicator');
+    
+    let currentIndex = 0;
+    const itemCount = carouselItems.length;
+    
+    function updateCarousel() {
+      carouselInner.style.transform = `translateX(-${currentIndex * 100}%)`;
+      
+      // Update indicators
+      indicators.forEach((indicator, index) => {
+        if (index === currentIndex) {
+          indicator.classList.add('active');
+        } else {
+          indicator.classList.remove('active');
+        }
+      });
+    }
+    
+    prevButton.addEventListener('click', () => {
+      currentIndex = (currentIndex > 0) ? currentIndex - 1 : itemCount - 1;
+      updateCarousel();
+    });
+    
+    nextButton.addEventListener('click', () => {
+      currentIndex = (currentIndex < itemCount - 1) ? currentIndex + 1 : 0;
+      updateCarousel();
+    });
+    
+    // Add click events to indicators
+    indicators.forEach((indicator, index) => {
+      indicator.addEventListener('click', () => {
+        currentIndex = index;
+        updateCarousel();
+      });
+    });
+    
+    // Auto-advance carousel
+    setInterval(() => {
+      currentIndex = (currentIndex < itemCount - 1) ? currentIndex + 1 : 0;
+      updateCarousel();
+    }, 5000);
+  </script>
+</body>
+</html>

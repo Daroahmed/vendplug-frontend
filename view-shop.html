@@ -422,6 +422,14 @@
 <body>
   <!-- Header -->
   <div class="header">
+    <a href="#" class="notification-icon" id="notification-icon" aria-label="Notifications" title="Notifications">
+      <span class="bell-icon" aria-hidden="true" style="display:inline-flex;align-items:center;justify-content:center;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M12 2C10.343 2 9 3.343 9 5V5.29C6.718 6.15 5 8.39 5 11V16L3 18V19H21V18L19 16V11C19 8.39 17.282 6.15 15 5.29V5C15 3.343 13.657 2 12 2ZM12 22C13.657 22 15 20.657 15 19H9C9 20.657 10.343 22 12 22Z"/>
+        </svg>
+      </span>
+      <span class="notification-badge" id="notification-badge">0</span>
+    </a>
     <h1>Vendor Shop</h1>
     <div class="header-actions">
       <a href="public-buyer-home.html" class="home-button">
@@ -938,5 +946,7 @@
   <script src="/js/back-button.js"></script>
   <script src="/js/adManager.js"></script>
   <script src="/js/cart-badge.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="/js/notifications.js"></script>
 </body>
 </html>
