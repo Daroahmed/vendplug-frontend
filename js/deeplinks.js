@@ -23,17 +23,18 @@
       if (protocol === 'vendplug:') {
         if (pathname === 'payment-success' && reference) {
           try { localStorage.setItem('paystack:pendingRef', reference); } catch(_){}
-          navigateTo(`/payment-success.html?reference=${encodeURIComponent(reference)}&from=deeplink`);
+          navigateTo(`/buyer-wallet.html?from=deeplink`);
           return;
         }
         if (pathname === 'wallet') {
+          if (reference) { try { localStorage.setItem('paystack:pendingRef', reference); } catch(_){}} 
           navigateTo('/buyer-wallet.html?from=deeplink');
           return;
         }
         // Default fallback for custom scheme
         if (reference) {
           try { localStorage.setItem('paystack:pendingRef', reference); } catch(_){}
-          navigateTo(`/payment-success.html?reference=${encodeURIComponent(reference)}&from=deeplink`);
+          navigateTo(`/buyer-wallet.html?from=deeplink`);
           return;
         }
       }
@@ -42,7 +43,7 @@
       if (protocol === 'https:' && /vendplug\.com\.ng$/i.test(host)) {
         if (pathname === 'payment-success' && reference) {
           try { localStorage.setItem('paystack:pendingRef', reference); } catch(_){}
-          navigateTo(`/payment-success.html?reference=${encodeURIComponent(reference)}&from=applink`);
+          navigateTo(`/buyer-wallet.html?from=applink`);
           return;
         }
         if (pathname === 'buyer-wallet.html' || pathname === 'wallet') {
