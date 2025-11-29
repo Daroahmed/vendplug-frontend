@@ -100,27 +100,42 @@
     } catch (_) {}
   };
 
-  // On native builds, rewrite relative API calls to the production backend
+  // Global fetch patch:
+  // - For native, rewrite /api and /socket.io to BACKEND_URL
+  // - For any environment, if path starts with /api and tokenManager is available,
+  //   use tokenManager.authenticatedFetch to auto-attach/refresh tokens.
   try {
-    if (isNative && !window.__vpFetchPatched) {
+    if (!window.__vpFetchPatched) {
       const originalFetch = window.fetch.bind(window);
       window.fetch = function(input, init) {
         try {
-          const raw = typeof input === 'string' ? input : input.url;
-          // Normalize to a URL object (base: current origin) to inspect path/origin
-          const u = new URL(raw, window.location.origin);
-          const isApiLike = /^\/(api|socket\.io)\b/.test(u.pathname);
-          const isLocalOrigin = u.origin === window.location.origin; // Capacitor uses http://localhost
+          const raw = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+          if (!raw) return originalFetch(input, init);
 
-          // Rewrite cases:
-          // 1) Relative /api... (already handled by isLocalOrigin true since base is current origin)
-          // 2) Absolute pointing to current (localhost) origin under /api or /socket.io
-          if (isApiLike && (raw.startsWith('/') || isLocalOrigin)) {
-            const rewritten = window.BACKEND_URL + u.pathname + (u.search || '');
-            if (typeof input === 'string') {
-              return originalFetch(rewritten, init);
-            } else {
-              const req = new Request(rewritten, input);
+          const u = new URL(raw, window.location.origin);
+          const isSocket = /^\/socket\.io\b/.test(u.pathname);
+          const isApi = /^\/api\b/.test(u.pathname);
+          const isLocalOrigin = u.origin === window.location.origin;
+
+          // Compute final URL (rewrite for native)
+          let targetUrl = raw;
+          if (isNative && (isApi || isSocket) && (raw.startsWith('/') || isLocalOrigin)) {
+            targetUrl = window.BACKEND_URL + u.pathname + (u.search || '');
+          }
+
+          // Prefer tokenManager for API calls (not for socket.io handshakes)
+          if (isApi && window.tokenManager && typeof window.tokenManager.authenticatedFetch === 'function' && typeof input === 'string') {
+            const opts = { ...(init || {}), credentials: 'include' };
+            return window.tokenManager.authenticatedFetch(targetUrl, opts);
+          }
+
+          // Fallback to original fetch
+          if (typeof input === 'string') {
+            return originalFetch(targetUrl, init);
+          } else {
+            // When input is a Request object, rewrite URL only (tokenManager path skipped to avoid cloning body streams)
+            if (targetUrl !== raw) {
+              const req = new Request(targetUrl, input);
               return originalFetch(req, init);
             }
           }

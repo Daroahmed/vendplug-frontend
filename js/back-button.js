@@ -156,9 +156,17 @@
       // so the OS doesn't immediately minimize the app when on a root screen.
       try {
         const guardKey = '__vp_back_guard__';
+        const isRootPage = () => {
+          try {
+            const path = (location.pathname || '').replace(/^\//, '');
+            return !path || path === 'public-buyer-home.html' || path === 'index.html';
+          } catch(_){ return false; }
+        };
         const ensureGuard = () => {
           try {
-            // If history has only one entry, add a guard state
+            // Only arm the guard on root screens to avoid double-back behavior on inner pages
+            if (!isRootPage()) return;
+            // If history has only one entry or guard missing, add a guard state
             if (window.history.length <= 1 || !history.state || history.state.__vp !== guardKey) {
               try { history.replaceState({ __vp: guardKey }, document.title, location.href); } catch(_) {}
               try { history.pushState({ __vp: guardKey }, document.title, location.href); } catch(_) {}

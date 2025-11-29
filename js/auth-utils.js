@@ -471,6 +471,8 @@ function urlBase64ToUint8Array(base64String) {
   document.addEventListener('DOMContentLoaded', ()=>{
     try{ const s=document.createElement('script'); s.src='/js/push-cta.js'; document.body.appendChild(s);}catch(_){}
     try{ const s2=document.createElement('script'); s2.src='/js/back-button.js'; document.body.appendChild(s2);}catch(_){}
+    try{ const s3=document.createElement('script'); s3.src='/js/app-lock.js'; document.body.appendChild(s3);}catch(_){}
+    try{ const s4=document.createElement('script'); s4.src='/js/deeplinks.js'; document.body.appendChild(s4);}catch(_){}
     // Auto-cleanup only runs after successful login, not on every page load
     try{ autoCleanupTokens(); }catch(_){}
   });

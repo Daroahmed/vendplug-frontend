@@ -50,8 +50,9 @@
       color: var(--primary);
     }
 
-/* Notification badge */
-.notification-icon { position: relative; }
+/* Notification icon + badge */
+.notification-icon { position: relative; color: var(--text-light) !important; }
+.notification-icon svg { color: inherit; fill: currentColor; }
 .notification-badge {
   position: absolute;
   top: -8px;

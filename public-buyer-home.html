@@ -55,6 +55,28 @@
       gap: 10px;
     }
 
+    /* Brand (logo + text) beside hamburger */
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      text-decoration: none;
+      color: var(--text-light);
+      font-weight: 700;
+      line-height: 1;
+    }
+    .brand-logo {
+      height: 28px;
+      width: auto;
+      display: block;
+    }
+    .brand-text {
+      color: var(--primary);
+      font-size: 1.05rem;
+      letter-spacing: 0.2px;
+      white-space: nowrap;
+    }
+
     .logo {
       width: 40px;
       height: 40px;
@@ -617,6 +639,10 @@
       }
       .menu-toggle { font-size: 1.6rem; }
 
+      /* Keep header compact on mobile */
+      .brand-logo { height: 22px; }
+      .brand-text { display: inline; font-size: .95rem; } /* keep wordmark on mobile */
+
       .auth-buttons {
         flex-direction: row;
         gap: .5rem;
@@ -654,6 +680,11 @@
         font-size: 0.7rem;
       }
     }
+
+    /* Extra-small devices: hide wordmark if space is extremely tight */
+    @media (max-width: 360px) {
+      .brand-text { display: none; }
+    }
   </style>
 </head>
 <body>
@@ -663,7 +694,15 @@
       <button class="menu-toggle" id="menuToggle">
         <i class="fas fa-bars"></i>
       </button>
-      
+      <!-- Brand (logo + text). Place a horizontal logo at /logo-horizontal.png -->
+      <a href="public-buyer-home.html" class="brand" aria-label="VendPlug home">
+        <img src="/logo-horizontal.png"
+             alt="VendPlug"
+             class="brand-logo"
+             decoding="async"
+             onerror="this.style.display='none'">
+        <span class="brand-text">VendPlug</span>
+      </a>
     </div>
     
     <!-- Global Product Search Bar -->
